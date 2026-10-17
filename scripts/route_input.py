@@ -48,12 +48,24 @@ LAT_RE = re.compile(r"^(lat|latitude|y)$", re.I)
 LON_RE = re.compile(r"^(lon|lng|long|longitude|x)$", re.I)
 TS_RE = re.compile(r"^(time|timestamp|datetime|date|ts|event_time)$", re.I)
 DATEISH_RE = re.compile(r"^\d{4}-\d{2}-\d{2}([ T]\d{2}:\d{2}(:\d{2})?)?$")
+GENERATED_DIRS = {
+    "outputs", "audit", "state", "__pycache__", ".git", ".hg", ".svn",
+    ".pytest_cache", ".ruff_cache", ".codex-preview", "branch_inputs",
+}
 
 
 def expand(pattern: str) -> List[Path]:
     p = Path(pattern)
     if p.is_dir():
-        return sorted(q for q in p.rglob("*") if q.is_file())
+        files = []
+        for path in p.rglob("*"):
+            if not path.is_file():
+                continue
+            rel = path.relative_to(p)
+            if any(part in GENERATED_DIRS or part.startswith(".") for part in rel.parts):
+                continue
+            files.append(path)
+        return sorted(files)
     if p.is_file():
         return [p]
     hits = sorted(Path(h) for h in glob.glob(pattern, recursive=True))

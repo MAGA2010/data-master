@@ -1,6 +1,6 @@
 {
   "title": "Iris morphometrics",
-  "generated": "2026-10-17 17:27 中国标准时间",
+  "generated": "2026-10-17 17:47 中国标准时间",
   "template": "nature",
   "verdict": "NOT SUBMISSION-READY",
   "gates": [
@@ -95,7 +95,7 @@
     {
       "check": "PDF delivered",
       "status": "PASS",
-      "detail": "backend reportlab, 485640 bytes"
+      "detail": "backend reportlab, 485637 bytes"
     },
     {
       "check": "writer self-audit",

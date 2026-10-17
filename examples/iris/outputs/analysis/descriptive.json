@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "source": "examples/iris/outputs/cleaned/cleaned.csv",
+  "source": "D:\\数据处理 skill\\examples\\iris\\outputs\\cleaned\\cleaned.csv",
   "shape": {
     "n_rows": 158,
     "n_cols": 7

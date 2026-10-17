@@ -96,7 +96,7 @@ One paragraph: setup → conflict → resolution, with one numeric headline + on
 - <Action 2>
 ```
 
-## 3. `audit_report.md` — Nature audit
+## 3. `audit/final_audit.md` — Nature audit
 
 ```markdown
 # Nature Audit Report — [dataset]

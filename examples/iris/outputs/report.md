@@ -1,6 +1,6 @@
 # Iris morphometrics -- Statistical Report
 
-> **Template**: research-report | **Generated**: 2026-10-17 17:22 中国标准时间 | **Pipeline**: data-master
+> **Template**: nature | **Generated**: 2026-10-17 17:47 中国标准时间 | **Pipeline**: data-master
 > **Raw input**: `iris_dirty.csv` (sha256 `d5e5668ecd92e4d3...`) | **Analysed file**: `cleaned.csv`
 > **Rows**: 158 raw -> 158 analysed | **Columns**: 7 | **Modality**: tabular
 > **Independent unit**: no --unit-key given; row is assumed to be the independent unit
@@ -194,10 +194,10 @@ Every number above is traceable to a script. Nothing in this report was typed by
 | Plan | scripts/cleaning_plan.py | cleaning_plan.json | b0560ae42f2688c1 |
 | Clean | scripts/execute_cleaning.py | cleaned/cleaned.csv | 7c1b8a3004c28c85 |
 | Validate | scripts/validate_clean.py | cleaned/validation.json | 070ee266feb052fd |
-| Describe | scripts/stats_descriptive.py | analysis/descriptive.json | 7a5050b10b6f48db |
-| Infer | scripts/stats_inferential.py | analysis/inferential.json | bd5f6ed83434e0da |
+| Describe | scripts/stats_descriptive.py | analysis/descriptive.json | 3f23de383020cb3c |
+| Infer | scripts/stats_inferential.py | analysis/inferential.json | e6ad35f2bd09f998 |
 | Decide figures | scripts/chart_decision.py | analysis/chart_decisions.json | 1a61453e5217f232 |
-| Render figures | scripts/render_chart.py | charts/*.png | 767829ad4512e17b |
+| Render figures | scripts/render_chart.py | charts/*.png | ac1c79a69a930c1e |
 | Assemble | scripts/assemble_report.py | report.md / report.pdf | self-referential -- see report_build.json |
 
 
@@ -390,4 +390,4 @@ Of these, 3 are already reflected as caveats in section 5.
 
 ---
 
-*End of report. Generated 2026-10-17 17:22 中国标准时间 by data-master. The raw input was never modified: every value above was read from the cleaned file or from a recorded artifact. Each number is registered in `report_build.json`; the gate verdict, including anything that failed, is in `audit/final_audit.md`.*
+*End of report. Generated 2026-10-17 17:47 中国标准时间 by data-master. The raw input was never modified: every value above was read from the cleaned file or from a recorded artifact. Each number is registered in `report_build.json`; the gate verdict, including anything that failed, is in `audit/final_audit.md`.*

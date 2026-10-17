@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "source": "examples/iris/outputs/cleaned/cleaned.csv",
+  "source": "D:\\数据处理 skill\\examples\\iris\\outputs\\cleaned\\cleaned.csv",
   "group": "species",
   "group_levels": [
     "setosa",

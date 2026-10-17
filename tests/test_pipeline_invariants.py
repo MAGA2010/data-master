@@ -31,6 +31,9 @@ sys.path.insert(0, str(SCRIPTS))
 import dm_types                     # noqa: E402
 import execute_cleaning as ec        # noqa: E402
 import stats_inferential as si       # noqa: E402
+import assemble_profile_report as apr  # noqa: E402
+import pipeline_state as ps          # noqa: E402
+import run_pipeline as rp            # noqa: E402
 
 TRAPS = ROOT / "examples" / "column_traps"
 TRAPS_CSV = TRAPS / "traps_dirty.csv"
@@ -558,62 +561,110 @@ def test_router_json_records():
 
 @check("the time-series profiler sees gaps, repeats and a regime change")
 def test_timeseries_profile():
-    out = ROOT / "examples" / "timeseries" / "outputs" / "analysis" / "profile.json"
-    p = _run("profile_timeseries.py",
-             "--in", ROOT / "examples" / "timeseries" / "sensor_log.csv",
-             "--out", out)
-    eq(p.returncode, 0, p.stderr)
-    d = json.loads(out.read_text(encoding="utf-8"))
-    eq(d["time_column"], "timestamp", "wrong time column")
-    ts = d["timeseries_candidate"]
-    eq(ts["step_seconds"], 3600.0, "modal interval should be one hour")
-    assert ts["n_gaps"] >= 1, "the six-hour dropout was not detected"
-    assert ts["regime_change_suspected"] is True, \
-        "the switch to 15-minute sampling was not detected"
-    kinds = {f["type"] for f in d["anomalies"]["flags"]}
-    assert "duplicate_timestamps" in kinds, "the retransmitted timestamp was not flagged"
+    with tempfile.TemporaryDirectory() as td:
+        out = Path(td) / "profile.json"
+        p = _run("profile_timeseries.py",
+                 "--in", ROOT / "examples" / "timeseries" / "sensor_log.csv",
+                 "--out", out)
+        eq(p.returncode, 0, p.stderr)
+        d = json.loads(out.read_text(encoding="utf-8"))
+        eq(d["time_column"], "timestamp", "wrong time column")
+        ts = d["timeseries_candidate"]
+        eq(ts["step_seconds"], 3600.0, "modal interval should be one hour")
+        assert ts["n_gaps"] >= 1, "the six-hour dropout was not detected"
+        assert ts["regime_change_suspected"] is True, \
+            "the switch to 15-minute sampling was not detected"
+        kinds = {f["type"] for f in d["anomalies"]["flags"]}
+        assert "duplicate_timestamps" in kinds, "the retransmitted timestamp was not flagged"
 
 
 @check("the text profiler sees duplicates, empty files and an encoding fallback")
 def test_text_profile():
-    out = ROOT / "examples" / "text" / "outputs" / "analysis" / "profile.json"
-    p = _run("profile_text.py", "--in", ROOT / "examples" / "text" / "corpus", "--out", out)
-    eq(p.returncode, 0, p.stderr)
-    d = json.loads(out.read_text(encoding="utf-8"))
-    kinds = {f["type"] for f in d["anomalies"]["flags"]}
-    assert "duplicate_documents" in kinds, "the duplicated document was not flagged"
-    assert "empty_documents" in kinds, "the empty file was not flagged"
-    assert "encoding_fallback" in kinds, "the GB18030 file was not flagged"
-    eq(d["corpus"]["n_documents"], 6, "document count changed")
+    with tempfile.TemporaryDirectory() as td:
+        out = Path(td) / "profile.json"
+        p = _run("profile_text.py", "--in", ROOT / "examples" / "text" / "corpus",
+                 "--out", out)
+        eq(p.returncode, 0, p.stderr)
+        d = json.loads(out.read_text(encoding="utf-8"))
+        kinds = {f["type"] for f in d["anomalies"]["flags"]}
+        assert "duplicate_documents" in kinds, "the duplicated document was not flagged"
+        assert "empty_documents" in kinds, "the empty file was not flagged"
+        assert "encoding_fallback" in kinds, "the GB18030 file was not flagged"
+        eq(d["corpus"]["n_documents"], 6, "document count changed")
 
 
 @check("the media profiler sees a corrupt image and a re-encoded duplicate")
 def test_media_profile():
-    out = ROOT / "examples" / "media" / "outputs" / "analysis" / "profile.json"
-    p = _run("profile_media.py", "--in", ROOT / "examples" / "media" / "images",
-             "--kind", "image", "--out", out)
-    eq(p.returncode, 0, p.stderr)
-    d = json.loads(out.read_text(encoding="utf-8"))
-    eq(d["summary"]["n_unreadable"], 1, "the corrupt JPEG was not counted")
-    pairs = {(x["a"], x["b"]) for x in d["summary"]["near_duplicate_pairs"]}
-    assert ("scene.png", "scene_reencoded.jpg") in pairs, \
-        "the re-encoded duplicate was not found: %s" % pairs
-    assert "blank.png" not in {n for pair in pairs for n in pair}, \
-        "a blank frame was reported as a near-duplicate of a real image"
+    with tempfile.TemporaryDirectory() as td:
+        out = Path(td) / "profile.json"
+        p = _run("profile_media.py", "--in", ROOT / "examples" / "media" / "images",
+                 "--kind", "image", "--out", out)
+        eq(p.returncode, 0, p.stderr)
+        d = json.loads(out.read_text(encoding="utf-8"))
+        eq(d["summary"]["n_unreadable"], 1, "the corrupt JPEG was not counted")
+        pairs = {(x["a"], x["b"]) for x in d["summary"]["near_duplicate_pairs"]}
+        assert ("scene.png", "scene_reencoded.jpg") in pairs, \
+            "the re-encoded duplicate was not found: %s" % pairs
+        assert "blank.png" not in {n for pair in pairs for n in pair}, \
+            "a blank frame was reported as a near-duplicate of a real image"
 
 
 @check("the geospatial profiler sees out-of-range, null-island and null points")
 def test_geospatial_profile():
-    out = ROOT / "examples" / "geo" / "outputs" / "analysis" / "profile.json"
-    p = _run("profile_geospatial.py",
-             "--in", ROOT / "examples" / "geo" / "stations.geojson", "--out", out)
-    eq(p.returncode, 0, p.stderr)
-    d = json.loads(out.read_text(encoding="utf-8"))
-    kinds = {f["type"] for f in d["anomalies"]["flags"]}
-    assert "out_of_range_coordinates" in kinds, "the swapped lat/lon was not flagged"
-    assert "null_island" in kinds, "the (0,0) point was not flagged"
-    assert "non_numeric_coordinates" in kinds, "the null coordinate was not flagged"
-    eq(d["summary"]["n_features_invalid"], 1, "null-coordinate feature count changed")
+    with tempfile.TemporaryDirectory() as td:
+        out = Path(td) / "profile.json"
+        p = _run("profile_geospatial.py",
+                 "--in", ROOT / "examples" / "geo" / "stations.geojson", "--out", out)
+        eq(p.returncode, 0, p.stderr)
+        d = json.loads(out.read_text(encoding="utf-8"))
+        kinds = {f["type"] for f in d["anomalies"]["flags"]}
+        assert "out_of_range_coordinates" in kinds, "the swapped lat/lon was not flagged"
+        assert "null_island" in kinds, "the (0,0) point was not flagged"
+        assert "non_numeric_coordinates" in kinds, "the null coordinate was not flagged"
+        eq(d["summary"]["n_features_invalid"], 1, "null-coordinate feature count changed")
+
+
+@check("group selection prefers a human label over an identifier or code column")
+def test_group_selection_rejects_code_columns():
+    profile = {
+        "columns": {
+            "species": {"missing_pct": 0.0,
+                        "residual_case_variants_post_hygiene": {
+                            "n_after_casefold": 3}},
+            "species_code": {"missing_pct": 0.0},
+        },
+        "group_candidate": {"candidates": [
+            {"column": "species_code", "n_unique": 3},
+            {"column": "species", "n_unique": 9},
+        ]},
+    }
+    eq(rp.choose_group(profile), "species", "the relabeling column won")
+
+
+@check("state resume starts at the first stage without completed evidence")
+def test_state_first_incomplete():
+    with tempfile.TemporaryDirectory() as td:
+        state = ps.new_state(
+            {"kind": "file", "path": "x", "sha256": "0", "bytes": 0, "files": 1},
+            Path(td),
+            {},
+            stages=["input", "route", "profile"],
+        )
+        ps.record_stage(state, "input", "completed", evidence=[])
+        ps.record_stage(state, "route", "failed", evidence=[])
+        eq(ps.first_incomplete(state), "route", "resume did not stop at the failed stage")
+
+
+@check("profile-only prose states the inferential scope boundary")
+def test_profile_report_scope():
+    profile = json.loads(
+        (ROOT / "examples" / "text" / "outputs" / "analysis"
+         / "profile.json").read_text(encoding="utf-8")
+    )
+    text = apr.build_markdown(profile, {"plan": []}, "Text profile")
+    assert "No statistical test is reported here" in text
+    assert "does not clean" in text
+    assert "AUTHOR_INPUT_NEEDED" in text
 
 
 @check("the dependency checker does not demand packages the stage never imports")

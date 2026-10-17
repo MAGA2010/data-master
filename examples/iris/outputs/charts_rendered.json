@@ -17,7 +17,7 @@
  "n_skipped": 0,
  "rendered": [
   {
-   "path": "examples\\iris\\outputs\\charts\\fig01_distribution_panel.png",
+   "path": "D:\\数据处理 skill\\examples\\iris\\outputs\\charts\\fig01_distribution_panel.png",
    "bytes": 102812,
    "ink_ratio": 0.31835,
    "non_blank": true,
@@ -31,7 +31,7 @@
    "ok": true
   },
   {
-   "path": "examples\\iris\\outputs\\charts\\fig02_small_multiples_ci.png",
+   "path": "D:\\数据处理 skill\\examples\\iris\\outputs\\charts\\fig02_small_multiples_ci.png",
    "bytes": 162095,
    "ink_ratio": 0.22969,
    "non_blank": true,
@@ -45,7 +45,7 @@
    "ok": true
   },
   {
-   "path": "examples\\iris\\outputs\\charts\\fig03_scatter_panel.png",
+   "path": "D:\\数据处理 skill\\examples\\iris\\outputs\\charts\\fig03_scatter_panel.png",
    "bytes": 147035,
    "ink_ratio": 0.08847,
    "non_blank": true,

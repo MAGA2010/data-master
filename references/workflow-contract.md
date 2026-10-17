@@ -237,56 +237,64 @@ Gate:
 
 Run `scripts/final_audit.py` against the report + all artifacts.
 
-Output: `audit/audit_report.md`. Each gate = PASS / WARN / FAIL with evidence.
+Output: `audit/final_audit.md` and `audit/final_audit.json`. Each gate =
+PASS / WARN / FAIL with evidence.
 
 Final verdict:
 - All PASS / WARN only → `report.md` becomes the deliverable.
-- Any FAIL on gates 1, 2, 7, 8 → freeze run; `report.md` is renamed to `report.PENDING.md`; `audit/audit_report.md` becomes the actionable.
+- Any FAIL on gates 1, 2, 7, 8 -> the report remains available, but the verdict
+  is `NOT SUBMISSION-READY`; `audit/final_audit.md` carries the actionable list.
 
 ## Step 13 — State snapshot
 
-Run `scripts/state_keeper.py --output state.json`.
+`scripts/run_pipeline.py` writes `state.json` after every stage. Inspect it with:
+
+```powershell
+python scripts/state_keeper.py --state outputs/state.json --show
+python scripts/state_keeper.py --state outputs/state.json --validate
+```
 
 State schema:
 
 ```json
 {
-  "version": "1.0.0",
-  "started_at": "2026-10-17T10:00:00",
-  "completed_at": "2026-10-17T10:05:23",
-  "inputs": {"files": [...], "modality": "tabular", "template": "nature"},
-  "gates": {
-    "input_resolved": {"passes": true, "evidence": "outputs/manifest.json"},
-    "modality_routed": {"passes": true, "evidence": "analysis/routing_decisions.json"},
-    "dependencies_ok": {"passes": true, "evidence": "outputs/env.txt"},
-    "profile_done": {"passes": true, "evidence": "analysis/profile.json"},
-    "cleaning_planned": {"passes": true, "evidence": "outputs/cleaning_plan.json"},
-    "cleaning_executed": {"passes": true, "evidence": "cleaned/cleaning_report.md"},
-    "cleaning_validated": {"passes": true, "evidence": "cleaned/cleaned_validation.json"},
-    "stats_done": {"passes": true, "evidence": "analysis/stats.json"},
-    "charts_done": {"passes": true, "evidence": "outputs/charts/"},
-    "report_done": {"passes": true, "evidence": "outputs/report.md"},
-    "audit_done": {"passes": true, "evidence": "audit/audit_report.md"}
+  "schema_version": "1.0",
+  "status": "completed",
+  "input": {"kind": "file", "path": "...", "sha256": "...", "files": 1},
+  "outdir": "...",
+  "options": {"title": "...", "group": null, "journal": "nature"},
+  "stage_order": ["input", "route", "profile", "..."],
+  "stages": {
+    "profile": {
+      "status": "completed",
+      "evidence": [".../analysis/profile.json"],
+      "command": ["python", "scripts/profile_tabular.py", "..."],
+      "duration_ms": 812
+    }
   },
-  "audit_verdict": "pass_or_warn_only"
+  "audit_verdict": "NOT SUBMISSION-READY"
 }
 ```
 
 To cold-resume:
 
-```bash
-python scripts/state_keeper.py --resume
+```powershell
+python scripts/run_pipeline.py --resume outputs/state.json
+# or, from the output directory:
+python ../../scripts/state_keeper.py --resume
 ```
 
-The script reads state.json, finds the first gate with `passes: false`, and re-runs from there.
+The runner reads the stage ledger, verifies the input fingerprint and starts at
+the first stage whose evidence is missing or incomplete.
 
 ## Cold-resume semantics
 
 A re-run must:
 
 - Not re-process the same file if its hash matches the previous run.
-- Re-execute only the gates after the first failed gate.
-- Always re-run `final_audit.py` at the end (audit is never cached).
+- Re-execute only stages whose state is incomplete or whose evidence is missing.
+- Refuse to resume when the input fingerprint changed.
+- Re-run the audit when the user passes `--force` or when audit evidence is absent.
 
 ## Determinism
 

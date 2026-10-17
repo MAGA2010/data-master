@@ -31,17 +31,10 @@ jobs:
       - name: Unit and invariant tests
         run: python tests/test_pipeline_invariants.py
 
-      - name: End-to-end iris pipeline (rebuilds every artifact)
+      - name: One-command iris pipeline
         run: |
-          python scripts/profile_tabular.py --in examples/iris/iris_dirty.csv --out examples/iris/outputs/analysis/profile.json
-          python scripts/cleaning_plan.py --profile examples/iris/outputs/analysis/profile.json --out examples/iris/outputs/cleaning_plan.json
-          python scripts/execute_cleaning.py --in examples/iris/iris_dirty.csv --plan examples/iris/outputs/cleaning_plan.json --out examples/iris/outputs/cleaned
-          python scripts/validate_clean.py --raw examples/iris/iris_dirty.csv --clean examples/iris/outputs/cleaned/cleaned.csv --profile examples/iris/outputs/analysis/profile.json --out examples/iris/outputs/cleaned/validation.json
-          python scripts/stats_descriptive.py --clean examples/iris/outputs/cleaned/cleaned.csv --out examples/iris/outputs/analysis/descriptive.json
-          python scripts/stats_inferential.py --clean examples/iris/outputs/cleaned/cleaned.csv --group species --out examples/iris/outputs/analysis/inferential.json
-          python scripts/chart_decision.py --clean examples/iris/outputs/cleaned/cleaned.csv --profile examples/iris/outputs/analysis/profile.json --descriptive examples/iris/outputs/analysis/descriptive.json --inferential examples/iris/outputs/analysis/inferential.json --out examples/iris/outputs/analysis/chart_decisions.json
-          python scripts/render_chart.py --clean examples/iris/outputs/cleaned/cleaned.csv --decisions examples/iris/outputs/analysis/chart_decisions.json --outdir examples/iris/outputs/charts
-          python scripts/assemble_report.py --raw examples/iris/iris_dirty.csv --outdir examples/iris/outputs --title "Iris morphometrics"
+          python scripts/run_pipeline.py --in examples/iris/iris_dirty.csv --out examples/iris/outputs --title "Iris morphometrics" --journal nature
+          python scripts/state_keeper.py --state examples/iris/outputs/state.json --validate
 
       - name: Audit must report exactly the one known open question
         shell: bash
@@ -84,7 +77,7 @@ jobs:
           python-version: "3.13"
       - run: |
           python -m pip install --upgrade pip
-          python -m pip install pandas numpy pillow
+          python -m pip install pandas numpy pillow reportlab
       - name: Route a mixed folder
         run: python scripts/route_input.py --in examples --deep --out /tmp/route.json
       - name: Time series
@@ -95,3 +88,7 @@ jobs:
         run: python scripts/profile_media.py --in examples/media/images --kind image --out /tmp/img.json
       - name: Geospatial
         run: python scripts/profile_geospatial.py --in examples/geo/stations.geojson --out /tmp/geo.json
+      - name: Profile-only report path
+        run: |
+          python scripts/run_pipeline.py --in examples/text/corpus --out /tmp/text-report --title "Text corpus"
+          python scripts/state_keeper.py --state /tmp/text-report/state.json --validate

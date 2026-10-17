@@ -171,10 +171,12 @@ data-master/
 │   ├── assemble_report.py      [✓] report.md / report.pdf / report_build.json
 │   ├── final_audit.py          [✓] 8 gate + 期刊清单 + structural checks
 │   ├── _md2pdf_reportlab.py    [✓] PDF 一级后端（CJK / 目录 / 页码）
-│   ├── _md2pdf_fpdf.py         [○] 二级后端，未在本机验证
+│   ├── _md2pdf_fpdf.py         [✓] 二级后端，已实测
 │   ├── _md2pdf_browser.py      [✓] 三级后端（Edge headless）
 │   ├── ── sensitivity_analysis.py         [○] 留一法等扰动尚未自动化
-│   └── ── state_keeper.py / pipeline.py   [○] cold-resume
+│   ├── state_keeper.py         [✓] 状态检查 / 冷恢复入口
+│   ├── run_pipeline.py         [✓] 单命令执行器
+│   └── pipeline_state.py       [✓] 状态与输入指纹
 ├── skills/                       [✓] 10 个子 skill，各绑定一个 stage + gate
 ├── references/
 │   ├── journal-reporting-standards.json [✓] 机器可读路由表（9 design + generic）
@@ -187,13 +189,12 @@ data-master/
 │   ├── text/             [✓] 重复文档 + 空文件 + GB18030
 │   ├── media/            [✓] 损坏图 + 重编码近重复 + 空白帧
 │   └── geo/              [✓] 经纬度互换 + null island + 空坐标
-├── templates/              [○] 已建目录，待填
-└── state/                  [○] 已建目录，待填
+└── docs/assets/            [✓] README 报告截图
 ```
 
 > Stage 1（路由 + 6 类模态画像）、Stage 2（统计 + Welch 分母自由度）、Stage 3
-> （图表 + PDF 报告 + 8 gate 审计）已经贯通。未完成的是：敏感性分析的留一法自动化、
-> `state_keeper.py` 冷恢复、以及 fpdf2 后端在真实环境中的验证。
+> （图表 + PDF 报告 + 8 gate 审计）已经贯通。`run_pipeline.py` 提供单命令入口和
+> 可验证的冷恢复；未完成的是敏感性分析的留一法自动化，以及非表格模态的推断分析。
 
 ---
 

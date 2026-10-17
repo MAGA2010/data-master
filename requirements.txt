@@ -1,0 +1,14 @@
+# Core analysis, figures and PDF delivery. Install explicitly; the skill does not
+# install packages on the user's behalf.
+numpy>=1.26
+pandas>=2.1,<4
+scipy>=1.11
+matplotlib>=3.8
+statsmodels>=0.14
+openpyxl>=3.1
+pyarrow>=15
+Pillow>=10
+reportlab>=4
+pypdf>=4
+fpdf2>=2.7
+pyshp>=2.3

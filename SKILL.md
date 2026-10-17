@@ -1,7 +1,6 @@
 ---
 name: data-master
 description: "Universal data processing pipeline — Agent auto-detects data modality (tabular / text / time-series / image / audio / geo / mixed), runs full-auto cleaning, then Nature-grade statistics, and delivers report + charts. Use when the user says clean this data, analyze my data, 跑数据, 出报告, 做图表, generate report from CSV, statistical analysis, EDA + inference, Nature-grade audit, or wants any data processed end-to-end with reproducible evidence."
-argument-hint: "<file | folder | glob> [--report nature|standard|executive] [--out <dir>]"
 allowed-tools: Bash(python *), Bash(py *), PowerShell(python *), PowerShell(py *), WebSearch, WebFetch
 ---
 
@@ -123,6 +122,17 @@ Full table in [references/modality-routing.md](references/modality-routing.md).
 
 The agent executing this skill should follow this loop. Each step has full instructions in the linked reference.
 
+0. **Prefer the one-command runner** (`scripts/run_pipeline.py`). It wraps every
+   deterministic stage, records `state.json`, auto-selects the highest-ranked
+   grouping column for a single tabular file, and resumes without repeating
+   stages whose evidence still exists:
+   ```powershell
+   python scripts/run_pipeline.py --in <file|folder|glob> --out outputs --title "<title>"
+   python scripts/run_pipeline.py --resume outputs/state.json
+   ```
+   Use the step-by-step commands below only when debugging or overriding a stage.
+   Non-tabular and multi-file inputs take the documented profile-only path: they
+   receive a PDF report and integrity audit, but no inferential claim.
 1. **Resolve input** (`references/workflow-contract.md#step-1`). If $ARGUMENTS is empty, list data-looking files in cwd and ask the user which to process. This is the only allowed clarification.
 2. **Route modality** (`references/modality-routing.md`). Read file extensions, sniff a small sample, pick one of the 7 modalities. Mixed folder → run one branch per modality and merge reports.
 3. **Check dependencies** (`scripts/check_deps.py --modalities <list>`). Install missing libs one at a time, never silent-install.
@@ -147,7 +157,8 @@ The agent executing this skill should follow this loop. Each step has full instr
     python scripts/final_audit.py --outdir outputs --journal nature
     python scripts/final_audit.py --outdir outputs --journal nejm --design randomized_trial
     ```
-13. **State** (`scripts/state_keeper.py`). Snapshot `state.json` after every gate. Allows cold-resume.
+13. **State** (`scripts/state_keeper.py`). Inspect or validate `state.json`; resume
+    with either `state_keeper.py --resume` or `run_pipeline.py --resume <state>`.
 
 Agent meta-rules:
 - If a step is missing a reference, stop and read the linked file — do NOT improvise on methods.
@@ -195,10 +206,9 @@ data-master/
 |   |-- assemble_report.py              # markdown + PDF cascade + provenance
 |   |-- final_audit.py                  # 8 gates + journal checklist
 |   `-- profile_tabular.py ...          # profiler, cleaner, stats, charts
-|-- templates/                          # JSON / Markdown scaffolds
 |-- examples/iris/                      # end-to-end iris example
-|-- state/                              # state.json schema
-`-- audit/                              # gated fail output
+|-- docs/assets/                        # README screenshots
+`-- .github/workflows/ci.yml            # cross-platform regression CI
 ```
 
 ## Related files

@@ -4,12 +4,18 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 .ruff_cache/
+/.codex-preview/
 
 # Local outputs -- examples keep their generated artifacts, but a user's run
 # should never be committed.
 /outputs/
 /audit/
 /state/
+
+# Machine-specific run ledgers and route evidence in reference examples.
+/examples/*/outputs/state.json
+/examples/*/outputs/preflight.json
+/examples/*/outputs/route.json
 
 # Editors
 .vscode/

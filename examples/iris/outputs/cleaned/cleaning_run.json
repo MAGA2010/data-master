@@ -6,7 +6,7 @@
     "expected_hash": "7c1b8a3004c28c85cfb2ff94ee43d4cf0f7be37b60dbe361f9d55160208592df",
     "regenerated_hash": "7c1b8a3004c28c85cfb2ff94ee43d4cf0f7be37b60dbe361f9d55160208592df"
   },
-  "source": "examples\\iris\\iris_dirty.csv",
+  "source": "D:\\数据处理 skill\\examples\\iris\\iris_dirty.csv",
   "n_raw": 158,
   "n_clean": 158,
   "columns_before": [
@@ -34,7 +34,7 @@
   "raw_hash": "d5e5668ecd92e4d30c13aa6ee875a6dd6a40ded6517d69a97800b67540f2ec86",
   "cleaned_hash": "7c1b8a3004c28c85cfb2ff94ee43d4cf0f7be37b60dbe361f9d55160208592df",
   "source_spec": {
-    "path": "examples\\iris\\iris_dirty.csv",
+    "path": "D:\\数据处理 skill\\examples\\iris\\iris_dirty.csv",
     "extension": ".csv",
     "read_mode": "text",
     "schema_declares_types": false

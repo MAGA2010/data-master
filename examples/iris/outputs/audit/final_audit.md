@@ -1,6 +1,6 @@
 # Final audit -- Iris morphometrics
 
-_Generated 2026-10-17 17:27 中国标准时间 by scripts/final_audit.py from the artifacts on disk. This audit reads the report; it does not trust it._
+_Generated 2026-10-17 17:47 中国标准时间 by scripts/final_audit.py from the artifacts on disk. This audit reads the report; it does not trust it._
 
 **Verdict: NOT SUBMISSION-READY**
 
@@ -61,7 +61,7 @@ Blocking issues:
 | at least one caveat | **PASS** | 6 caveat(s) |
 | figure title / caption / body | **PASS** | all 3 figure(s) carry title, caption and a three-part body |
 | number provenance | **PASS** | 11 registered claim(s) in report_build.json |
-| PDF delivered | **PASS** | backend reportlab, 485640 bytes |
+| PDF delivered | **PASS** | backend reportlab, 485637 bytes |
 | writer self-audit | **PASS** | 0 forbidden phrases in the writer's own scan |
 
 ## Journal routing

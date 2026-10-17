@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
   "title": "Iris morphometrics",
-  "template": "research-report",
-  "generated": "2026-10-17 17:22 中国标准时间",
-  "report_md": "examples\\iris\\outputs\\report.md",
-  "report_md_sha256": "fa8f41bc05e087b037abd8f8ef1651969fc2027a74baeb7cfd5d73f91f5018df",
-  "executive_summary_md": "examples\\iris\\outputs\\executive_summary.md",
-  "report_pdf": "examples\\iris\\outputs\\report.pdf",
+  "template": "nature",
+  "generated": "2026-10-17 17:47 中国标准时间",
+  "report_md": "D:\\数据处理 skill\\examples\\iris\\outputs\\report.md",
+  "report_md_sha256": "3aced4c2c4c134997a80e18c1e180592967bfcf5ba03922755db07daad038139",
+  "executive_summary_md": "D:\\数据处理 skill\\examples\\iris\\outputs\\executive_summary.md",
+  "report_pdf": "D:\\数据处理 skill\\examples\\iris\\outputs\\report.pdf",
   "pdf": {
     "pdf_written": true,
     "backend": "reportlab",
@@ -18,10 +18,10 @@
         "ok": true
       }
     ],
-    "sha256": "8c8fc62227a2f1dd1b6752f43a0fff4367e1ff7f3a978c2d47973cdbb6cb882e",
+    "sha256": "17a6de27a9fe84a41a8aa222e00d14688211ccbbc532b3ab63d80af37132135f",
     "reportlab_version": "4.4.9",
     "pages": 14,
-    "bytes": 485640,
+    "bytes": 485637,
     "cjk_font_embedded": true,
     "cjk_font_available": true,
     "cjk_text_present": true
@@ -37,10 +37,10 @@
         "ok": true
       }
     ],
-    "sha256": "37b4b8932eab3118cc5b5465b784d255234facabd9b718b2c50f655e6869da64",
+    "sha256": "4e0b55baee7866f12cfb5e35ee7368fb0f37463399c7c630e805564080f2dd2f",
     "reportlab_version": "4.4.9",
     "pages": 14,
-    "bytes": 485365,
+    "bytes": 485360,
     "cjk_font_embedded": true,
     "cjk_font_available": true,
     "cjk_text_present": true,
@@ -50,10 +50,10 @@
     "profile": "3dc825cd3a941c53",
     "plan": "b0560ae42f2688c1",
     "validation": "070ee266feb052fd",
-    "descriptive": "7a5050b10b6f48db",
-    "inferential": "bd5f6ed83434e0da",
+    "descriptive": "3f23de383020cb3c",
+    "inferential": "e6ad35f2bd09f998",
     "decisions": "1a61453e5217f232",
-    "rendered": "767829ad4512e17b"
+    "rendered": "ac1c79a69a930c1e"
   },
   "cleaned_sha256": "7c1b8a3004c28c85cfb2ff94ee43d4cf0f7be37b60dbe361f9d55160208592df",
   "environment": {
@@ -64,7 +64,7 @@
       "numpy": "2.4.6",
       "scipy": "1.18.1"
     },
-    "assembled_at": "2026-10-17 17:22 中国标准时间"
+    "assembled_at": "2026-10-17 17:47 中国标准时间"
   },
   "caveats": [
     {

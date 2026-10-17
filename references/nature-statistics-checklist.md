@@ -115,7 +115,8 @@ And shows: did the conclusion change?
 
 ## Audit output
 
-The audit script writes `audit/audit_report.md` with one section per gate:
+The audit script writes `audit/final_audit.md` and `audit/final_audit.json` with
+one section per gate:
 
 ```markdown
 # Nature Audit Report
