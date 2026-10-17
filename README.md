@@ -1,230 +1,443 @@
 # data-master
 
-**One command. Any data type. A report that shows its work.**
+**Auditable data analysis from one command.**
 
-`data-master` is a Codex skill and a standalone Python pipeline for people who
-want data analysed without silent type guessing, silent test selection or a
-confident report that cannot be reproduced.
+[![CI](https://github.com/MAGA2010/data-master/actions/workflows/ci.yml/badge.svg)](https://github.com/MAGA2010/data-master/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-3776AB)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-2EA44F)](LICENSE)
+[![Codex Skill](https://img.shields.io/badge/Codex-skill-111827)](SKILL.md)
 
-Give it a file, folder or glob. It routes each input to a modality, profiles it
-without modifying it, cleans and analyses supported tabular data, renders one
-figure per argument, and delivers a PDF plus machine-readable evidence.
+`data-master` is a Codex skill and standalone Python pipeline for transforming
+raw data into a reproducible report with a complete evidence trail. It identifies
+the input modality, profiles the data without modifying it, plans and executes
+safe cleaning, runs statistics where the data supports them, creates figures,
+and delivers Markdown and PDF reports.
 
-![Generated iris report](docs/assets/iris-report.png)
+It is built for workflows where an answer must survive inspection: research
+analysis, data quality review, exploratory reporting, and AI-assisted work that
+still needs transparent decisions.
 
-[中文说明](#中文) | [Design](docs/DESIGN.md) | [Journal standards](references/journal-reporting-standards.md) | [Workflow contract](references/workflow-contract.md)
+![Generated data-master report](docs/assets/iris-report.png)
 
-## Quick start
+## Why data-master
 
-```powershell
-git clone https://github.com/<owner>/data-master.git
+Most automated analysis tools optimize for the shortest path to a polished answer.
+`data-master` optimizes for an answer that can be traced, repeated, and challenged.
+
+| Common failure | data-master control |
+|---|---|
+| A reader silently changes `02134` to `2134` | All text cells are read as text; conversions are explicit plan operations |
+| Cleaning changes columns nobody approved | Every changed value must belong to a named operation; untouched columns are audited |
+| A statistical test is selected without explanation | Tests, assumptions, alternatives, effect sizes, and confidence intervals are recorded |
+| A report overstates the study design | A shared phrase audit blocks unsupported causal upgrades |
+| Outputs cannot be reproduced | Cleaning replay is checked byte-for-byte; inputs are fingerprinted |
+| A failed run starts from zero | `state.json` records stage status, commands, duration, and evidence for resume |
+| Non-tabular data receives invented inference | Unsupported modalities receive an explicitly labelled profile-only report |
+
+The project does not replace statistical judgment or peer review. It makes the
+judgment that was actually applied visible, testable, and easier to correct.
+
+## Installation
+
+### Requirements
+
+- Python 3.11, 3.12, or 3.13
+- Git
+- A platform supported by the Python scientific stack
+
+```bash
+git clone https://github.com/MAGA2010/data-master.git
 cd data-master
+python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
-
-python scripts/run_pipeline.py `
-  --in examples/iris/iris_dirty.csv `
-  --out examples/iris/outputs `
-  --title "Iris morphometrics" `
-  --journal nature
 ```
 
-The runner writes `report.pdf`, `report.md`, `executive_summary.md`, figures,
-cleaning artifacts, an audit and `state.json`.
+The pipeline never installs packages silently. It records a dependency preflight
+and stops with the missing requirements when a selected stage cannot run.
 
-Use it as a Codex skill:
+### Use as a Codex skill
+
+Clone the repository:
+
+```bash
+git clone https://github.com/MAGA2010/data-master.git
+```
+
+Then copy or link it into your Codex skills directory. On PowerShell:
 
 ```powershell
 Copy-Item -Recurse data-master "$env:USERPROFILE\.codex\skills\data-master"
 ```
 
-Then ask Codex to clean and analyse a dataset. The root [SKILL.md](SKILL.md) is
-the routing entry point.
+On macOS or Linux:
 
-## What makes it different
+```bash
+cp -R data-master ~/.codex/skills/data-master
+```
 
-Most "AI data analysis" tools fail in the same places. `data-master` treats those
-failures as the product requirements:
+The root [SKILL.md](SKILL.md) is the Codex routing entry point. It coordinates
+the ten stage-specific skills under [`skills/`](skills/).
 
-| Failure | Contract in this repository |
-|---|---|
-| A reader turns `02134` into `2134` before any audit exists | Every text cell is read as text; conversions are explicit, all-or-nothing plan operations |
-| A statistical test is chosen silently | Test selection, rejected alternatives and assumptions are written to `inferential.json` |
-| A p-value appears without effect size or uncertainty | Nature gates require effect size plus a 95% CI |
-| A report claims more than the design supports | Causal-upgrade phrases fail the audit; unknowns become `AUTHOR_INPUT_NEEDED` |
-| The result cannot be reproduced | Cleaning is byte-replayable; every reported number is registered in `report_build.json` |
-| A crash means starting over | `state.json` records stage evidence and supports cold resume |
+## Quick start
+
+Run the included Iris example:
+
+```bash
+python scripts/run_pipeline.py \
+  --in examples/iris/iris_dirty.csv \
+  --out examples/iris/outputs \
+  --title "Iris morphometrics" \
+  --journal nature
+```
+
+The command produces a complete report, figures, cleaning artifacts, statistics,
+an audit, and a resumable state ledger.
+
+For a smaller and more explicit analysis:
+
+```bash
+python scripts/run_pipeline.py \
+  --in data/measurements.csv \
+  --out outputs \
+  --title "Treatment response" \
+  --group treatment \
+  --unit-key participant_id \
+  --outcomes response_time,accuracy \
+  --journal nature
+```
+
+`--unit-key` is not decorative. Without a valid declaration of what one
+independent unit represents, the report is deliberately marked
+`NOT SUBMISSION-READY`.
 
 ## Execution modes
 
-| Input | What runs |
+The runner selects a mode from the route result and records that decision.
+
+| Input shape | What runs |
 |---|---|
-| One tabular file | Route -> profile -> clean -> validate -> describe -> infer -> charts -> PDF -> 8-gate audit |
-| Time series, text, image, audio or geospatial | Route -> profile -> PDF profile report -> integrity audit |
-| Mixed folder or multi-file input | One branch per modality/file -> profile-only report |
+| One tabular file | Route, profile, clean, validate, describe, infer, chart, report, audit |
+| One text, image, audio, geospatial, or time-series input | Route, profile, profile-only PDF, integrity audit |
+| Mixed folder or multiple files | One profile branch per modality or file, followed by a merged profile-only report |
 | Unknown format | Stops with a route record and points to the research protocol |
 
-Profile-only is a deliberate scope boundary, not a claim that statistics ran.
-The report says so on its first page.
+Profile-only is an explicit scope boundary. It reports structure, integrity
+issues, missingness, duplicates, and modality-specific findings without claiming
+that a statistical model or causal analysis was performed.
 
-## Automatic decisions, explicit evidence
+## Command-line reference
 
-For tabular data the runner chooses the highest-ranked grouping column from the
-profiler. Override it when the study design says otherwise:
+| Option | Purpose |
+|---|---|
+| `--in PATH` | File, directory, or glob input |
+| `--out DIR` | Output directory |
+| `--title TEXT` | Report title |
+| `--group COLUMN` | Override automatic grouping selection |
+| `--outcomes A,B` | Restrict inferential outcomes |
+| `--unit TEXT` | Describe what one row represents |
+| `--unit-key COLUMN` | Declare the independent-unit identifier |
+| `--journal auto|nature|nejm|science|lancet` | Journal checklist family |
+| `--design ID` | EQUATOR study-design identifier |
+| `--modality NAME` | Force a routing modality |
+| `--profile-only` | Stop after profiling and report generation |
+| `--pdf-backend auto|reportlab|fpdf2|headless-browser` | Select the PDF backend |
+| `--resume STATE` | Resume an existing `state.json` |
+| `--force` | Re-run stages instead of reusing completed evidence |
 
-```powershell
-python scripts/run_pipeline.py `
-  --in data/measurements.csv `
-  --out outputs `
-  --group treatment `
-  --unit-key participant_id `
-  --outcomes response_time,accuracy
+View the built-in help:
+
+```bash
+python scripts/run_pipeline.py --help
 ```
 
-Without `--unit-key`, the output still builds, but Gate 1 remains open and the
-report is marked **not submission-ready**. That is intentional. The pipeline
-does not invent what one row represents.
+## Pipeline architecture
 
-## Resume and inspect
-
-Every completed stage records its command, duration, evidence paths and status:
-
-```powershell
-python scripts/state_keeper.py --state outputs/state.json --show
-python scripts/state_keeper.py --state outputs/state.json --validate
-python scripts/run_pipeline.py --resume outputs/state.json
+```text
+input file / folder / glob
+        |
+        v
+  route -> preflight -> profile
+        |                  |
+        |                  +---- non-tabular / mixed ----> profile report -> audit
+        |
+        +---- one tabular file
+                 |
+                 v
+             cleaning plan
+                 |
+                 v
+      execute -> validate -> describe
+                 |
+                 v
+           inferential analysis
+                 |
+                 v
+        chart decisions -> charts
+                 |
+                 v
+          report.md / report.pdf
+                 |
+                 v
+           structural + 8-gate audit
 ```
 
-A resume is accepted only when the input fingerprint is unchanged. Completed
-stages are reused when their evidence still exists; `--force` re-runs them.
+Every stage writes evidence to disk before it is considered complete. The runner
+uses that evidence, rather than console output or an in-memory flag, to decide
+whether a stage can be reused.
 
-## Output
+### Core components
+
+| Component | Responsibility |
+|---|---|
+| [`scripts/run_pipeline.py`](scripts/run_pipeline.py) | One-command orchestration and execution mode selection |
+| [`scripts/route_input.py`](scripts/route_input.py) | File inspection and modality routing |
+| [`scripts/profile_*.py`](scripts/) | Modality-specific structural profiling |
+| [`scripts/cleaning_plan.py`](scripts/cleaning_plan.py) | Explicit, reviewable cleaning plan |
+| [`scripts/execute_cleaning.py`](scripts/execute_cleaning.py) | Additive cleaning with a replayable script |
+| [`scripts/stats_*.py`](scripts/) | Descriptive and inferential statistics |
+| [`scripts/final_audit.py`](scripts/final_audit.py) | Machine-derived report and journal audit |
+| [`scripts/pipeline_state.py`](scripts/pipeline_state.py) | Input fingerprints and stage ledger |
+| [`scripts/state_keeper.py`](scripts/state_keeper.py) | State inspection, evidence validation, and resume entry point |
+
+## Supported inputs
+
+| Modality | Formats and examples | Current depth |
+|---|---|---|
+| Tabular | CSV, TSV, Excel, JSON, JSONL, Parquet | Full analysis pipeline |
+| Time series | Timestamped tabular data | Structural profiling |
+| Text corpus | TXT and mixed-encoding document sets | Corpus profiling |
+| Image set | PNG, JPEG, WebP, TIFF | Decode, metadata, brightness, near-duplicate profiling |
+| Audio set | WAV, MP3, FLAC and related formats | Duration, rate, channel, clipping, and silence profiling |
+| Geospatial | GeoJSON, shapefiles, coordinate tables | CRS, bounds, coordinate validity, coincidence profiling |
+| Mixed input | Folders containing several supported modalities | Branch profiling and combined profile-only report |
+
+Unknown and unsupported formats are routed to
+[`references/research-protocol.md`](references/research-protocol.md) rather than
+being treated as tabular data by default.
+
+## Output contract
 
 ```text
 outputs/
-|-- report.pdf                  primary deliverable
-|-- report.md                   citable Markdown source
-|-- executive_summary.md        one page, same numbers
-|-- report_build.json           provenance, hashes and PDF backend trail
-|-- state.json                  resumable run ledger
-|-- route.json                  modality decisions and alternatives
-|-- preflight.json              dependency evidence
+|-- report.pdf
+|-- report.md
+|-- executive_summary.md
+|-- report_build.json
+|-- state.json
+|-- route.json
+|-- preflight.json
+|-- cleaning_plan.json
+|-- charts_rendered.json
 |-- audit/
-|   |-- final_audit.md          8 Nature gates + journal checklist
-|   `-- final_audit.json        machine-readable verdict
+|   |-- final_audit.json
+|   `-- final_audit.md
 |-- analysis/
 |   |-- profile.json
 |   |-- descriptive.json
 |   |-- inferential.json
 |   `-- chart_decisions.json
-|-- cleaning_plan.json
 |-- cleaned/
 |   |-- cleaned.csv
-|   |-- clean_<slug>.py         standalone replay script
+|   |-- clean_<dataset>.py
 |   |-- cleaning_run.json
 |   `-- validation.json
-|-- charts/*.png
-`-- charts_rendered.json
+`-- charts/
+    `-- *.png
 ```
 
-## The 8 Nature gates
+The important files are:
 
-Any mandatory failure means the report exists but is **not submission-ready**.
+- `report.pdf`: the primary human-readable deliverable.
+- `report.md`: the citable report source.
+- `report_build.json`: hashes, provenance, PDF backend, and registered report values.
+- `analysis/*.json`: machine-readable statistical and chart decisions.
+- `audit/final_audit.*`: the final audit verdict and actionable failures.
+- `state.json`: completed stages, commands, durations, and evidence paths.
 
-| # | Gate | Machine evidence |
-|---|---|---|
-| 1 | n and independent unit are explicit | `unit_of_analysis`, per-group n |
-| 2 | Missingness mechanism declared | `missing_mechanism_screen` |
-| 3 | Effect size accompanies p | effect size plus `*_ci95` |
-| 4 | Uncertainty is visible | SE, intervals, CI beside prose p-values |
-| 5 | Multiple comparisons corrected | declared family and finite adjusted p-values |
-| 6 | Sensitivity tested | rank-based cross-check plus Appendix A1 |
-| 7 | No association-to-mechanism upgrade | shared forbidden-phrase scan |
-| 8 | Unknowns flagged | `AUTHOR_INPUT_NEEDED` plus Appendix B |
+## Reproducibility and data safety
 
-Journal routing supports **Nature, NEJM, Science and Lancet**, with EQUATOR
-checklists such as CONSORT, STROBE, PRISMA, MOOSE, STARD, ARRIVE, SQUIRE and CARE.
+The pipeline applies four non-negotiable data-integrity rules.
 
-```powershell
+1. **Raw input is never modified.** Outputs are additive and generated under the
+   selected output directory.
+2. **Types are explicit.** Text cells remain text until a recorded operation
+   proves that every value can be converted. Conversions are all-or-nothing.
+3. **Only approved columns may change.** The cleaned output is compared against
+   the raw input in text space, and an unexpected value change fails validation.
+4. **Types are decided once.** A dtype manifest is saved and replayed by every
+   downstream stage instead of being guessed again.
+
+Cleaning also produces a standalone replay script. Re-running that script on the
+raw input must reproduce the cleaned output hash exactly.
+
+## Resume and inspection
+
+Inspect a run:
+
+```bash
+python scripts/state_keeper.py --state outputs/state.json --show
+```
+
+Validate every recorded evidence path:
+
+```bash
+python scripts/state_keeper.py --state outputs/state.json --validate
+```
+
+Resume an interrupted run:
+
+```bash
+python scripts/run_pipeline.py --resume outputs/state.json
+```
+
+Completed stages are reused only when their evidence still exists and the input
+fingerprint is unchanged. Use `--force` when the intent is to rebuild artifacts.
+
+## Report audit
+
+The default audit is journal-oriented and derives results from saved artifacts,
+not from the report's own claims.
+
+| Gate | Requirement |
+|---|---|
+| 1 | Sample size and independent unit are explicit |
+| 2 | Missingness mechanism is declared |
+| 3 | Effect size accompanies p-values |
+| 4 | Uncertainty is visible |
+| 5 | Multiple comparisons are corrected |
+| 6 | Sensitivity analysis is reported |
+| 7 | Association is not upgraded to mechanism |
+| 8 | Unknowns are marked `AUTHOR_INPUT_NEEDED` |
+
+Journal profiles include Nature, NEJM, Science, and Lancet. Design routing covers
+common EQUATOR checklists such as CONSORT, STROBE, PRISMA, MOOSE, STARD, ARRIVE,
+SQUIRE, and CARE.
+
+Run the audit independently:
+
+```bash
 python scripts/final_audit.py --outdir outputs --journal nature
 python scripts/final_audit.py --outdir outputs --journal nejm --design randomized_trial
 python scripts/final_audit.py --outdir outputs --journal lancet --template standard
 ```
 
-## The 10 sub-skills
-
-The root skill routes. Each sub-skill owns one stage, one artifact set and one
-gate.
-
-| # | Sub-skill | Owns |
-|---|---|---|
-| 1 | [data-router](skills/data-router/SKILL.md) | `route.json` |
-| 2 | [data-profiler](skills/data-profiler/SKILL.md) | `profile.json` |
-| 3 | [data-cleaner](skills/data-cleaner/SKILL.md) | `cleaning_plan.json`, `cleaned/*` |
-| 4 | [data-explorer](skills/data-explorer/SKILL.md) | `descriptive.json` |
-| 5 | [data-validator](skills/data-validator/SKILL.md) | `audit/final_audit.*` |
-| 6 | [data-transformer](skills/data-transformer/SKILL.md) | `transform_ledger.json` |
-| 7 | [statistical-analyzer](skills/statistical-analyzer/SKILL.md) | `inferential.json` |
-| 8 | [deep-analyzer](skills/deep-analyzer/SKILL.md) | supervised modelling |
-| 9 | [visualizer](skills/visualizer/SKILL.md) | `charts/*.png` |
-| 10 | [report-generator](skills/report-generator/SKILL.md) | `report.md`, `report.pdf` |
+A report can exist while the audit says `NOT SUBMISSION-READY`. This is an
+intentional outcome, not a missing output. The audit identifies what still needs
+to be resolved.
 
 ## Examples
 
-| Example | What it exercises |
+| Example | Demonstrates |
 |---|---|
-| [iris](examples/iris/) | Dirty tabular data, two ANOVA branches, figures, full PDF |
-| [column_traps](examples/column_traps/) | Leading zeros, currency, percent, mixed text, date ambiguity |
-| [timeseries](examples/timeseries/) | Dropout, retransmission, sampling-regime change |
-| [text](examples/text/) | Duplicates, empty files, GB18030 fallback |
-| [media](examples/media/) | Corrupt image, re-encoded duplicate, blank frame |
-| [geo](examples/geo/) | Out-of-range coordinates, null island, missing coordinate |
+| [`examples/iris`](examples/iris/) | Full tabular analysis, automatic grouping, effect sizes, figures, and PDF |
+| [`examples/column_traps`](examples/column_traps/) | Leading zeros, currency, percentages, mixed values, and date ambiguity |
+| [`examples/timeseries`](examples/timeseries/) | Sampling gaps, duplicate timestamps, and regime change |
+| [`examples/text`](examples/text/) | Duplicate and empty documents, plus legacy encoding fallback |
+| [`examples/media`](examples/media/) | Corrupt images, re-encoded near-duplicates, and blank frames |
+| [`examples/geo`](examples/geo/) | Invalid coordinates, null island, and missing geometry |
 
-## Verification
+Run any supported example through the one-command interface:
 
-```powershell
+```bash
+python scripts/run_pipeline.py \
+  --in examples/timeseries/sensor_log.csv \
+  --out outputs/timeseries \
+  --title "Sensor stability review"
+```
+
+## Development
+
+Run the invariant and regression suite:
+
+```bash
 python tests/test_pipeline_invariants.py
 ```
 
-The suite pins the guarantees that are easy to break silently: leading-zero
-preservation, all-or-nothing conversion, untouched-column audit, dtype-manifest
-replay, byte-level reproducibility, multiplicity with non-finite safeguards,
-Welch denominator degrees of freedom, forbidden-phrase consistency, state
-transitions and a complete iris PDF build.
+Check syntax:
 
-GitHub Actions runs the suite on Windows and Linux across Python 3.11, 3.12 and
-3.13, plus the modality profilers.
+```bash
+python -m compileall scripts tests
+```
 
-## Scope
+The suite covers type preservation, all-or-nothing conversions, untouched-column
+auditing, dtype replay, byte-reproducible cleaning, multiplicity safeguards,
+Welch denominator degrees of freedom, causal-language consistency, routing,
+profile-only scope, state transitions, and end-to-end report generation.
 
-Implemented: tabular full pipeline; time-series, text, image, audio and
-geospatial profiling; PDF delivery through `reportlab -> headless browser ->
-fpdf2 -> BLOCKED`; journal and EQUATOR routing; resumable state.
+GitHub Actions runs the project on Windows and Linux with Python 3.11, 3.12, and
+3.13, including the one-command tabular and profile-only paths.
 
-Not implemented in v1: leave-one-group-out sensitivity automation, mixed-effects
-model selection, document/video format conversion, and inferential analysis for
-non-tabular modalities. The reports mark these as gaps rather than passing checks.
+## Project structure
+
+```text
+.
+|-- SKILL.md                  Codex entry point and routing contract
+|-- scripts/                  Deterministic pipeline implementation
+|-- skills/                   Ten stage-specific Codex skills
+|-- references/               Methodological and reporting references
+|-- examples/                 Reproducible demonstration datasets
+|-- tests/                    Invariant and end-to-end tests
+|-- docs/                     Architecture notes and README assets
+|-- requirements.txt          Runtime dependencies
+|-- CONTRIBUTING.md           Contribution workflow
+|-- SECURITY.md               Security and disclosure policy
+`-- LICENSE                   MIT
+```
+
+## Scope and limitations
+
+Current limitations are explicit:
+
+- Full inferential analysis currently applies to a single tabular file.
+- Non-tabular and mixed inputs produce profile-only reports.
+- Leave-one-group-out sensitivity automation is not complete.
+- Mixed-effects model selection is not automated.
+- PDF, DOCX, HTML, and video conversion are outside the v1 scope.
+- The audit supports reporting discipline; it does not validate scientific truth.
+
+These boundaries are part of the output contract. Unsupported analysis is marked
+as unsupported instead of being silently replaced with a weaker claim.
+
+## Contributing
+
+Contributions are welcome when they preserve the evidence contract. Start with
+[`CONTRIBUTING.md`](CONTRIBUTING.md), add regression coverage for behavior
+changes, and keep generated user data out of commits.
+
+For security and data-disclosure concerns, follow [`SECURITY.md`](SECURITY.md).
+
+## Citation
+
+If you use `data-master` in research or technical work, cite the repository and
+the exact commit used for the analysis:
+
+```text
+Wang, S. data-master: Auditable data analysis from one command.
+https://github.com/MAGA2010/data-master
+```
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+Released under the [MIT License](LICENSE).
 
-## 中文
+## 中文简介
 
-**data-master** 是一个通用数据处理 skill：输入文件、目录或 glob，自动判断数据模态，
-执行可审计的画像、清理、统计、图表和 PDF 报告流程。
+`data-master` 是一个可审计的数据分析 Skill 与 Python 流水线。输入文件、目录或
+glob 后，它会自动判断数据模态、完成画像与安全清理、运行适用的统计分析、生成图表，
+并输出 Markdown、PDF、审计结果和完整证据链。
 
-一条命令开始：
-
-```powershell
-python -m pip install -r requirements.txt
-python scripts/run_pipeline.py --in data.csv --out outputs --title "分析报告"
+```bash
+python scripts/run_pipeline.py \
+  --in data.csv \
+  --out outputs \
+  --title "数据分析报告"
 ```
 
-核心承诺：
+核心原则：
 
-- 原始文件永不修改，清理前后字节级可复现；
-- 类型只决定一次，后续通过 manifest 重放；
-- 分组和方法选择有证据，无法判断的内容写 `AUTHOR_INPUT_NEEDED`；
-- 表格数据交付完整统计 PDF；其他模态交付明确的 profile-only PDF，不冒充推断分析；
-- 每个阶段写入 `state.json`，输入未变时可冷恢复；
-- 报告存在不等于可提交，Nature 8 道 gate 会给出明确 verdict。
+- 永不修改原始文件；
+- 类型转换显式、可逆、全量可解析才执行；
+- 统计方法和清理操作均记录证据；
+- 无法确定的单位或设计问题标记为 `AUTHOR_INPUT_NEEDED`；
+- 非表格与混合输入只交付明确标注的 profile-only 报告；
+- 报告存在不等于可提交，必须通过机器可核验的审计门禁。
