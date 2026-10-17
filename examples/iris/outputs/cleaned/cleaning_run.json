@@ -1,0 +1,383 @@
+{
+  "schema_version": "1.1",
+  "reproducibility_check": {
+    "passed": true,
+    "reason": "hash matches",
+    "expected_hash": "7c1b8a3004c28c85cfb2ff94ee43d4cf0f7be37b60dbe361f9d55160208592df",
+    "regenerated_hash": "7c1b8a3004c28c85cfb2ff94ee43d4cf0f7be37b60dbe361f9d55160208592df"
+  },
+  "source": "examples\\iris\\iris_dirty.csv",
+  "n_raw": 158,
+  "n_clean": 158,
+  "columns_before": [
+    "sepal_length_cm",
+    "sepal_width_cm",
+    "petal_length_cm",
+    "petal_width_cm",
+    "species_code",
+    "species",
+    "notes",
+    "height_m"
+  ],
+  "columns_after": [
+    "sepal_length_cm",
+    "sepal_width_cm",
+    "petal_length_cm",
+    "petal_width_cm",
+    "species_code",
+    "species",
+    "height_m"
+  ],
+  "columns_dropped": [
+    "notes"
+  ],
+  "raw_hash": "d5e5668ecd92e4d30c13aa6ee875a6dd6a40ded6517d69a97800b67540f2ec86",
+  "cleaned_hash": "7c1b8a3004c28c85cfb2ff94ee43d4cf0f7be37b60dbe361f9d55160208592df",
+  "source_spec": {
+    "path": "examples\\iris\\iris_dirty.csv",
+    "extension": ".csv",
+    "read_mode": "text",
+    "schema_declares_types": false
+  },
+  "read_mode": "text",
+  "columns_touched_by_ops": [
+    "petal_length_cm",
+    "petal_width_cm",
+    "sepal_length_cm",
+    "sepal_width_cm",
+    "species",
+    "species_code"
+  ],
+  "dtype_manifest": {
+    "sepal_length_cm": "Float64",
+    "sepal_width_cm": "Float64",
+    "petal_length_cm": "Float64",
+    "petal_width_cm": "Float64",
+    "species_code": "Int64",
+    "species": "category",
+    "height_m": "string"
+  },
+  "untouched_column_audit": {
+    "passed": true,
+    "reason": "every column no operation named kept exactly its raw values",
+    "columns_checked": 1,
+    "columns_violating": [],
+    "violations": []
+  },
+  "applied_ops": [
+    {
+      "id": "t-fix-unicode",
+      "op": "fix_unicode",
+      "columns": [
+        "height_m",
+        "petal_length_cm",
+        "petal_width_cm",
+        "sepal_length_cm",
+        "sepal_width_cm",
+        "species",
+        "species_code"
+      ],
+      "severity": "P3",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-fix-unicode",
+      "origin": "rule",
+      "n_before": 158,
+      "n_after": 158
+    },
+    {
+      "id": "t-strip-ws",
+      "op": "strip_whitespace",
+      "columns": [
+        "height_m",
+        "petal_length_cm",
+        "petal_width_cm",
+        "sepal_length_cm",
+        "sepal_width_cm",
+        "species",
+        "species_code"
+      ],
+      "severity": "P3",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-strip-ws",
+      "origin": "rule",
+      "n_before": 158,
+      "n_after": 158
+    },
+    {
+      "id": "t-collapse-whitespace",
+      "op": "collapse_whitespace",
+      "columns": [
+        "height_m",
+        "petal_length_cm",
+        "petal_width_cm",
+        "sepal_length_cm",
+        "sepal_width_cm",
+        "species",
+        "species_code"
+      ],
+      "severity": "P3",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-collapse-whitespace",
+      "origin": "rule",
+      "n_before": 158,
+      "n_after": 158
+    },
+    {
+      "id": "t-trim-quotes",
+      "op": "trim_paired_quotes",
+      "columns": [
+        "height_m",
+        "petal_length_cm",
+        "petal_width_cm",
+        "sepal_length_cm",
+        "sepal_width_cm",
+        "species",
+        "species_code"
+      ],
+      "severity": "P3",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-trim-quotes",
+      "origin": "rule",
+      "n_before": 158,
+      "n_after": 158
+    },
+    {
+      "id": "t-coerce-numeric",
+      "op": "coerce_numeric",
+      "columns": [
+        "petal_length_cm",
+        "petal_width_cm",
+        "sepal_length_cm",
+        "sepal_width_cm",
+        "species_code"
+      ],
+      "severity": "P2",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-coerce-numeric",
+      "origin": "rule",
+      "n_before": 158,
+      "n_after": 158
+    },
+    {
+      "id": "t-normalize-dtypes",
+      "op": "normalize_dtypes",
+      "columns": [
+        "height_m",
+        "petal_length_cm",
+        "petal_width_cm",
+        "sepal_length_cm",
+        "sepal_width_cm",
+        "species",
+        "species_code"
+      ],
+      "severity": "P2",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-normalize-dtypes",
+      "origin": "rule",
+      "n_before": 158,
+      "n_after": 158
+    },
+    {
+      "id": "t-merge-case-variants",
+      "op": "merge_case_variants",
+      "columns": [
+        "species"
+      ],
+      "severity": "P2",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-merge-case-variants",
+      "origin": "rule",
+      "n_before": 158,
+      "n_after": 158
+    },
+    {
+      "id": "t-drop-all-null-cols",
+      "op": "drop_all_null_cols",
+      "columns": [
+        "notes"
+      ],
+      "severity": "P1",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-drop-all-null-cols",
+      "origin": "rule",
+      "n_before": 158,
+      "n_after": 158
+    },
+    {
+      "id": "t-drop-all-null-rows",
+      "op": "drop_all_null_rows",
+      "columns": [],
+      "severity": "P1",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-drop-all-null-rows",
+      "origin": "rule",
+      "n_before": 158,
+      "n_after": 158
+    },
+    {
+      "id": "t-rename-clean",
+      "op": "rename_columns_append_cleaned",
+      "columns": [],
+      "severity": "P2",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-rename-clean",
+      "origin": "rule",
+      "n_before": 158,
+      "n_after": 158
+    }
+  ],
+  "case_variant_merge_map": [
+    {
+      "column": "species",
+      "n_exact_levels": 6,
+      "n_after_casefold": 3,
+      "n_merged_groups": 3,
+      "merged_groups": [
+        {
+          "canonical": "setosa",
+          "variants": [
+            "Setosa",
+            "setosa"
+          ],
+          "count": 52
+        },
+        {
+          "canonical": "versicolor",
+          "variants": [
+            "Versicolor",
+            "versicolor"
+          ],
+          "count": 53
+        },
+        {
+          "canonical": "virginica",
+          "variants": [
+            "Virginica",
+            "virginica"
+          ],
+          "count": 53
+        }
+      ],
+      "canonical_rule": "modal original spelling, lexicographic tie-break"
+    }
+  ],
+  "withheld": [],
+  "failed": [],
+  "never_automatic_flags": [
+    {
+      "op": "coerce_numeric",
+      "columns": [
+        "height_m"
+      ],
+      "reason": "153 of 158 non-null values parse as numbers and the other 5 do not (e.g. '--', '--', '--'). Converting would turn those into missing values, after which a recorded category (say 'unknown') would be indistinguishable from a value that was never collected. The failures are all blank or conventional sentinels, so treating them as missing is defensible -- but 'not recorded' is a claim about the study, not a formatting detail, and it stays yours to make.",
+      "ask_user": "Choose: keep_as_text (default) / coerce and accept the loss --force-coerce-numeric height_m / map the listed tokens to missing by editing the source file",
+      "default_if_silent": "keep_as_text",
+      "severity": "P1",
+      "rule_source": "references/never-automatic-list.md#conditional-never",
+      "detail": {
+        "hold": "mixed_with_text",
+        "numeric_probe": {
+          "n_non_null": 158,
+          "n_parsed": 153,
+          "n_failed": 5,
+          "all_parse": false,
+          "parse_fraction_of_non_null": 0.9684,
+          "sample_failed": [
+            "--",
+            "--",
+            "--",
+            "--",
+            "--"
+          ],
+          "failed_are_blank_or_sentinel": true,
+          "has_currency_or_percent": false,
+          "currency_or_percent_samples": [],
+          "would_parse_after_symbol_strip": null,
+          "leading_zero_suspected_id": false,
+          "leading_zero_fraction": 0.0,
+          "leading_zero_samples": [],
+          "parser": "pd.to_numeric(errors='coerce') after removing thousands separators"
+        },
+        "date_probe": {
+          "n_non_null": 158,
+          "n_parsed": 0,
+          "n_failed": 158,
+          "all_parse": false,
+          "parse_fraction_of_non_null": 0.0,
+          "sample_failed": [
+            "4.5",
+            "3.4",
+            "4.3",
+            "3.7",
+            "3.9"
+          ],
+          "parser": "pd.to_datetime(errors='coerce'), per-element format inference"
+        },
+        "override": "--force-coerce-numeric height_m"
+      }
+    },
+    {
+      "op": "merge_case_variants",
+      "columns": [
+        "species"
+      ],
+      "reason": "once the automatic whitespace/quote hygiene has run, 3 label group(s) still differ only by case (6 levels -> 3 after casefold); collapsed automatically because this is a lossless canonicalisation",
+      "ask_user": "Choose: keep_asis (undo the collapse) / merge (default, already applied)",
+      "default_if_silent": "merge",
+      "severity": "INFO",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-merge-case-variants",
+      "detail": {
+        "n_exact_levels": 6,
+        "n_after_casefold": 3,
+        "n_merged_groups": 3,
+        "merged_groups": [
+          {
+            "canonical": "setosa",
+            "variants": [
+              "Setosa",
+              "setosa"
+            ],
+            "count": 52
+          },
+          {
+            "canonical": "versicolor",
+            "variants": [
+              "Versicolor",
+              "versicolor"
+            ],
+            "count": 53
+          },
+          {
+            "canonical": "virginica",
+            "variants": [
+              "Virginica",
+              "virginica"
+            ],
+            "count": 53
+          }
+        ],
+        "canonical_rule": "modal original spelling, lexicographic tie-break"
+      }
+    },
+    {
+      "op": "dedupe_exact",
+      "columns": [],
+      "reason": "9 exact-duplicate rows (5.7% of rows)",
+      "ask_user": "Choose: drop_duplicates / keep_all",
+      "default_if_silent": "keep_all",
+      "severity": "P1",
+      "rule_source": "references/never-automatic-list.md#conditional-never",
+      "detail": {
+        "count": 9,
+        "pct": 5.7
+      }
+    },
+    {
+      "op": "impute_categorical",
+      "columns": [
+        "petal_width_cm",
+        "sepal_width_cm"
+      ],
+      "reason": "categorical column(s) with missing values; adding a mode level invents a category",
+      "ask_user": "Choose: mode / sentinel_value / listwise_delete / leave_as_nan",
+      "default_if_silent": "leave_as_nan",
+      "severity": "P1",
+      "rule_source": "references/never-automatic-list.md#conditional-never",
+      "detail": {
+        "petal_width_cm": 3.8,
+        "sepal_width_cm": 3.8
+      }
+    }
+  ],
+  "user_flags": {}
+}

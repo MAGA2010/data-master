@@ -1,0 +1,193 @@
+{
+  "schema_version": "1.0",
+  "source": "D:\\数据处理 skill\\examples\\media\\images",
+  "modality": "image-set",
+  "generated": "2026-10-17T09:24:38.880877+00:00",
+  "read_mode": "binary",
+  "shape": {
+    "n_rows": 6,
+    "n_cols": 1
+  },
+  "summary": {
+    "n_files": 6,
+    "n_ok": 5,
+    "n_unreadable": 1,
+    "width": {
+      "min": 128,
+      "max": 800,
+      "median": 640.0
+    },
+    "height": {
+      "min": 96,
+      "max": 600,
+      "median": 480.0
+    },
+    "formats": {
+      "PNG": 3,
+      "JPEG": 2
+    },
+    "modes": {
+      "RGB": 5
+    },
+    "nearly_blank": [
+      "blank.png",
+      "thumb.png"
+    ],
+    "with_exif": 0,
+    "near_duplicate_pairs": [
+      {
+        "a": "scene.png",
+        "b": "scene_reencoded.jpg",
+        "hamming": 0
+      },
+      {
+        "a": "scene.png",
+        "b": "scene_soft.jpg",
+        "hamming": 0
+      },
+      {
+        "a": "scene_reencoded.jpg",
+        "b": "scene_soft.jpg",
+        "hamming": 0
+      }
+    ],
+    "hash_method": "64-bit average hash; catches re-encode and resize, not crop"
+  },
+  "items": [
+    {
+      "file": "blank.png",
+      "path": "D:\\数据处理 skill\\examples\\media\\images\\blank.png",
+      "bytes": 2787,
+      "sha256": "f34bd453947b77be02bdbbb1033426aa7b8ac9655516df8b91a4eb9cdf76abdc",
+      "width": 800,
+      "height": 600,
+      "mode": "RGB",
+      "format": "PNG",
+      "aspect_ratio": 1.3333,
+      "megapixels": 0.48,
+      "has_exif": false,
+      "mean_brightness": 255.0,
+      "contrast_sd": 0.0,
+      "nearly_blank": true,
+      "ahash": "0000000000000000",
+      "ok": true
+    },
+    {
+      "file": "corrupt.jpg",
+      "path": "D:\\数据处理 skill\\examples\\media\\images\\corrupt.jpg",
+      "bytes": 21,
+      "sha256": "28840bc84f750aec808c25b1f85a1a1612fb7e7e192d31cec54857d39dcaf5f7",
+      "ok": false,
+      "error": "OSError: Truncated File Read"
+    },
+    {
+      "file": "scene.png",
+      "path": "D:\\数据处理 skill\\examples\\media\\images\\scene.png",
+      "bytes": 4740,
+      "sha256": "ba9f27bab0da1514ce41c1cd5400301254865636bc6b37cc5976614805994354",
+      "width": 640,
+      "height": 480,
+      "mode": "RGB",
+      "format": "PNG",
+      "aspect_ratio": 1.3333,
+      "megapixels": 0.307,
+      "has_exif": false,
+      "mean_brightness": 123.76,
+      "contrast_sd": 45.06,
+      "nearly_blank": false,
+      "ahash": "40e0183c3c3c1800",
+      "ok": true
+    },
+    {
+      "file": "scene_reencoded.jpg",
+      "path": "D:\\数据处理 skill\\examples\\media\\images\\scene_reencoded.jpg",
+      "bytes": 10066,
+      "sha256": "dd3d5bcd1e901c766ea71c73a86aaf95afa499fa4efe96f36bc40f5b8eb9bf49",
+      "width": 640,
+      "height": 480,
+      "mode": "RGB",
+      "format": "JPEG",
+      "aspect_ratio": 1.3333,
+      "megapixels": 0.307,
+      "has_exif": false,
+      "mean_brightness": 123.85,
+      "contrast_sd": 45.0,
+      "nearly_blank": false,
+      "ahash": "40e0183c3c3c1800",
+      "ok": true
+    },
+    {
+      "file": "scene_soft.jpg",
+      "path": "D:\\数据处理 skill\\examples\\media\\images\\scene_soft.jpg",
+      "bytes": 16369,
+      "sha256": "7fb7f8101ff21fcc711aa5c61e2d83305472675cb0ece7c99dce189520249d4e",
+      "width": 640,
+      "height": 480,
+      "mode": "RGB",
+      "format": "JPEG",
+      "aspect_ratio": 1.3333,
+      "megapixels": 0.307,
+      "has_exif": false,
+      "mean_brightness": 123.39,
+      "contrast_sd": 44.65,
+      "nearly_blank": false,
+      "ahash": "40e0183c3c3c1800",
+      "ok": true
+    },
+    {
+      "file": "thumb.png",
+      "path": "D:\\数据处理 skill\\examples\\media\\images\\thumb.png",
+      "bytes": 291,
+      "sha256": "f9f8ed6dd9bd5bff0bd830f451fe373fbe31d506a2c2764def281f70bd1dfdf9",
+      "width": 128,
+      "height": 96,
+      "mode": "RGB",
+      "format": "PNG",
+      "aspect_ratio": 1.3333,
+      "megapixels": 0.012,
+      "has_exif": false,
+      "mean_brightness": 120.0,
+      "contrast_sd": 0.0,
+      "nearly_blank": true,
+      "ahash": "0000000000000000",
+      "ok": true
+    }
+  ],
+  "columns": {},
+  "column_roles": {},
+  "anomalies": {
+    "flags": [
+      {
+        "type": "unreadable_files",
+        "severity": "P1",
+        "count": 1,
+        "examples": [
+          "corrupt.jpg"
+        ],
+        "detail": "these files cannot be decoded; a silent skip would change the denominator of every downstream figure"
+      },
+      {
+        "type": "near_duplicate_images",
+        "severity": "P2",
+        "count": 3,
+        "detail": "aHash distance <= 4; confirm these are not the same image exported twice"
+      },
+      {
+        "type": "mixed_resolutions",
+        "severity": "P3",
+        "detail": "widths range 128-800; a pixel-level comparison across these images is not valid"
+      }
+    ]
+  },
+  "target_candidate": null,
+  "group_candidate": {
+    "candidates": [],
+    "rejected": [
+      {
+        "column": "file",
+        "reason": "a filename is not a grouping variable"
+      }
+    ]
+  },
+  "independent_unit_hint": "one image file"
+}

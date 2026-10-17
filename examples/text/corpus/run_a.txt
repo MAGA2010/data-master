@@ -1,0 +1,3 @@
+The instrument drifted by 0.4 degrees during the second run.
+The drift was corrected after recalibration on day three.
+No samples were lost, but the first twelve readings were excluded.

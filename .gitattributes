@@ -1,0 +1,23 @@
+# Normalise text line endings; never let git touch binaries.
+* text=auto
+
+*.pdf   binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.webp  binary
+*.xlsx  binary
+*.xls   binary
+*.docx  binary
+*.parquet binary
+*.feather binary
+*.wav   binary
+*.mp3   binary
+
+*.py    text eol=lf
+*.md    text eol=lf
+*.json  text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.ps1   text eol=crlf

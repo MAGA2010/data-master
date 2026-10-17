@@ -1,0 +1,97 @@
+name: ci
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: ${{ matrix.os }} / py${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ["3.11", "3.12", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Install the pipelines the examples need
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pandas numpy scipy matplotlib statsmodels pillow reportlab pypdf openpyxl pyarrow
+
+      - name: Unit and invariant tests
+        run: python tests/test_pipeline_invariants.py
+
+      - name: End-to-end iris pipeline (rebuilds every artifact)
+        run: |
+          python scripts/profile_tabular.py --in examples/iris/iris_dirty.csv --out examples/iris/outputs/analysis/profile.json
+          python scripts/cleaning_plan.py --profile examples/iris/outputs/analysis/profile.json --out examples/iris/outputs/cleaning_plan.json
+          python scripts/execute_cleaning.py --in examples/iris/iris_dirty.csv --plan examples/iris/outputs/cleaning_plan.json --out examples/iris/outputs/cleaned
+          python scripts/validate_clean.py --raw examples/iris/iris_dirty.csv --clean examples/iris/outputs/cleaned/cleaned.csv --profile examples/iris/outputs/analysis/profile.json --out examples/iris/outputs/cleaned/validation.json
+          python scripts/stats_descriptive.py --clean examples/iris/outputs/cleaned/cleaned.csv --out examples/iris/outputs/analysis/descriptive.json
+          python scripts/stats_inferential.py --clean examples/iris/outputs/cleaned/cleaned.csv --group species --out examples/iris/outputs/analysis/inferential.json
+          python scripts/chart_decision.py --clean examples/iris/outputs/cleaned/cleaned.csv --profile examples/iris/outputs/analysis/profile.json --descriptive examples/iris/outputs/analysis/descriptive.json --inferential examples/iris/outputs/analysis/inferential.json --out examples/iris/outputs/analysis/chart_decisions.json
+          python scripts/render_chart.py --clean examples/iris/outputs/cleaned/cleaned.csv --decisions examples/iris/outputs/analysis/chart_decisions.json --outdir examples/iris/outputs/charts
+          python scripts/assemble_report.py --raw examples/iris/iris_dirty.csv --outdir examples/iris/outputs --title "Iris morphometrics"
+
+      - name: Audit must report exactly the one known open question
+        shell: bash
+        run: |
+          set +e
+          python scripts/final_audit.py --outdir examples/iris/outputs --journal nature
+          code=$?
+          set -e
+          python - <<'PY'
+          import json, sys
+          p = "examples/iris/outputs/audit/final_audit.json"
+          d = json.load(open(p, encoding="utf-8"))
+          fails = [g["gate"] for g in d["gates"] if g["status"] == "FAIL"]
+          assert fails == [1], "expected only gate 1 to fail, got %r" % fails
+          assert all(c["status"] == "PASS" for c in d["structural"]), d["structural"]
+          assert d["n_warn"] == 0, d["gates"]
+          print("audit OK: gates pass except the declared unit, structural clean")
+          PY
+          test "$code" = "1"
+
+      - name: The PDF must be a real PDF with pages
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path("examples/iris/outputs/report.pdf")
+          data = p.read_bytes()
+          assert data[:5] == b"%PDF-", "not a PDF"
+          assert p.stat().st_size > 20000, p.stat().st_size
+          print("PDF OK: %d bytes" % p.stat().st_size)
+          PY
+
+  modality-profilers:
+    name: modality profilers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: |
+          python -m pip install --upgrade pip
+          python -m pip install pandas numpy pillow
+      - name: Route a mixed folder
+        run: python scripts/route_input.py --in examples --deep --out /tmp/route.json
+      - name: Time series
+        run: python scripts/profile_timeseries.py --in examples/timeseries/sensor_log.csv --out /tmp/ts.json
+      - name: Text corpus
+        run: python scripts/profile_text.py --in examples/text/corpus --out /tmp/text.json
+      - name: Image set
+        run: python scripts/profile_media.py --in examples/media/images --kind image --out /tmp/img.json
+      - name: Geospatial
+        run: python scripts/profile_geospatial.py --in examples/geo/stations.geojson --out /tmp/geo.json

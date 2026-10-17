@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Local outputs -- examples keep their generated artifacts, but a user's run
+# should never be committed.
+/outputs/
+/audit/
+/state/
+
+# Editors
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Temporary build helpers used during development
+_ar_part*.py
+_fa_part*.py
+_merge*.py
+_patch*.py
+_peek*.py
+_sync*.py
+_fix*.py
+_mk*.py
+_run_chain.ps1
+_new_tests*.py
+_add_tests*.py
+_p[0-9]*.py
+_chk_*.py
+_tmp_*.json
+_t.html
+_t.pdf

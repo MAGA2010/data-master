@@ -1,0 +1,157 @@
+{
+  "schema_version": "1.0",
+  "source": "D:\\数据处理 skill\\examples\\timeseries\\sensor_log.csv",
+  "modality": "time-series",
+  "generated": "2026-10-17T09:24:36.256810+00:00",
+  "read_mode": "text",
+  "shape": {
+    "n_rows": 103,
+    "n_cols": 4
+  },
+  "time_column": "timestamp",
+  "time_evidence": {
+    "origin": "auto",
+    "score": 4.634729,
+    "rule_source": "profile_timeseries.py#find_time_column",
+    "evidence": {
+      "n_non_null": 103,
+      "n_parsed": 103,
+      "n_failed": 0,
+      "parse_rate": 1.0,
+      "all_or_nothing": true,
+      "converted": true,
+      "failure_examples": [],
+      "reason": "every non-null value parses as a timestamp"
+    },
+    "parse": {
+      "n_non_null": 103,
+      "n_parsed": 103,
+      "n_failed": 0,
+      "parse_rate": 1.0,
+      "all_or_nothing": true,
+      "converted": true,
+      "failure_examples": [],
+      "reason": "every non-null value parses as a timestamp"
+    }
+  },
+  "columns": {
+    "temperature_c": {
+      "column": "temperature_c",
+      "n_numeric": 103,
+      "n_missing": 0,
+      "kind": "numeric",
+      "mean": 19.991165,
+      "sd": 2.049131,
+      "min": 16.51,
+      "max": 23.54,
+      "n_unique": 99,
+      "zero_variance": false
+    },
+    "humidity_pct": {
+      "column": "humidity_pct",
+      "n_numeric": 103,
+      "n_missing": 0,
+      "kind": "numeric",
+      "mean": 54.914563,
+      "sd": 1.896716,
+      "min": 49.6,
+      "max": 58.4,
+      "n_unique": 54,
+      "zero_variance": false
+    },
+    "site": {
+      "column": "site",
+      "n_numeric": 0,
+      "n_missing": 0,
+      "kind": "not-numeric"
+    }
+  },
+  "column_roles": {
+    "temperature_c": "value-candidate",
+    "humidity_pct": "value-candidate",
+    "site": "value-candidate"
+  },
+  "anomalies": {
+    "flags": [
+      {
+        "type": "duplicate_timestamps",
+        "severity": "P1",
+        "count": 1,
+        "detail": "1 timestamp(s) appear more than once; a mean per instant is not the same as an independent observation per row"
+      },
+      {
+        "type": "irregular_gaps",
+        "severity": "P2",
+        "count": 14,
+        "detail": "the sampling interval is not constant; a mean over rows is then a mean over sampled instants, not over time"
+      },
+      {
+        "type": "sampling_regime_change",
+        "severity": "P1",
+        "detail": "the median interval in the last third differs from the first third by more than 3x; check whether the instrument changed"
+      }
+    ]
+  },
+  "target_candidate": null,
+  "group_candidate": {
+    "candidates": [],
+    "rejected": []
+  },
+  "timeseries_candidate": {
+    "n": 103,
+    "step_seconds": 3600.0,
+    "step_human": "1 hour",
+    "regular": false,
+    "on_step_fraction": 0.862745,
+    "n_gaps": 14,
+    "gaps": [
+      {
+        "at": "2026-01-01T10:00:00",
+        "seconds": 0.0
+      },
+      {
+        "at": "2026-01-03T06:00:00",
+        "seconds": 25200.0
+      },
+      {
+        "at": "2026-01-04T23:15:00",
+        "seconds": 900.0
+      },
+      {
+        "at": "2026-01-04T23:30:00",
+        "seconds": 900.0
+      },
+      {
+        "at": "2026-01-04T23:45:00",
+        "seconds": 900.0
+      },
+      {
+        "at": "2026-01-05T00:00:00",
+        "seconds": 900.0
+      },
+      {
+        "at": "2026-01-05T00:15:00",
+        "seconds": 900.0
+      },
+      {
+        "at": "2026-01-05T00:30:00",
+        "seconds": 900.0
+      },
+      {
+        "at": "2026-01-05T00:45:00",
+        "seconds": 900.0
+      },
+      {
+        "at": "2026-01-05T01:00:00",
+        "seconds": 900.0
+      }
+    ],
+    "first_timestamp": "2026-01-01T00:00:00",
+    "last_timestamp": "2026-01-05T02:00:00",
+    "regime_change_suspected": true,
+    "head_median_seconds": 3600.0,
+    "tail_median_seconds": 900.0,
+    "rule_source": "profile_timeseries.py#interval_profile"
+  },
+  "independent_unit_hint": "one row per timestamp"
+}

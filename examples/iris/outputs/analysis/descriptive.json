@@ -1,0 +1,316 @@
+{
+  "schema_version": "1.0",
+  "source": "examples/iris/outputs/cleaned/cleaned.csv",
+  "shape": {
+    "n_rows": 158,
+    "n_cols": 7
+  },
+  "independent_unit": {
+    "independent_unit": "row",
+    "unit_key": null,
+    "n_independent": 158,
+    "n_rows": 158,
+    "n_technical_replicates": null,
+    "n_repeated_measures": null,
+    "hierarchy": "flat (one row = one unit)",
+    "status": "AUTHOR_INPUT_NEEDED",
+    "ask_user": "Is each row an independent unit, or are rows nested within a subject/sample? Provide --unit-key <column> if nested.",
+    "rule_source": "references/nature-statistics-checklist.md#gate-1"
+  },
+  "alpha": 0.05,
+  "numeric": {
+    "sepal_length_cm": {
+      "n": 158,
+      "n_missing": 0,
+      "missing_pct": 0.0,
+      "mean": 5.816456,
+      "sd": 0.984262,
+      "se": 0.078304,
+      "median": 5.8,
+      "q25": 5.1,
+      "q75": 6.4,
+      "iqr": 1.3,
+      "min": -1.0,
+      "max": 7.9,
+      "skew": -1.8674,
+      "kurtosis": 13.4101,
+      "n_zeros": 0,
+      "n_negatives": 1,
+      "mean_ci95": [
+        5.661791,
+        5.97112
+      ],
+      "ci_method": "Student t, df=157",
+      "n_outliers_iqr15": 1,
+      "normality": {
+        "test": "Shapiro-Wilk",
+        "W": 0.86677,
+        "p": 0.0,
+        "normal_at_alpha": false
+      }
+    },
+    "sepal_width_cm": {
+      "n": 152,
+      "n_missing": 6,
+      "missing_pct": 3.8,
+      "mean": 3.069737,
+      "sd": 0.43582,
+      "se": 0.03535,
+      "median": 3.0,
+      "q25": 2.8,
+      "q75": 3.4,
+      "iqr": 0.6,
+      "min": 2.0,
+      "max": 4.4,
+      "skew": 0.3274,
+      "kurtosis": 0.137,
+      "n_zeros": 0,
+      "n_negatives": 0,
+      "mean_ci95": [
+        2.999893,
+        3.139581
+      ],
+      "ci_method": "Student t, df=151",
+      "n_outliers_iqr15": 1,
+      "normality": {
+        "test": "Shapiro-Wilk",
+        "W": 0.98492,
+        "p": 0.096497,
+        "normal_at_alpha": true
+      }
+    },
+    "petal_length_cm": {
+      "n": 158,
+      "n_missing": 0,
+      "missing_pct": 0.0,
+      "mean": 3.772152,
+      "sd": 1.761256,
+      "se": 0.140118,
+      "median": 4.35,
+      "q25": 1.6,
+      "q75": 5.1,
+      "iqr": 3.5,
+      "min": 1.0,
+      "max": 6.9,
+      "skew": -0.2844,
+      "kurtosis": -1.3896,
+      "n_zeros": 0,
+      "n_negatives": 0,
+      "mean_ci95": [
+        3.495392,
+        4.048911
+      ],
+      "ci_method": "Student t, df=157",
+      "n_outliers_iqr15": 0,
+      "normality": {
+        "test": "Shapiro-Wilk",
+        "W": 0.87733,
+        "p": 0.0,
+        "normal_at_alpha": false
+      }
+    },
+    "petal_width_cm": {
+      "n": 152,
+      "n_missing": 6,
+      "missing_pct": 3.8,
+      "mean": 1.201974,
+      "sd": 0.758743,
+      "se": 0.061542,
+      "median": 1.3,
+      "q25": 0.3,
+      "q75": 1.8,
+      "iqr": 1.5,
+      "min": 0.1,
+      "max": 2.5,
+      "skew": -0.114,
+      "kurtosis": -1.3377,
+      "n_zeros": 0,
+      "n_negatives": 0,
+      "mean_ci95": [
+        1.080379,
+        1.323569
+      ],
+      "ci_method": "Student t, df=151",
+      "n_outliers_iqr15": 0,
+      "normality": {
+        "test": "Shapiro-Wilk",
+        "W": 0.9034,
+        "p": 0.0,
+        "normal_at_alpha": false
+      }
+    },
+    "species_code": {
+      "n": 158,
+      "n_missing": 0,
+      "missing_pct": 0.0,
+      "mean": 1.006329,
+      "sd": 0.817771,
+      "se": 0.065058,
+      "median": 1.0,
+      "q25": 0.0,
+      "q75": 2.0,
+      "iqr": 2.0,
+      "min": 0.0,
+      "max": 2.0,
+      "skew": -0.0117,
+      "kurtosis": -1.5045,
+      "n_zeros": 52,
+      "n_negatives": 0,
+      "mean_ci95": [
+        0.877827,
+        1.134832
+      ],
+      "ci_method": "Student t, df=157",
+      "n_outliers_iqr15": 0,
+      "normality": {
+        "test": "Shapiro-Wilk",
+        "W": 0.79341,
+        "p": 0.0,
+        "normal_at_alpha": false
+      }
+    }
+  },
+  "categorical": {
+    "species": {
+      "n": 158,
+      "n_missing": 0,
+      "missing_pct": 0.0,
+      "n_unique": 3,
+      "mode": "versicolor",
+      "counts": {
+        "versicolor": 53,
+        "virginica": 53,
+        "setosa": 52
+      },
+      "proportions": {
+        "versicolor": 0.335443,
+        "virginica": 0.335443,
+        "setosa": 0.329114
+      }
+    },
+    "height_m": {
+      "n": 158,
+      "n_missing": 0,
+      "missing_pct": 0.0,
+      "n_unique": 27,
+      "mode": "3.9",
+      "counts": {
+        "3.9": 15,
+        "3.6": 13,
+        "4.5": 12,
+        "3.4": 10,
+        "4.3": 10,
+        "3.5": 10,
+        "4.1": 10,
+        "4.0": 9,
+        "4.7": 9,
+        "4.4": 9,
+        "4.8": 8,
+        "3.8": 6,
+        "4.2": 6,
+        "--": 5,
+        "5.4": 4,
+        "5.0": 4,
+        "3.2": 3,
+        "3.7": 2,
+        "3.3": 2,
+        "4.6": 2
+      },
+      "proportions": {
+        "3.9": 0.094937,
+        "3.6": 0.082278,
+        "4.5": 0.075949,
+        "3.4": 0.063291,
+        "4.3": 0.063291,
+        "3.5": 0.063291,
+        "4.1": 0.063291,
+        "4.0": 0.056962,
+        "4.7": 0.056962,
+        "4.4": 0.056962,
+        "4.8": 0.050633,
+        "3.8": 0.037975,
+        "4.2": 0.037975,
+        "--": 0.031646,
+        "5.4": 0.025316,
+        "5.0": 0.025316,
+        "3.2": 0.018987,
+        "3.7": 0.012658,
+        "3.3": 0.012658,
+        "4.6": 0.012658
+      }
+    }
+  },
+  "datetime": {},
+  "missing_mechanism_screen": [
+    {
+      "column": "sepal_width_cm",
+      "n_missing": 6,
+      "missing_pct": 3.8,
+      "mechanism": "MCAR-likely",
+      "evidence": [
+        "missing rate 3.8% below the 5% threshold commonly treated as ignorable"
+      ],
+      "rule_source": "references/nature-statistics-checklist.md#gate-2",
+      "imputation_default": "listwise deletion is usually acceptable; report n before/after"
+    },
+    {
+      "column": "petal_width_cm",
+      "n_missing": 6,
+      "missing_pct": 3.8,
+      "mechanism": "MCAR-likely",
+      "evidence": [
+        "missing rate 3.8% below the 5% threshold commonly treated as ignorable"
+      ],
+      "rule_source": "references/nature-statistics-checklist.md#gate-2",
+      "imputation_default": "listwise deletion is usually acceptable; report n before/after"
+    }
+  ],
+  "correlation_pearson": {
+    "columns": [
+      "sepal_length_cm",
+      "sepal_width_cm",
+      "petal_length_cm",
+      "petal_width_cm",
+      "species_code"
+    ],
+    "matrix": {
+      "sepal_length_cm": {
+        "sepal_length_cm": 1.0,
+        "sepal_width_cm": -0.109983,
+        "petal_length_cm": 0.777441,
+        "petal_width_cm": 0.72769,
+        "species_code": 0.697823
+      },
+      "sepal_width_cm": {
+        "sepal_length_cm": -0.109983,
+        "sepal_width_cm": 1.0,
+        "petal_length_cm": -0.441352,
+        "petal_width_cm": -0.376017,
+        "species_code": -0.437345
+      },
+      "petal_length_cm": {
+        "sepal_length_cm": 0.777441,
+        "sepal_width_cm": -0.441352,
+        "petal_length_cm": 1.0,
+        "petal_width_cm": 0.961043,
+        "species_code": 0.94826
+      },
+      "petal_width_cm": {
+        "sepal_length_cm": 0.72769,
+        "sepal_width_cm": -0.376017,
+        "petal_length_cm": 0.961043,
+        "petal_width_cm": 1.0,
+        "species_code": 0.956244
+      },
+      "species_code": {
+        "sepal_length_cm": 0.697823,
+        "sepal_width_cm": -0.437345,
+        "petal_length_cm": 0.94826,
+        "petal_width_cm": 0.956244,
+        "species_code": 1.0
+      }
+    },
+    "n_pairs": 10,
+    "note": "raw Pearson on untransformed data; treat as exploratory only"
+  }
+}

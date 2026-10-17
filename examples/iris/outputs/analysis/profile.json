@@ -1,0 +1,551 @@
+{
+  "schema_version": "1.1",
+  "source": "examples\\iris\\iris_dirty.csv",
+  "modality": "tabular",
+  "sampled": false,
+  "read_mode": "text",
+  "shape": {
+    "n_rows": 158,
+    "n_cols": 8
+  },
+  "memory_bytes": 14147,
+  "columns": {
+    "sepal_length_cm": {
+      "dtype": "str",
+      "role": "categorical",
+      "n": 158,
+      "n_missing": 0,
+      "n_unique": 36,
+      "missing_pct": 0.0,
+      "min_len": 3,
+      "max_len": 4,
+      "mean_len": 3.006329,
+      "top": {
+        "5.1": 10,
+        "5.0": 10,
+        "5.7": 9,
+        "6.7": 9,
+        "6.3": 9
+      },
+      "coercion": {
+        "interesting": true,
+        "auto_numeric": true,
+        "auto_date": false,
+        "hold": null,
+        "numeric": {
+          "n_non_null": 158,
+          "n_parsed": 158,
+          "n_failed": 0,
+          "all_parse": true,
+          "parse_fraction_of_non_null": 1.0,
+          "sample_failed": [],
+          "failed_are_blank_or_sentinel": false,
+          "has_currency_or_percent": false,
+          "currency_or_percent_samples": [],
+          "would_parse_after_symbol_strip": null,
+          "leading_zero_suspected_id": false,
+          "leading_zero_fraction": 0.0,
+          "leading_zero_samples": [],
+          "parser": "pd.to_numeric(errors='coerce') after removing thousands separators"
+        },
+        "date": {
+          "n_non_null": 158,
+          "n_parsed": 0,
+          "n_failed": 158,
+          "all_parse": false,
+          "parse_fraction_of_non_null": 0.0,
+          "sample_failed": [
+            "6.4",
+            "4.8",
+            "6.1",
+            "5.3",
+            "5.5"
+          ],
+          "parser": "pd.to_datetime(errors='coerce'), per-element format inference"
+        },
+        "role_hint": "numeric"
+      }
+    },
+    "sepal_width_cm": {
+      "dtype": "str",
+      "role": "categorical",
+      "n": 158,
+      "n_missing": 6,
+      "n_unique": 23,
+      "missing_pct": 3.8,
+      "min_len": 3,
+      "max_len": 3,
+      "mean_len": 3.0,
+      "top": {
+        "3.0": 26,
+        "2.8": 13,
+        "3.2": 13,
+        "3.4": 12,
+        "2.9": 11
+      },
+      "coercion": {
+        "interesting": true,
+        "auto_numeric": true,
+        "auto_date": false,
+        "hold": null,
+        "numeric": {
+          "n_non_null": 152,
+          "n_parsed": 152,
+          "n_failed": 0,
+          "all_parse": true,
+          "parse_fraction_of_non_null": 1.0,
+          "sample_failed": [],
+          "failed_are_blank_or_sentinel": false,
+          "has_currency_or_percent": false,
+          "currency_or_percent_samples": [],
+          "would_parse_after_symbol_strip": null,
+          "leading_zero_suspected_id": false,
+          "leading_zero_fraction": 0.0,
+          "leading_zero_samples": [],
+          "parser": "pd.to_numeric(errors='coerce') after removing thousands separators"
+        },
+        "date": {
+          "n_non_null": 152,
+          "n_parsed": 0,
+          "n_failed": 152,
+          "all_parse": false,
+          "parse_fraction_of_non_null": 0.0,
+          "sample_failed": [
+            "2.8",
+            "3.0",
+            "2.6",
+            "3.7",
+            "2.6"
+          ],
+          "parser": "pd.to_datetime(errors='coerce'), per-element format inference"
+        },
+        "role_hint": "numeric"
+      }
+    },
+    "petal_length_cm": {
+      "dtype": "str",
+      "role": "categorical",
+      "n": 158,
+      "n_missing": 0,
+      "n_unique": 43,
+      "missing_pct": 0.0,
+      "min_len": 3,
+      "max_len": 3,
+      "mean_len": 3.0,
+      "top": {
+        "1.5": 15,
+        "1.4": 13,
+        "4.5": 8,
+        "5.1": 8,
+        "1.6": 7
+      },
+      "coercion": {
+        "interesting": true,
+        "auto_numeric": true,
+        "auto_date": false,
+        "hold": null,
+        "numeric": {
+          "n_non_null": 158,
+          "n_parsed": 158,
+          "n_failed": 0,
+          "all_parse": true,
+          "parse_fraction_of_non_null": 1.0,
+          "sample_failed": [],
+          "failed_are_blank_or_sentinel": false,
+          "has_currency_or_percent": false,
+          "currency_or_percent_samples": [],
+          "would_parse_after_symbol_strip": null,
+          "leading_zero_suspected_id": false,
+          "leading_zero_fraction": 0.0,
+          "leading_zero_samples": [],
+          "parser": "pd.to_numeric(errors='coerce') after removing thousands separators"
+        },
+        "date": {
+          "n_non_null": 158,
+          "n_parsed": 0,
+          "n_failed": 158,
+          "all_parse": false,
+          "parse_fraction_of_non_null": 0.0,
+          "sample_failed": [
+            "5.6",
+            "1.4",
+            "5.6",
+            "1.5",
+            "4.4"
+          ],
+          "parser": "pd.to_datetime(errors='coerce'), per-element format inference"
+        },
+        "role_hint": "numeric"
+      }
+    },
+    "petal_width_cm": {
+      "dtype": "str",
+      "role": "categorical",
+      "n": 158,
+      "n_missing": 6,
+      "n_unique": 22,
+      "missing_pct": 3.8,
+      "min_len": 3,
+      "max_len": 3,
+      "mean_len": 3.0,
+      "top": {
+        "0.2": 29,
+        "1.3": 14,
+        "1.8": 12,
+        "1.5": 10,
+        "1.4": 8
+      },
+      "coercion": {
+        "interesting": true,
+        "auto_numeric": true,
+        "auto_date": false,
+        "hold": null,
+        "numeric": {
+          "n_non_null": 152,
+          "n_parsed": 152,
+          "n_failed": 0,
+          "all_parse": true,
+          "parse_fraction_of_non_null": 1.0,
+          "sample_failed": [],
+          "failed_are_blank_or_sentinel": false,
+          "has_currency_or_percent": false,
+          "currency_or_percent_samples": [],
+          "would_parse_after_symbol_strip": null,
+          "leading_zero_suspected_id": false,
+          "leading_zero_fraction": 0.0,
+          "leading_zero_samples": [],
+          "parser": "pd.to_numeric(errors='coerce') after removing thousands separators"
+        },
+        "date": {
+          "n_non_null": 152,
+          "n_parsed": 0,
+          "n_failed": 152,
+          "all_parse": false,
+          "parse_fraction_of_non_null": 0.0,
+          "sample_failed": [
+            "2.1",
+            "0.3",
+            "1.4",
+            "0.2",
+            "1.2"
+          ],
+          "parser": "pd.to_datetime(errors='coerce'), per-element format inference"
+        },
+        "role_hint": "numeric"
+      }
+    },
+    "species_code": {
+      "dtype": "str",
+      "role": "categorical",
+      "n": 158,
+      "n_missing": 0,
+      "n_unique": 3,
+      "missing_pct": 0.0,
+      "min_len": 1,
+      "max_len": 1,
+      "mean_len": 1.0,
+      "top": {
+        "2": 53,
+        "1": 53,
+        "0": 52
+      },
+      "coercion": {
+        "interesting": true,
+        "auto_numeric": true,
+        "auto_date": false,
+        "hold": null,
+        "numeric": {
+          "n_non_null": 158,
+          "n_parsed": 158,
+          "n_failed": 0,
+          "all_parse": true,
+          "parse_fraction_of_non_null": 1.0,
+          "sample_failed": [],
+          "failed_are_blank_or_sentinel": false,
+          "has_currency_or_percent": false,
+          "currency_or_percent_samples": [],
+          "would_parse_after_symbol_strip": null,
+          "leading_zero_suspected_id": false,
+          "leading_zero_fraction": 0.0,
+          "leading_zero_samples": [],
+          "parser": "pd.to_numeric(errors='coerce') after removing thousands separators"
+        },
+        "date": {
+          "n_non_null": 158,
+          "n_parsed": 0,
+          "n_failed": 158,
+          "all_parse": false,
+          "parse_fraction_of_non_null": 0.0,
+          "sample_failed": [
+            "2",
+            "0",
+            "2",
+            "0",
+            "1"
+          ],
+          "parser": "pd.to_datetime(errors='coerce'), per-element format inference"
+        },
+        "role_hint": "numeric"
+      }
+    },
+    "species": {
+      "dtype": "str",
+      "role": "categorical",
+      "n": 158,
+      "n_missing": 0,
+      "n_unique": 9,
+      "missing_pct": 0.0,
+      "min_len": 6,
+      "max_len": 14,
+      "mean_len": 8.575949,
+      "top": {
+        "virginica": 48,
+        "versicolor": 48,
+        "setosa": 47,
+        "  versicolor  ": 3,
+        "  virginica  ": 3
+      },
+      "residual_case_variants_raw": {
+        "n_exact_levels": 6,
+        "n_after_casefold": 3,
+        "n_merged_groups": 3,
+        "merged_groups": [
+          {
+            "canonical": "setosa",
+            "variants": [
+              "Setosa",
+              "setosa"
+            ],
+            "count": 52
+          },
+          {
+            "canonical": "versicolor",
+            "variants": [
+              "Versicolor",
+              "versicolor"
+            ],
+            "count": 53
+          },
+          {
+            "canonical": "virginica",
+            "variants": [
+              "Virginica",
+              "virginica"
+            ],
+            "count": 53
+          }
+        ],
+        "canonical_rule": "modal original spelling, lexicographic tie-break"
+      },
+      "residual_case_variants_post_hygiene": {
+        "n_exact_levels": 6,
+        "n_after_casefold": 3,
+        "n_merged_groups": 3,
+        "merged_groups": [
+          {
+            "canonical": "setosa",
+            "variants": [
+              "Setosa",
+              "setosa"
+            ],
+            "count": 52
+          },
+          {
+            "canonical": "versicolor",
+            "variants": [
+              "Versicolor",
+              "versicolor"
+            ],
+            "count": 53
+          },
+          {
+            "canonical": "virginica",
+            "variants": [
+              "Virginica",
+              "virginica"
+            ],
+            "count": 53
+          }
+        ],
+        "canonical_rule": "modal original spelling, lexicographic tie-break"
+      }
+    },
+    "notes": {
+      "dtype": "str",
+      "role": "categorical",
+      "n": 158,
+      "n_missing": 158,
+      "n_unique": 0,
+      "missing_pct": 100.0
+    },
+    "height_m": {
+      "dtype": "str",
+      "role": "categorical",
+      "n": 158,
+      "n_missing": 0,
+      "n_unique": 27,
+      "missing_pct": 0.0,
+      "min_len": 2,
+      "max_len": 3,
+      "mean_len": 2.968354,
+      "top": {
+        "3.9": 15,
+        "3.6": 13,
+        "4.5": 12,
+        "3.4": 10,
+        "4.3": 10
+      },
+      "coercion": {
+        "interesting": true,
+        "auto_numeric": false,
+        "auto_date": false,
+        "hold": "mixed_with_text",
+        "numeric": {
+          "n_non_null": 158,
+          "n_parsed": 153,
+          "n_failed": 5,
+          "all_parse": false,
+          "parse_fraction_of_non_null": 0.9684,
+          "sample_failed": [
+            "--",
+            "--",
+            "--",
+            "--",
+            "--"
+          ],
+          "failed_are_blank_or_sentinel": true,
+          "has_currency_or_percent": false,
+          "currency_or_percent_samples": [],
+          "would_parse_after_symbol_strip": null,
+          "leading_zero_suspected_id": false,
+          "leading_zero_fraction": 0.0,
+          "leading_zero_samples": [],
+          "parser": "pd.to_numeric(errors='coerce') after removing thousands separators"
+        },
+        "date": {
+          "n_non_null": 158,
+          "n_parsed": 0,
+          "n_failed": 158,
+          "all_parse": false,
+          "parse_fraction_of_non_null": 0.0,
+          "sample_failed": [
+            "4.5",
+            "3.4",
+            "4.3",
+            "3.7",
+            "3.9"
+          ],
+          "parser": "pd.to_datetime(errors='coerce'), per-element format inference"
+        }
+      }
+    }
+  },
+  "column_roles": {
+    "sepal_length_cm": "categorical",
+    "sepal_width_cm": "categorical",
+    "petal_length_cm": "categorical",
+    "petal_width_cm": "categorical",
+    "species_code": "categorical",
+    "species": "categorical",
+    "notes": "categorical",
+    "height_m": "categorical"
+  },
+  "anomalies": {
+    "flags": [
+      {
+        "type": "residual_case_variants",
+        "column": "species",
+        "severity": "P2",
+        "n_exact_levels": 6,
+        "n_after_casefold": 3,
+        "n_merged_groups": 3,
+        "n_exact_levels_raw": 6,
+        "note": "levels still differ only by case AFTER the automatic whitespace and quote hygiene; this is the state the case-merge op will see"
+      },
+      {
+        "type": "constant_column",
+        "column": "notes",
+        "severity": "P3"
+      },
+      {
+        "type": "all_missing",
+        "column": "notes",
+        "severity": "P1"
+      },
+      {
+        "type": "duplicate_rows",
+        "count": 9,
+        "severity": "P1",
+        "pct": 5.7
+      }
+    ],
+    "n_flags": 4
+  },
+  "target_candidate": {
+    "candidates": [
+      {
+        "column": "species_code",
+        "n_unique": 3,
+        "score": 0.333333
+      },
+      {
+        "column": "species",
+        "n_unique": 9,
+        "score": 0.111111
+      }
+    ],
+    "note": "integer-coded class label or small-cardinality outcome"
+  },
+  "group_candidate": {
+    "candidates": [
+      {
+        "column": "species_code",
+        "n_unique": 3,
+        "balance_entropy": 1.0,
+        "n_levels_observed": 3,
+        "score": 0.666654
+      },
+      {
+        "column": "species",
+        "n_unique": 9,
+        "balance_entropy": 0.6719,
+        "n_levels_observed": 9,
+        "score": 0.185765
+      },
+      {
+        "column": "petal_width_cm",
+        "n_unique": 22,
+        "balance_entropy": 0.9123,
+        "n_levels_observed": 22,
+        "score": 0.086924
+      },
+      {
+        "column": "sepal_width_cm",
+        "n_unique": 23,
+        "balance_entropy": 0.8911,
+        "n_levels_observed": 23,
+        "score": 0.08222
+      },
+      {
+        "column": "height_m",
+        "n_unique": 27,
+        "balance_entropy": 0.9163,
+        "n_levels_observed": 27,
+        "score": 0.070975
+      }
+    ],
+    "rejected": [
+      {
+        "column": "notes",
+        "n_unique": 0,
+        "reason": "fewer than 2 observed levels; cannot form groups"
+      }
+    ],
+    "note": "low cardinality balanced categorical column; balance is entropy normalised by log(levels), columns with fewer than 2 observed levels are excluded"
+  },
+  "timeseries_candidate": {
+    "is_timeseries": false
+  },
+  "independent_unit_hint": "row",
+  "pandas_version": "3.0.3"
+}

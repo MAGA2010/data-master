@@ -1,0 +1,202 @@
+{
+  "schema_version": "1.0",
+  "title": "Iris morphometrics",
+  "template": "research-report",
+  "generated": "2026-10-17 17:22 中国标准时间",
+  "report_md": "examples\\iris\\outputs\\report.md",
+  "report_md_sha256": "fa8f41bc05e087b037abd8f8ef1651969fc2027a74baeb7cfd5d73f91f5018df",
+  "executive_summary_md": "examples\\iris\\outputs\\executive_summary.md",
+  "report_pdf": "examples\\iris\\outputs\\report.pdf",
+  "pdf": {
+    "pdf_written": true,
+    "backend": "reportlab",
+    "attempts": [
+      {
+        "tier": "reportlab",
+        "interpreter": "C:\\Users\\华为\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+        "in_process": false,
+        "ok": true
+      }
+    ],
+    "sha256": "8c8fc62227a2f1dd1b6752f43a0fff4367e1ff7f3a978c2d47973cdbb6cb882e",
+    "reportlab_version": "4.4.9",
+    "pages": 14,
+    "bytes": 485640,
+    "cjk_font_embedded": true,
+    "cjk_font_available": true,
+    "cjk_text_present": true
+  },
+  "pdf_probe": {
+    "pdf_written": true,
+    "backend": "reportlab",
+    "attempts": [
+      {
+        "tier": "reportlab",
+        "interpreter": "C:\\Users\\华为\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+        "in_process": false,
+        "ok": true
+      }
+    ],
+    "sha256": "37b4b8932eab3118cc5b5465b784d255234facabd9b718b2c50f655e6869da64",
+    "reportlab_version": "4.4.9",
+    "pages": 14,
+    "bytes": 485365,
+    "cjk_font_embedded": true,
+    "cjk_font_available": true,
+    "cjk_text_present": true,
+    "probed_from": "throwaway first pass; the delivered PDF is re-rendered"
+  },
+  "artifact_hashes": {
+    "profile": "3dc825cd3a941c53",
+    "plan": "b0560ae42f2688c1",
+    "validation": "070ee266feb052fd",
+    "descriptive": "7a5050b10b6f48db",
+    "inferential": "bd5f6ed83434e0da",
+    "decisions": "1a61453e5217f232",
+    "rendered": "767829ad4512e17b"
+  },
+  "cleaned_sha256": "7c1b8a3004c28c85cfb2ff94ee43d4cf0f7be37b60dbe361f9d55160208592df",
+  "environment": {
+    "python": "3.13.15",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "libs": {
+      "pandas": "3.0.3",
+      "numpy": "2.4.6",
+      "scipy": "1.18.1"
+    },
+    "assembled_at": "2026-10-17 17:22 中国标准时间"
+  },
+  "caveats": [
+    {
+      "id": "missingness",
+      "caveat": "2 variable(s) carry missing values, the most at `sepal_width_cm` (3.8%). Values were not imputed, so every statistic here is conditional on complete cases. Listwise deletion removed rows from `sepal_width_cm` (6 rows, n = 152), `petal_width_cm` (6 rows, n = 152). The screening test returned MCAR-likely, which is a screening result and not proof of a mechanism -- confirm it against how the data were actually collected.",
+      "limits": "every mean, median, interval and p value in the Results section",
+      "resolved_by": "AUTHOR_INPUT_NEEDED: how the missing values arose"
+    },
+    {
+      "id": "duplicate_rows",
+      "caveat": "9 exact-duplicate rows (5.7%) were found and **kept**, because deciding whether a repeat row is a genuine second observation or a double entry is a question about the study, not about formatting. If they are double entries, every n in this report is inflated by up to 5.7% and every interval below is narrower than it should be.",
+      "limits": "the reported n, and through it the width of every confidence interval",
+      "resolved_by": "AUTHOR_INPUT_NEEDED: are the repeated rows independent observations?"
+    },
+    {
+      "id": "not_estimable",
+      "caveat": "1 candidate outcome(s) -- `species_code` -- returned no p value at all and were removed from the corrected family rather than counted as non-significant. That removal is itself a finding: a column that restates the grouping variable cannot be evidence about it.",
+      "limits": "the breadth of the outcome family, and therefore the correction",
+      "resolved_by": "confirmed automatically by the structural restatement check"
+    },
+    {
+      "id": "withheld_conversion",
+      "caveat": "A numeric conversion was withheld for `height_m`. Those columns stay text in this report, so they appear in the inventory as categorical and are read as counts of recorded values, not as measurements. Any statement about them would be a statement about recording practice.",
+      "limits": "any conclusion about those columns",
+      "resolved_by": "re-run with --force-coerce-numeric once the sentinel is agreed"
+    },
+    {
+      "id": "design",
+      "caveat": "The independent unit was never declared, so each row was treated as one observation. If a row pools several plants, fields, patients or technical replicates, the effective n is smaller than the row count and every interval below is too narrow -- usually by more than the replication factor. The groups were also not assigned, so differences between them are associations and this data cannot support a reading in which the group label produced the measurement.",
+      "limits": "the causal reading of every group difference, and the width of every interval",
+      "resolved_by": "AUTHOR_INPUT_NEEDED: what one row represents"
+    },
+    {
+      "id": "skew",
+      "caveat": "`sepal_length_cm` (skew 1.87) is strongly skewed. The parametric tests were retained rather than replaced, because at these sample sizes the mean statistic is robust by the central limit theorem while a rank test would discard the effect sizes; each result is cross-checked against its rank equivalent in Appendix A3 and the two agree.",
+      "limits": "the mean-based summaries; median and IQR are reported alongside",
+      "resolved_by": "cross-checked in Appendix A3"
+    }
+  ],
+  "provenance": [
+    {
+      "kind": "header",
+      "value": 158,
+      "meaning": "rows analysed",
+      "artifact": "cleaning_run.json",
+      "script": "scripts/execute_cleaning.py",
+      "rule_source": ""
+    },
+    {
+      "kind": "headline",
+      "value": "`petal_length_cm` separates species by omega squared = 0.94 out of a possible 1, 95% CI 0.93 to 0.95, BH-adjusted p = 3.7e-69 across a family of 4 outcomes",
+      "meaning": "strongest group separation",
+      "artifact": "inferential.json",
+      "script": "scripts/stats_inferential.py",
+      "rule_source": ""
+    },
+    {
+      "kind": "method_rejection",
+      "value": "Welch ANOVA",
+      "meaning": "rejected for sepal_length_cm",
+      "artifact": "inferential.json",
+      "script": "scripts/stats_inferential.py",
+      "rule_source": "scripts/stats_inferential.py#k_group_numeric"
+    },
+    {
+      "kind": "method_rejection",
+      "value": "Kruskal-Wallis H",
+      "meaning": "rejected for sepal_length_cm",
+      "artifact": "inferential.json",
+      "script": "scripts/stats_inferential.py",
+      "rule_source": "scripts/stats_inferential.py#k_group_numeric"
+    },
+    {
+      "kind": "method_rejection",
+      "value": "Welch ANOVA",
+      "meaning": "rejected for sepal_width_cm",
+      "artifact": "inferential.json",
+      "script": "scripts/stats_inferential.py",
+      "rule_source": "scripts/stats_inferential.py#k_group_numeric"
+    },
+    {
+      "kind": "method_rejection",
+      "value": "Kruskal-Wallis H",
+      "meaning": "rejected for sepal_width_cm",
+      "artifact": "inferential.json",
+      "script": "scripts/stats_inferential.py",
+      "rule_source": "scripts/stats_inferential.py#k_group_numeric"
+    },
+    {
+      "kind": "method_rejection",
+      "value": "one-way ANOVA",
+      "meaning": "rejected for petal_length_cm",
+      "artifact": "inferential.json",
+      "script": "scripts/stats_inferential.py",
+      "rule_source": "scripts/stats_inferential.py#k_group_numeric"
+    },
+    {
+      "kind": "method_rejection",
+      "value": "Kruskal-Wallis H",
+      "meaning": "rejected for petal_length_cm",
+      "artifact": "inferential.json",
+      "script": "scripts/stats_inferential.py",
+      "rule_source": "scripts/stats_inferential.py#k_group_numeric"
+    },
+    {
+      "kind": "method_rejection",
+      "value": "one-way ANOVA",
+      "meaning": "rejected for petal_width_cm",
+      "artifact": "inferential.json",
+      "script": "scripts/stats_inferential.py",
+      "rule_source": "scripts/stats_inferential.py#k_group_numeric"
+    },
+    {
+      "kind": "method_rejection",
+      "value": "Kruskal-Wallis H",
+      "meaning": "rejected for petal_width_cm",
+      "artifact": "inferential.json",
+      "script": "scripts/stats_inferential.py",
+      "rule_source": "scripts/stats_inferential.py#k_group_numeric"
+    },
+    {
+      "kind": "multiplicity",
+      "value": "BH",
+      "meaning": "family correction method",
+      "artifact": "inferential.json",
+      "script": "scripts/stats_inferential.py",
+      "rule_source": "references/nature-statistics-checklist.md#gate-5"
+    }
+  ],
+  "self_audit": {
+    "n_forbidden": 0,
+    "findings": [],
+    "n_lines_scanned": 256
+  }
+}

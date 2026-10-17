@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.0",
+  "gate": "cleaning_validated",
+  "passes": true,
+  "checks": [
+    {
+      "id": "row_loss",
+      "passes": true,
+      "detail": {
+        "n_raw": 240,
+        "n_clean": 240,
+        "loss_pct": 0.0,
+        "limit": 30.0
+      },
+      "severity": "P1"
+    },
+    {
+      "id": "target_preserved",
+      "passes": true,
+      "detail": {
+        "target_candidate": "postcode",
+        "n_unique_raw": 6,
+        "n_unique_clean": 6
+      },
+      "severity": "P0"
+    },
+    {
+      "id": "dtype_stable",
+      "passes": true,
+      "detail": {
+        "issues": [],
+        "n_issues": 0,
+        "dtype_source": "cleaning_run.json",
+        "columns_coerced_by_plan": [
+          "signup_date",
+          "turnover",
+          "weight_kg"
+        ]
+      },
+      "severity": "P0"
+    },
+    {
+      "id": "no_nan_inflation",
+      "passes": true,
+      "detail": {
+        "issues": [],
+        "n_issues": 0
+      },
+      "severity": "P0"
+    },
+    {
+      "id": "no_all_null_col",
+      "passes": true,
+      "detail": {
+        "columns": []
+      },
+      "severity": "P1"
+    },
+    {
+      "id": "columns_retained",
+      "passes": true,
+      "detail": {
+        "dropped": [],
+        "n_dropped": 0,
+        "note": "dropped columns must all be 100% null (auto) or flagged in plan"
+      },
+      "severity": "P3"
+    }
+  ],
+  "n_failed": 0,
+  "verdict": "PASS"
+}

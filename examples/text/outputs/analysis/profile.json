@@ -1,0 +1,222 @@
+{
+  "schema_version": "1.0",
+  "source": "D:\\数据处理 skill\\examples\\text\\corpus",
+  "source_kind": "folder",
+  "modality": "text-corpus",
+  "generated": "2026-10-17T09:24:38.222245+00:00",
+  "read_mode": "text",
+  "sampled": false,
+  "shape": {
+    "n_rows": 6,
+    "n_cols": 1
+  },
+  "corpus": {
+    "n_documents": 6,
+    "total_chars": 595,
+    "n_tokens": 78,
+    "vocabulary_size": 36,
+    "type_token_ratio": 0.461538,
+    "chars": {
+      "min": 0.0,
+      "q25": 33.0,
+      "median": 33.0,
+      "q75": 189.0,
+      "max": 189.0,
+      "mean": 98.33
+    },
+    "empty_documents": [
+      "empty.txt"
+    ],
+    "duplicate_document_groups": 2,
+    "duplicate_document_examples": [
+      "bb8b9bcd25a673e592135fb809bc3989ab4567f1e1eb0d9042edce48ca7ace13",
+      "a28f04ea3e9c0ca6d55c7fa88fada48adc7035f00f8554a936480484fcd2dd4e"
+    ],
+    "language": {
+      "script": "latin-dominant",
+      "cjk_fraction": 0.1164,
+      "latin_fraction": 0.8836
+    },
+    "top_content_terms": [
+      {
+        "term": "degrees",
+        "count": 3
+      },
+      {
+        "term": "corrected",
+        "count": 3
+      },
+      {
+        "term": "recalibration",
+        "count": 3
+      },
+      {
+        "term": "twelve",
+        "count": 3
+      },
+      {
+        "term": "readings",
+        "count": 3
+      },
+      {
+        "term": "instrument",
+        "count": 2
+      },
+      {
+        "term": "drifted",
+        "count": 2
+      },
+      {
+        "term": "during",
+        "count": 2
+      },
+      {
+        "term": "second",
+        "count": 2
+      },
+      {
+        "term": "run",
+        "count": 2
+      },
+      {
+        "term": "drift",
+        "count": 2
+      },
+      {
+        "term": "after",
+        "count": 2
+      },
+      {
+        "term": "day",
+        "count": 2
+      },
+      {
+        "term": "three",
+        "count": 2
+      },
+      {
+        "term": "samples",
+        "count": 2
+      },
+      {
+        "term": "lost",
+        "count": 2
+      },
+      {
+        "term": "first",
+        "count": 2
+      },
+      {
+        "term": "excluded",
+        "count": 2
+      },
+      {
+        "term": "reduced",
+        "count": 1
+      },
+      {
+        "term": "mean",
+        "count": 1
+      }
+    ],
+    "url_fraction": 0.0,
+    "whitespace_ratio": 0.1731,
+    "rule_source": "profile_text.py#profile_corpus"
+  },
+  "documents": [
+    {
+      "name": "empty.txt",
+      "path": "D:\\数据处理 skill\\examples\\text\\corpus\\empty.txt",
+      "bytes": 0,
+      "chars": 0,
+      "encoding": "utf-8",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "run_a.txt",
+      "path": "D:\\数据处理 skill\\examples\\text\\corpus\\run_a.txt",
+      "bytes": 189,
+      "chars": 189,
+      "encoding": "utf-8",
+      "sha256": "bb8b9bcd25a673e592135fb809bc3989ab4567f1e1eb0d9042edce48ca7ace13"
+    },
+    {
+      "name": "run_a_copy.txt",
+      "path": "D:\\数据处理 skill\\examples\\text\\corpus\\run_a_copy.txt",
+      "bytes": 189,
+      "chars": 189,
+      "encoding": "utf-8",
+      "sha256": "bb8b9bcd25a673e592135fb809bc3989ab4567f1e1eb0d9042edce48ca7ace13"
+    },
+    {
+      "name": "run_b.txt",
+      "path": "D:\\数据处理 skill\\examples\\text\\corpus\\run_b.txt",
+      "bytes": 146,
+      "chars": 146,
+      "encoding": "utf-8",
+      "sha256": "eca99140891df177fbe36a141c9377205149812b698be087d215ab91900742b0"
+    },
+    {
+      "name": "run_c.txt",
+      "path": "D:\\数据处理 skill\\examples\\text\\corpus\\run_c.txt",
+      "bytes": 91,
+      "chars": 33,
+      "encoding": "utf-8",
+      "sha256": "a28f04ea3e9c0ca6d55c7fa88fada48adc7035f00f8554a936480484fcd2dd4e"
+    },
+    {
+      "name": "run_c_gbk.txt",
+      "path": "D:\\数据处理 skill\\examples\\text\\corpus\\run_c_gbk.txt",
+      "bytes": 62,
+      "chars": 33,
+      "encoding": "gb18030",
+      "sha256": "a28f04ea3e9c0ca6d55c7fa88fada48adc7035f00f8554a936480484fcd2dd4e"
+    }
+  ],
+  "columns": {
+    "text": {
+      "dtype": "string",
+      "n_missing": 1,
+      "n_unique": 36
+    }
+  },
+  "column_roles": {
+    "text": "document-body"
+  },
+  "anomalies": {
+    "flags": [
+      {
+        "type": "empty_documents",
+        "severity": "P2",
+        "count": 1,
+        "detail": "empty files are not empty documents; they are usually a failed export"
+      },
+      {
+        "type": "duplicate_documents",
+        "severity": "P1",
+        "count": 2,
+        "detail": "byte-identical documents inflate every frequency count; deduplicate only with an explicit decision"
+      },
+      {
+        "type": "encoding_fallback",
+        "severity": "P2",
+        "count": 1,
+        "detail": "decoded as GB18030 or with replacement characters; verify a sample before trusting the vocabulary",
+        "examples": [
+          "run_c_gbk.txt"
+        ]
+      }
+    ]
+  },
+  "target_candidate": null,
+  "group_candidate": {
+    "candidates": [],
+    "rejected": [
+      {
+        "column": "text",
+        "reason": "free text cannot define comparison groups without an explicit labelling step"
+      }
+    ]
+  },
+  "independent_unit_hint": "one document"
+}

@@ -1,0 +1,329 @@
+{
+  "schema_version": "1.0",
+  "updated": "2026-10-17",
+  "purpose": "Machine-readable routing table for final_audit.py. The human explanation is references/journal-reporting-standards.md; this file is the single source of truth for the audit.",
+  "designs": {
+    "randomized_trial": {
+      "label": "Randomised controlled trial",
+      "checklist": "CONSORT 2025",
+      "fallback_checklist": "CONSORT 2010",
+      "url": "https://www.consort-statement.org/",
+      "detect": [
+        "randomised",
+        "randomized",
+        "random allocation",
+        "1:1",
+        "placebo",
+        "trial"
+      ],
+      "required_statistical_items": [
+        "n_per_arm",
+        "effect_size_ci",
+        "randomization_sequence",
+        "allocation_concealment",
+        "blinding",
+        "registration",
+        "protocol_deviations",
+        "harms"
+      ]
+    },
+    "observational": {
+      "label": "Observational study",
+      "checklist": "STROBE",
+      "url": "https://www.strobe-statement.org/",
+      "detect": [
+        "cohort",
+        "cross-sectional",
+        "case-control",
+        "survey",
+        "observational"
+      ],
+      "required_statistical_items": [
+        "n_and_unit",
+        "missing_data",
+        "effect_size_ci",
+        "confounders",
+        "selection_bias"
+      ]
+    },
+    "systematic_review": {
+      "label": "Systematic review / meta-analysis",
+      "checklist": "PRISMA 2020",
+      "url": "https://www.prisma-statement.org/",
+      "detect": [
+        "systematic review",
+        "meta-analysis",
+        "pooled estimate",
+        "heterogeneity",
+        "I2"
+      ],
+      "required_statistical_items": [
+        "search_strategy",
+        "risk_of_bias",
+        "effect_size_ci",
+        "heterogeneity",
+        "publication_bias",
+        "certainty"
+      ]
+    },
+    "observational_meta": {
+      "label": "Meta-analysis of observational studies",
+      "checklist": "MOOSE",
+      "url": "https://doi.org/10.1001/jama.283.15.2008",
+      "detect": [
+        "meta-analysis",
+        "observational",
+        "cohort",
+        "case-control"
+      ],
+      "required_statistical_items": [
+        "search_strategy",
+        "risk_of_bias",
+        "effect_size_ci",
+        "heterogeneity",
+        "publication_bias"
+      ]
+    },
+    "diagnostic_accuracy": {
+      "label": "Diagnostic accuracy study",
+      "checklist": "STARD 2015",
+      "url": "https://www.equator-network.org/reporting-guidelines/stard/",
+      "detect": [
+        "sensitivity",
+        "specificity",
+        "AUC",
+        "diagnostic",
+        "index test"
+      ],
+      "required_statistical_items": [
+        "reference_standard",
+        "n_and_unit",
+        "effect_size_ci",
+        "flow_diagram"
+      ]
+    },
+    "animal_preclinical": {
+      "label": "Animal / preclinical study",
+      "checklist": "ARRIVE 2.0",
+      "url": "https://arriveguidelines.org/",
+      "detect": [
+        "mice",
+        "rats",
+        "animal",
+        "in vivo",
+        "xenograft"
+      ],
+      "required_statistical_items": [
+        "n_and_unit",
+        "randomization_sequence",
+        "blinding",
+        "effect_size_ci",
+        "inclusion_exclusion"
+      ]
+    },
+    "quality_improvement": {
+      "label": "Quality improvement study",
+      "checklist": "SQUIRE 2.0",
+      "url": "https://www.squire-statement.org/",
+      "detect": [
+        "quality improvement",
+        "QI project",
+        "PDSA",
+        "intervention cycle"
+      ],
+      "required_statistical_items": [
+        "n_and_unit",
+        "effect_size_ci",
+        "intervention_description",
+        "context"
+      ]
+    },
+    "case_report": {
+      "label": "Case report",
+      "checklist": "CARE",
+      "url": "https://www.care-statement.org/",
+      "detect": [
+        "case report",
+        "single patient",
+        "n = 1"
+      ],
+      "required_statistical_items": [
+        "patient_history",
+        "timeline",
+        "diagnostic_assessment",
+        "informed_consent"
+      ]
+    },
+    "analytical_chemistry": {
+      "label": "Analytical / measurement study",
+      "checklist": "Nature Portfolio reporting standards",
+      "url": "https://www.nature.com/nature-portfolio/editorial-policies/reporting-standards",
+      "detect": [
+        "calibration",
+        "limit of detection",
+        "LOD",
+        "LOQ",
+        "recovery",
+        "precision"
+      ],
+      "required_statistical_items": [
+        "n_and_unit",
+        "replicates",
+        "effect_size_ci",
+        "measurement_uncertainty"
+      ]
+    },
+    "generic": {
+      "label": "Design not declared",
+      "checklist": "Nature Portfolio reporting standards (design checklist AUTHOR_INPUT_NEEDED)",
+      "url": "https://www.nature.com/nature-portfolio/editorial-policies/reporting-standards",
+      "detect": [],
+      "required_statistical_items": [
+        "n_and_unit",
+        "missing_data",
+        "effect_size_ci",
+        "multiplicity"
+      ]
+    }
+  },
+  "journals": {
+    "nature": {
+      "label": "Nature Portfolio",
+      "reporting_standards": "Nature Portfolio reporting standards + the 8 data-master statistical gates",
+      "url": "https://www.nature.com/nature-portfolio/editorial-policies/reporting-standards",
+      "statistics_guide": "https://www.nature.com/nature-portfolio/editorial-policies/statistics",
+      "mandatory_statistical_gates": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "author_supplied_items": [
+        "data_availability",
+        "code_availability",
+        "funding",
+        "conflict_of_interest",
+        "author_contributions",
+        "registration"
+      ]
+    },
+    "science": {
+      "label": "Science (AAAS)",
+      "reporting_standards": "Science Journals editorial policies: statistics, data and code availability",
+      "url": "https://www.science.org/content/page/science-journals-editorial-policies",
+      "statistics_guide": "https://www.science.org/content/page/science-journals-editorial-policies",
+      "mandatory_statistical_gates": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        7,
+        8
+      ],
+      "author_supplied_items": [
+        "data_availability",
+        "code_availability",
+        "funding",
+        "conflict_of_interest",
+        "author_contributions",
+        "reproducibility_statement"
+      ]
+    },
+    "lancet": {
+      "label": "The Lancet",
+      "reporting_standards": "The Lancet statistical reporting + EQUATOR checklist for the study design",
+      "url": "https://www.thelancet.com/information-for-authors",
+      "statistics_guide": "https://www.thelancet.com/information-for-authors",
+      "mandatory_statistical_gates": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "author_supplied_items": [
+        "registration",
+        "protocol",
+        "data_sharing_statement",
+        "funding",
+        "conflict_of_interest",
+        "author_contributions",
+        "patient_consent"
+      ]
+    },
+    "nejm": {
+      "label": "New England Journal of Medicine",
+      "reporting_standards": "NEJM statistical reporting standards + EQUATOR checklist for the study design",
+      "url": "https://www.nejm.org/author-center/new-manuscripts",
+      "statistics_guide": "https://www.nejm.org/author-center/new-manuscripts",
+      "mandatory_statistical_gates": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "author_supplied_items": [
+        "registration",
+        "protocol",
+        "data_sharing_statement",
+        "funding",
+        "conflict_of_interest",
+        "author_contributions",
+        "consent"
+      ]
+    }
+  },
+  "item_checks": {
+    "n_and_unit": "inferential.unit_of_analysis.unit_key is set and every estimable test reports n",
+    "n_per_arm": "inferential.group_n reports a size for every arm",
+    "effect_size_ci": "every estimable test carries an effect size with a 95% CI",
+    "missing_data": "every column above 5% missing carries a declared mechanism",
+    "multiplicity": "a multiplicity family is declared whenever more than one test is reported",
+    "randomization_sequence": "author-supplied; not derivable from a data file",
+    "allocation_concealment": "author-supplied",
+    "blinding": "author-supplied",
+    "registration": "author-supplied (trial or review registry id)",
+    "data_availability": "author-supplied",
+    "code_availability": "author-supplied",
+    "funding": "author-supplied",
+    "conflict_of_interest": "author-supplied",
+    "reproducibility_statement": "report_build.json records hashes and the byte-level replay check",
+    "protocol_deviations": "author-supplied",
+    "harms": "author-supplied",
+    "confounders": "author-supplied; the pipeline cannot know which variables were measured",
+    "selection_bias": "author-supplied",
+    "search_strategy": "author-supplied",
+    "risk_of_bias": "author-supplied",
+    "heterogeneity": "author-supplied unless a meta-analysis was run",
+    "publication_bias": "author-supplied unless a meta-analysis was run",
+    "certainty": "author-supplied (GRADE)",
+    "reference_standard": "author-supplied",
+    "flow_diagram": "author-supplied",
+    "inclusion_exclusion": "author-supplied",
+    "intervention_description": "author-supplied",
+    "context": "author-supplied",
+    "patient_history": "author-supplied",
+    "timeline": "author-supplied",
+    "diagnostic_assessment": "author-supplied",
+    "informed_consent": "author-supplied",
+    "replicates": "author-supplied unless replicate columns were detected",
+    "measurement_uncertainty": "derivable when replicate columns exist; otherwise author-supplied",
+    "author_contributions": "author-supplied",
+    "patient_consent": "author-supplied",
+    "consent": "author-supplied",
+    "protocol": "author-supplied",
+    "data_sharing_statement": "author-supplied"
+  }
+}

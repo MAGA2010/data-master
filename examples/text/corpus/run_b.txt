@@ -1,0 +1,2 @@
+Recalibration reduced the mean offset from 0.4 to 0.05 degrees.
+The same twelve readings were re-measured and agreed with the corrected series.

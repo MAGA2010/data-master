@@ -1,0 +1,1244 @@
+{
+  "schema_version": "1.1",
+  "source": "examples/iris/outputs/cleaned/cleaned.csv",
+  "group": "species",
+  "group_levels": [
+    "setosa",
+    "versicolor",
+    "virginica"
+  ],
+  "group_sizes": {
+    "setosa": 52,
+    "versicolor": 53,
+    "virginica": 53
+  },
+  "alpha": 0.05,
+  "n_rows": 158,
+  "unit_of_analysis": {
+    "unit_key": null,
+    "n_rows": 158,
+    "note": "no --unit-key given; row is assumed to be the independent unit"
+  },
+  "tests": [
+    {
+      "outcome": "sepal_length_cm",
+      "estimable": true,
+      "rows_dropped_for_missingness": 0,
+      "n_complete_cases": 158,
+      "design": "3-group numeric",
+      "method": "one-way ANOVA",
+      "statistic_name": "F",
+      "statistic": 76.15194206713791,
+      "dof": 2,
+      "dof_denom": null,
+      "p_raw": 9.208370210747348e-24,
+      "n_groups": 3,
+      "n_total": 158,
+      "n_min": 52,
+      "group_means": {
+        "setosa": 4.905769,
+        "versicolor": 5.939623,
+        "virginica": 6.586792
+      },
+      "group_medians": {
+        "setosa": 5.0,
+        "versicolor": 5.9,
+        "virginica": 6.5
+      },
+      "group_sds": {
+        "setosa": 0.902809,
+        "versicolor": 0.515282,
+        "virginica": 0.640624
+      },
+      "group_n": {
+        "setosa": 52,
+        "versicolor": 53,
+        "virginica": 53
+      },
+      "assumptions": {
+        "normality": {
+          "setosa": {
+            "test": "Shapiro-Wilk",
+            "statistic": 0.45627,
+            "p": 0.0,
+            "passes": false,
+            "n": 52,
+            "gating": false,
+            "note": null
+          },
+          "versicolor": {
+            "test": "Shapiro-Wilk",
+            "statistic": 0.97267,
+            "p": 0.262424,
+            "passes": true,
+            "n": 53,
+            "gating": false,
+            "note": null
+          },
+          "virginica": {
+            "test": "Shapiro-Wilk",
+            "statistic": 0.97698,
+            "p": 0.394054,
+            "passes": true,
+            "n": 53,
+            "gating": false,
+            "note": null
+          }
+        },
+        "variance": {
+          "test": "Levene",
+          "statistic": 0.70702,
+          "p": 0.494694,
+          "passes": true,
+          "equal_variance": true
+        }
+      },
+      "rejected_alternatives": [
+        {
+          "test": "Welch ANOVA",
+          "reason": "equal variance holds (Levene p > alpha); the pooled test is more powerful"
+        },
+        {
+          "test": "Kruskal-Wallis H",
+          "reason": "min n=52 >= 30; the mean statistic is robust by CLT"
+        }
+      ],
+      "effect_sizes": {
+        "eta_squared": 0.495613,
+        "omega_squared": 0.487519,
+        "omega_squared_ci95": {
+          "low": 0.376891,
+          "high": 0.665323,
+          "method": "bootstrap percentile, 2000 resamples, seed=42"
+        },
+        "omega_squared_formula": "(SS_b - (k-1)*MS_w) / (SS_t + MS_w)",
+        "eta_squared_note": "omega^2 <= eta^2 by construction; a negative omega^2 means the between-group spread is within sampling noise"
+      },
+      "robustness_cross_check": {
+        "test": "Kruskal-Wallis H",
+        "statistic": 101.5598,
+        "p_raw": 0.0,
+        "agrees_with_primary": true,
+        "note": "cross-check only"
+      },
+      "post_hoc": [
+        {
+          "group_a": "setosa",
+          "group_b": "versicolor",
+          "n_a": 52,
+          "n_b": 53,
+          "mean_difference_ci95": {
+            "difference": -1.033853,
+            "se": 0.143819,
+            "dof": 80.723,
+            "ci_low": -1.320024,
+            "ci_high": -0.747683,
+            "ci_level": 0.95,
+            "excludes_zero": true
+          },
+          "welch_t_p_raw": 2.9543569805083625e-10,
+          "mannwhitney_p_raw": 1.6542127876197457e-14,
+          "cliffs_delta": {
+            "estimable": true,
+            "cliffs_delta": -0.8679,
+            "ci95": [
+              -0.9503,
+              -0.7667
+            ],
+            "ci_method": "bootstrap, 10000 resamples, seed=42",
+            "n1": 52,
+            "n2": 53,
+            "magnitude": "large"
+          },
+          "p_adjusted_welch_BH": 4.431535470762544e-10,
+          "p_adjusted_mannwhitney_BH": 2.4813191814296185e-14,
+          "significant_adjusted": true
+        },
+        {
+          "group_a": "setosa",
+          "group_b": "virginica",
+          "n_a": 52,
+          "n_b": 53,
+          "mean_difference_ci95": {
+            "difference": -1.681023,
+            "se": 0.153028,
+            "dof": 91.851,
+            "ci_low": -1.984957,
+            "ci_high": -1.377089,
+            "ci_level": 0.95,
+            "excludes_zero": true
+          },
+          "welch_t_p_raw": 2.0280037890885397e-18,
+          "mannwhitney_p_raw": 1.1409954456165643e-17,
+          "cliffs_delta": {
+            "estimable": true,
+            "cliffs_delta": -0.9684,
+            "ci95": [
+              -0.9996,
+              -0.9097
+            ],
+            "ci_method": "bootstrap, 10000 resamples, seed=42",
+            "n1": 52,
+            "n2": 53,
+            "magnitude": "large"
+          },
+          "p_adjusted_welch_BH": 6.084011367265619e-18,
+          "p_adjusted_mannwhitney_BH": 3.422986336849693e-17,
+          "significant_adjusted": true
+        },
+        {
+          "group_a": "versicolor",
+          "group_b": "virginica",
+          "n_a": 53,
+          "n_b": 53,
+          "mean_difference_ci95": {
+            "difference": -0.64717,
+            "se": 0.11293,
+            "dof": 99.431,
+            "ci_low": -0.871235,
+            "ci_high": -0.423105,
+            "ci_level": 0.95,
+            "excludes_zero": true
+          },
+          "welch_t_p_raw": 1.0724603315660627e-07,
+          "mannwhitney_p_raw": 3.861928098425613e-07,
+          "cliffs_delta": {
+            "estimable": true,
+            "cliffs_delta": -0.5714,
+            "ci95": [
+              -0.7355,
+              -0.3923
+            ],
+            "ci_method": "bootstrap, 10000 resamples, seed=42",
+            "n1": 53,
+            "n2": 53,
+            "magnitude": "large"
+          },
+          "p_adjusted_welch_BH": 1.0724603315660629e-07,
+          "p_adjusted_mannwhitney_BH": 3.861928098425613e-07,
+          "significant_adjusted": true
+        }
+      ],
+      "post_hoc_note": "both parametric and rank p-values are BH-corrected within this outcome's pairwise family; report the one matching the omnibus test",
+      "rule_source": "scripts/stats_inferential.py#k_group_numeric",
+      "p_adjusted": 1.2277826947663131e-23,
+      "significant_after_correction": true
+    },
+    {
+      "outcome": "sepal_width_cm",
+      "estimable": true,
+      "rows_dropped_for_missingness": 6,
+      "n_complete_cases": 152,
+      "design": "3-group numeric",
+      "method": "one-way ANOVA",
+      "statistic_name": "F",
+      "statistic": 55.58020955480734,
+      "dof": 2,
+      "dof_denom": null,
+      "p_raw": 9.26628902939057e-19,
+      "n_groups": 3,
+      "n_total": 152,
+      "n_min": 49,
+      "group_means": {
+        "setosa": 3.44902,
+        "versicolor": 2.765306,
+        "virginica": 2.984615
+      },
+      "group_medians": {
+        "setosa": 3.4,
+        "versicolor": 2.8,
+        "virginica": 3.0
+      },
+      "group_sds": {
+        "setosa": 0.375432,
+        "versicolor": 0.317904,
+        "virginica": 0.297957
+      },
+      "group_n": {
+        "setosa": 51,
+        "versicolor": 49,
+        "virginica": 52
+      },
+      "assumptions": {
+        "normality": {
+          "setosa": {
+            "test": "Shapiro-Wilk",
+            "statistic": 0.97483,
+            "p": 0.34684,
+            "passes": true,
+            "n": 51,
+            "gating": false,
+            "note": null
+          },
+          "versicolor": {
+            "test": "Shapiro-Wilk",
+            "statistic": 0.97547,
+            "p": 0.393318,
+            "passes": true,
+            "n": 49,
+            "gating": false,
+            "note": null
+          },
+          "virginica": {
+            "test": "Shapiro-Wilk",
+            "statistic": 0.94549,
+            "p": 0.018837,
+            "passes": false,
+            "n": 52,
+            "gating": false,
+            "note": null
+          }
+        },
+        "variance": {
+          "test": "Levene",
+          "statistic": 1.23353,
+          "p": 0.294219,
+          "passes": true,
+          "equal_variance": true
+        }
+      },
+      "rejected_alternatives": [
+        {
+          "test": "Welch ANOVA",
+          "reason": "equal variance holds (Levene p > alpha); the pooled test is more powerful"
+        },
+        {
+          "test": "Kruskal-Wallis H",
+          "reason": "min n=49 >= 30; the mean statistic is robust by CLT"
+        }
+      ],
+      "effect_sizes": {
+        "eta_squared": 0.427276,
+        "omega_squared": 0.417982,
+        "omega_squared_ci95": {
+          "low": 0.304102,
+          "high": 0.537269,
+          "method": "bootstrap percentile, 2000 resamples, seed=42"
+        },
+        "omega_squared_formula": "(SS_b - (k-1)*MS_w) / (SS_t + MS_w)",
+        "eta_squared_note": "omega^2 <= eta^2 by construction; a negative omega^2 means the between-group spread is within sampling noise"
+      },
+      "robustness_cross_check": {
+        "test": "Kruskal-Wallis H",
+        "statistic": 67.65891,
+        "p_raw": 0.0,
+        "agrees_with_primary": true,
+        "note": "cross-check only"
+      },
+      "post_hoc": [
+        {
+          "group_a": "setosa",
+          "group_b": "versicolor",
+          "n_a": 51,
+          "n_b": 49,
+          "mean_difference_ci95": {
+            "difference": 0.683713,
+            "se": 0.069471,
+            "dof": 96.495,
+            "ci_low": 0.545824,
+            "ci_high": 0.821603,
+            "ci_level": 0.95,
+            "excludes_zero": true
+          },
+          "welch_t_p_raw": 3.096937839503497e-16,
+          "mannwhitney_p_raw": 1.1248832295986495e-13,
+          "cliffs_delta": {
+            "estimable": true,
+            "cliffs_delta": 0.8599,
+            "ci95": [
+              0.7499,
+              0.9444
+            ],
+            "ci_method": "bootstrap, 10000 resamples, seed=42",
+            "n1": 51,
+            "n2": 49,
+            "magnitude": "large"
+          },
+          "p_adjusted_welch_BH": 9.29081351851049e-16,
+          "p_adjusted_mannwhitney_BH": 3.374649688795949e-13,
+          "significant_adjusted": true
+        },
+        {
+          "group_a": "setosa",
+          "group_b": "virginica",
+          "n_a": 51,
+          "n_b": 52,
+          "mean_difference_ci95": {
+            "difference": 0.464404,
+            "se": 0.066865,
+            "dof": 95.228,
+            "ci_low": 0.331664,
+            "ci_high": 0.597145,
+            "ci_level": 0.95,
+            "excludes_zero": true
+          },
+          "welch_t_p_raw": 4.625222842710499e-10,
+          "mannwhitney_p_raw": 8.948665850474704e-10,
+          "cliffs_delta": {
+            "estimable": true,
+            "cliffs_delta": 0.6976,
+            "ci95": [
+              0.5385,
+              0.8371
+            ],
+            "ci_method": "bootstrap, 10000 resamples, seed=42",
+            "n1": 51,
+            "n2": 52,
+            "magnitude": "large"
+          },
+          "p_adjusted_welch_BH": 6.937834264065748e-10,
+          "p_adjusted_mannwhitney_BH": 1.3422998775712055e-09,
+          "significant_adjusted": true
+        },
+        {
+          "group_a": "versicolor",
+          "group_b": "virginica",
+          "n_a": 49,
+          "n_b": 52,
+          "mean_difference_ci95": {
+            "difference": -0.219309,
+            "se": 0.061399,
+            "dof": 97.487,
+            "ci_low": -0.341161,
+            "ci_high": -0.097458,
+            "ci_level": 0.95,
+            "excludes_zero": true
+          },
+          "welch_t_p_raw": 0.0005526006154168342,
+          "mannwhitney_p_raw": 0.002217228084552045,
+          "cliffs_delta": {
+            "estimable": true,
+            "cliffs_delta": -0.3513,
+            "ci95": [
+              -0.5471,
+              -0.1432
+            ],
+            "ci_method": "bootstrap, 10000 resamples, seed=42",
+            "n1": 49,
+            "n2": 52,
+            "magnitude": "medium"
+          },
+          "p_adjusted_welch_BH": 0.0005526006154168342,
+          "p_adjusted_mannwhitney_BH": 0.002217228084552045,
+          "significant_adjusted": true
+        }
+      ],
+      "post_hoc_note": "both parametric and rank p-values are BH-corrected within this outcome's pairwise family; report the one matching the omnibus test",
+      "rule_source": "scripts/stats_inferential.py#k_group_numeric",
+      "p_adjusted": 9.26628902939057e-19,
+      "significant_after_correction": true
+    },
+    {
+      "outcome": "petal_length_cm",
+      "estimable": true,
+      "rows_dropped_for_missingness": 0,
+      "n_complete_cases": 158,
+      "design": "3-group numeric",
+      "method": "Welch ANOVA (unequal variance)",
+      "statistic_name": "F",
+      "statistic": 1914.7748853585995,
+      "dof": 2,
+      "dof_denom": 82.342,
+      "p_raw": 9.242524938408637e-70,
+      "n_groups": 3,
+      "n_total": 158,
+      "n_min": 52,
+      "group_means": {
+        "setosa": 1.463462,
+        "versicolor": 4.256604,
+        "virginica": 5.55283
+      },
+      "group_medians": {
+        "setosa": 1.5,
+        "versicolor": 4.3,
+        "virginica": 5.5
+      },
+      "group_sds": {
+        "setosa": 0.170385,
+        "versicolor": 0.479787,
+        "virginica": 0.553174
+      },
+      "group_n": {
+        "setosa": 52,
+        "versicolor": 53,
+        "virginica": 53
+      },
+      "assumptions": {
+        "normality": {
+          "setosa": {
+            "test": "Shapiro-Wilk",
+            "statistic": 0.95119,
+            "p": 0.032726,
+            "passes": false,
+            "n": 52,
+            "gating": false,
+            "note": null
+          },
+          "versicolor": {
+            "test": "Shapiro-Wilk",
+            "statistic": 0.9695,
+            "p": 0.192122,
+            "passes": true,
+            "n": 53,
+            "gating": false,
+            "note": null
+          },
+          "virginica": {
+            "test": "Shapiro-Wilk",
+            "statistic": 0.9632,
+            "p": 0.101628,
+            "passes": true,
+            "n": 53,
+            "gating": false,
+            "note": null
+          }
+        },
+        "variance": {
+          "test": "Levene",
+          "statistic": 21.89116,
+          "p": 0.0,
+          "passes": false,
+          "equal_variance": false
+        }
+      },
+      "rejected_alternatives": [
+        {
+          "test": "one-way ANOVA",
+          "reason": "Levene indicates unequal variance (p <= alpha)"
+        },
+        {
+          "test": "Kruskal-Wallis H",
+          "reason": "Welch is already robust to unequal variance and n=52 >= 30"
+        }
+      ],
+      "effect_sizes": {
+        "eta_squared": 0.939709,
+        "omega_squared": 0.938566,
+        "omega_squared_ci95": {
+          "low": 0.926088,
+          "high": 0.952845,
+          "method": "bootstrap percentile, 2000 resamples, seed=42"
+        },
+        "omega_squared_formula": "(SS_b - (k-1)*MS_w) / (SS_t + MS_w)",
+        "eta_squared_note": "omega^2 <= eta^2 by construction; a negative omega^2 means the between-group spread is within sampling noise"
+      },
+      "robustness_cross_check": {
+        "test": "Kruskal-Wallis H",
+        "statistic": 137.07603,
+        "p_raw": 0.0,
+        "agrees_with_primary": true,
+        "note": "cross-check only"
+      },
+      "post_hoc": [
+        {
+          "group_a": "setosa",
+          "group_b": "versicolor",
+          "n_a": 52,
+          "n_b": 53,
+          "mean_difference_ci95": {
+            "difference": -2.793142,
+            "se": 0.070011,
+            "dof": 65.13,
+            "ci_low": -2.93296,
+            "ci_high": -2.653325,
+            "ci_level": 0.95,
+            "excludes_zero": true
+          },
+          "welch_t_p_raw": 1.706967142087079e-47,
+          "mannwhitney_p_raw": 8.298532024517966e-19,
+          "cliffs_delta": {
+            "estimable": true,
+            "cliffs_delta": -1.0,
+            "ci95": [
+              -1.0,
+              -1.0
+            ],
+            "ci_method": "bootstrap, 10000 resamples, seed=42",
+            "n1": 52,
+            "n2": 53,
+            "magnitude": "large"
+          },
+          "p_adjusted_welch_BH": 2.5604507131306186e-47,
+          "p_adjusted_mannwhitney_BH": 1.2468435033297e-18,
+          "significant_adjusted": true
+        },
+        {
+          "group_a": "setosa",
+          "group_b": "virginica",
+          "n_a": 52,
+          "n_b": 53,
+          "mean_difference_ci95": {
+            "difference": -4.089369,
+            "se": 0.079573,
+            "dof": 61.952,
+            "ci_low": -4.248436,
+            "ci_high": -3.930302,
+            "ci_level": 0.95,
+            "excludes_zero": true
+          },
+          "welch_t_p_raw": 1.639866132897176e-52,
+          "mannwhitney_p_raw": 8.312290022197999e-19,
+          "cliffs_delta": {
+            "estimable": true,
+            "cliffs_delta": -1.0,
+            "ci95": [
+              -1.0,
+              -1.0
+            ],
+            "ci_method": "bootstrap, 10000 resamples, seed=42",
+            "n1": 52,
+            "n2": 53,
+            "magnitude": "large"
+          },
+          "p_adjusted_welch_BH": 4.919598398691528e-52,
+          "p_adjusted_mannwhitney_BH": 1.2468435033297e-18,
+          "significant_adjusted": true
+        },
+        {
+          "group_a": "versicolor",
+          "group_b": "virginica",
+          "n_a": 53,
+          "n_b": 53,
+          "mean_difference_ci95": {
+            "difference": -1.296226,
+            "se": 0.100583,
+            "dof": 101.962,
+            "ci_low": -1.495733,
+            "ci_high": -1.09672,
+            "ci_level": 0.95,
+            "excludes_zero": true
+          },
+          "welch_t_p_raw": 3.964530663607451e-23,
+          "mannwhitney_p_raw": 1.5189016644212158e-17,
+          "cliffs_delta": {
+            "estimable": true,
+            "cliffs_delta": -0.9601,
+            "ci95": [
+              -0.9915,
+              -0.9142
+            ],
+            "ci_method": "bootstrap, 10000 resamples, seed=42",
+            "n1": 53,
+            "n2": 53,
+            "magnitude": "large"
+          },
+          "p_adjusted_welch_BH": 3.964530663607451e-23,
+          "p_adjusted_mannwhitney_BH": 1.5189016644212158e-17,
+          "significant_adjusted": true
+        }
+      ],
+      "post_hoc_note": "both parametric and rank p-values are BH-corrected within this outcome's pairwise family; report the one matching the omnibus test",
+      "rule_source": "scripts/stats_inferential.py#k_group_numeric",
+      "p_adjusted": 3.697009975363455e-69,
+      "significant_after_correction": true
+    },
+    {
+      "outcome": "petal_width_cm",
+      "estimable": true,
+      "rows_dropped_for_missingness": 6,
+      "n_complete_cases": 152,
+      "design": "3-group numeric",
+      "method": "Welch ANOVA (unequal variance)",
+      "statistic_name": "F",
+      "statistic": 1290.925782142662,
+      "dof": 2,
+      "dof_denom": 86.499,
+      "p_raw": 3.905489190704278e-65,
+      "n_groups": 3,
+      "n_total": 152,
+      "n_min": 50,
+      "group_means": {
+        "setosa": 0.246,
+        "versicolor": 1.319608,
+        "virginica": 2.021569
+      },
+      "group_medians": {
+        "setosa": 0.2,
+        "versicolor": 1.3,
+        "virginica": 2.0
+      },
+      "group_sds": {
+        "setosa": 0.105386,
+        "versicolor": 0.204958,
+        "virginica": 0.269306
+      },
+      "group_n": {
+        "setosa": 50,
+        "versicolor": 51,
+        "virginica": 51
+      },
+      "assumptions": {
+        "normality": {
+          "setosa": {
+            "test": "Shapiro-Wilk",
+            "statistic": 0.79976,
+            "p": 1e-06,
+            "passes": false,
+            "n": 50,
+            "gating": false,
+            "note": null
+          },
+          "versicolor": {
+            "test": "Shapiro-Wilk",
+            "statistic": 0.94704,
+            "p": 0.023753,
+            "passes": false,
+            "n": 51,
+            "gating": false,
+            "note": null
+          },
+          "virginica": {
+            "test": "Shapiro-Wilk",
+            "statistic": 0.96427,
+            "p": 0.12679,
+            "passes": true,
+            "n": 51,
+            "gating": false,
+            "note": null
+          }
+        },
+        "variance": {
+          "test": "Levene",
+          "statistic": 17.29116,
+          "p": 0.0,
+          "passes": false,
+          "equal_variance": false
+        }
+      },
+      "rejected_alternatives": [
+        {
+          "test": "one-way ANOVA",
+          "reason": "Levene indicates unequal variance (p <= alpha)"
+        },
+        {
+          "test": "Kruskal-Wallis H",
+          "reason": "Welch is already robust to unequal variance and n=50 >= 30"
+        }
+      ],
+      "effect_sizes": {
+        "eta_squared": 0.927863,
+        "omega_squared": 0.926446,
+        "omega_squared_ci95": {
+          "low": 0.909818,
+          "high": 0.942597,
+          "method": "bootstrap percentile, 2000 resamples, seed=42"
+        },
+        "omega_squared_formula": "(SS_b - (k-1)*MS_w) / (SS_t + MS_w)",
+        "eta_squared_note": "omega^2 <= eta^2 by construction; a negative omega^2 means the between-group spread is within sampling noise"
+      },
+      "robustness_cross_check": {
+        "test": "Kruskal-Wallis H",
+        "statistic": 132.91798,
+        "p_raw": 0.0,
+        "agrees_with_primary": true,
+        "note": "cross-check only"
+      },
+      "post_hoc": [
+        {
+          "group_a": "setosa",
+          "group_b": "versicolor",
+          "n_a": 50,
+          "n_b": 51,
+          "mean_difference_ci95": {
+            "difference": -1.073608,
+            "se": 0.032339,
+            "dof": 75.035,
+            "ci_low": -1.13803,
+            "ci_high": -1.009186,
+            "ci_level": 0.95,
+            "excludes_zero": true
+          },
+          "welch_t_p_raw": 1.3230577359165743e-46,
+          "mannwhitney_p_raw": 1.5904157660889536e-18,
+          "cliffs_delta": {
+            "estimable": true,
+            "cliffs_delta": -1.0,
+            "ci95": [
+              -1.0,
+              -1.0
+            ],
+            "ci_method": "bootstrap, 10000 resamples, seed=42",
+            "n1": 50,
+            "n2": 51,
+            "magnitude": "large"
+          },
+          "p_adjusted_welch_BH": 1.9845866038748614e-46,
+          "p_adjusted_mannwhitney_BH": 2.5511696557413605e-18,
+          "significant_adjusted": true
+        },
+        {
+          "group_a": "setosa",
+          "group_b": "virginica",
+          "n_a": 50,
+          "n_b": 51,
+          "mean_difference_ci95": {
+            "difference": -1.775569,
+            "se": 0.040549,
+            "dof": 65.216,
+            "ci_low": -1.856545,
+            "ci_high": -1.694593,
+            "ci_level": 0.95,
+            "excludes_zero": true
+          },
+          "welch_t_p_raw": 4.425335509500118e-50,
+          "mannwhitney_p_raw": 1.7007797704942405e-18,
+          "cliffs_delta": {
+            "estimable": true,
+            "cliffs_delta": -1.0,
+            "ci95": [
+              -1.0,
+              -1.0
+            ],
+            "ci_method": "bootstrap, 10000 resamples, seed=42",
+            "n1": 50,
+            "n2": 51,
+            "magnitude": "large"
+          },
+          "p_adjusted_welch_BH": 1.3276006528500352e-49,
+          "p_adjusted_mannwhitney_BH": 2.5511696557413605e-18,
+          "significant_adjusted": true
+        },
+        {
+          "group_a": "versicolor",
+          "group_b": "virginica",
+          "n_a": 51,
+          "n_b": 51,
+          "mean_difference_ci95": {
+            "difference": -0.701961,
+            "se": 0.047389,
+            "dof": 93.371,
+            "ci_low": -0.796062,
+            "ci_high": -0.60786,
+            "ci_level": 0.95,
+            "excludes_zero": true
+          },
+          "welch_t_p_raw": 3.015017208208414e-26,
+          "mannwhitney_p_raw": 4.44776070236748e-17,
+          "cliffs_delta": {
+            "estimable": true,
+            "cliffs_delta": -0.9619,
+            "ci95": [
+              -0.9935,
+              -0.9158
+            ],
+            "ci_method": "bootstrap, 10000 resamples, seed=42",
+            "n1": 51,
+            "n2": 51,
+            "magnitude": "large"
+          },
+          "p_adjusted_welch_BH": 3.015017208208414e-26,
+          "p_adjusted_mannwhitney_BH": 4.4477607023674794e-17,
+          "significant_adjusted": true
+        }
+      ],
+      "post_hoc_note": "both parametric and rank p-values are BH-corrected within this outcome's pairwise family; report the one matching the omnibus test",
+      "rule_source": "scripts/stats_inferential.py#k_group_numeric",
+      "p_adjusted": 7.810978381408557e-65,
+      "significant_after_correction": true
+    },
+    {
+      "outcome": "species_code",
+      "estimable": false,
+      "reason": "every row in each group holds the same value of this column, and the groups differ, so the column is determined by the grouping variable rather than measured independently of it",
+      "p_raw": null,
+      "p_adjusted": null,
+      "rows_dropped_for_missingness": 0,
+      "n_complete_cases": 158
+    }
+  ],
+  "multiple_comparisons": {
+    "primary_family": {
+      "family_size": 4,
+      "method": "BH",
+      "raw": [
+        9.208370210747348e-24,
+        9.26628902939057e-19,
+        9.242524938408637e-70,
+        3.905489190704278e-65
+      ],
+      "alpha": 0.05,
+      "n_dropped_non_finite": 0,
+      "dropped_note": null,
+      "rule_source": "references/nature-statistics-checklist.md#gate-5",
+      "adjusted": [
+        1.2277826947663131e-23,
+        9.26628902939057e-19,
+        3.697009975363455e-69,
+        7.810978381408557e-65
+      ],
+      "n_significant_raw": 4,
+      "n_significant_adjusted": 4
+    },
+    "note": "one outcome = one member of the family; correction applies across outcomes, and separately within each post-hoc pairwise family"
+  },
+  "correlations": {
+    "matrix": [
+      {
+        "x": "sepal_length_cm",
+        "y": "sepal_width_cm",
+        "n": 152,
+        "primary": "spearman",
+        "p_used": 0.031644208340540554,
+        "pearson": {
+          "estimable": true,
+          "pearson_r": -0.11,
+          "ci95": [
+            -0.2646,
+            0.0501
+          ],
+          "ci_method": "Fisher z transform",
+          "n": 152,
+          "r_squared": 0.0121,
+          "magnitude": "small"
+        },
+        "spearman": {
+          "estimable": true,
+          "spearman_rho": -0.1744,
+          "n": 152,
+          "p_raw": 0.031644208340540554,
+          "magnitude": "small",
+          "ci95": [
+            -0.3246,
+            -0.0156
+          ],
+          "ci_method": "Fisher z transform"
+        },
+        "p_adjusted": 0.031644208340540554,
+        "significant_after_correction": true
+      },
+      {
+        "x": "sepal_length_cm",
+        "y": "petal_length_cm",
+        "n": 158,
+        "primary": "spearman",
+        "p_used": 4.235679432764502e-53,
+        "pearson": {
+          "estimable": true,
+          "pearson_r": 0.7774,
+          "ci95": [
+            0.7071,
+            0.8325
+          ],
+          "ci_method": "Fisher z transform",
+          "n": 158,
+          "r_squared": 0.6044,
+          "magnitude": "large"
+        },
+        "spearman": {
+          "estimable": true,
+          "spearman_rho": 0.883,
+          "n": 158,
+          "p_raw": 4.235679432764502e-53,
+          "magnitude": "large",
+          "ci95": [
+            0.843,
+            0.9132
+          ],
+          "ci_method": "Fisher z transform"
+        },
+        "p_adjusted": 1.0589198581911254e-52,
+        "significant_after_correction": true
+      },
+      {
+        "x": "sepal_length_cm",
+        "y": "petal_width_cm",
+        "n": 152,
+        "primary": "spearman",
+        "p_used": 2.8502384930803862e-40,
+        "pearson": {
+          "estimable": true,
+          "pearson_r": 0.7277,
+          "ci95": [
+            0.643,
+            0.7948
+          ],
+          "ci_method": "Fisher z transform",
+          "n": 152,
+          "r_squared": 0.5295,
+          "magnitude": "large"
+        },
+        "spearman": {
+          "estimable": true,
+          "spearman_rho": 0.8323,
+          "n": 152,
+          "p_raw": 2.8502384930803862e-40,
+          "magnitude": "large",
+          "ci95": [
+            0.7759,
+            0.8755
+          ],
+          "ci_method": "Fisher z transform"
+        },
+        "p_adjusted": 5.7004769861607724e-40,
+        "significant_after_correction": true
+      },
+      {
+        "x": "sepal_length_cm",
+        "y": "species_code",
+        "n": 158,
+        "primary": "spearman",
+        "p_used": 1.1139405449798802e-35,
+        "pearson": {
+          "estimable": true,
+          "pearson_r": 0.6978,
+          "ci95": [
+            0.6079,
+            0.7701
+          ],
+          "ci_method": "Fisher z transform",
+          "n": 158,
+          "r_squared": 0.487,
+          "magnitude": "large"
+        },
+        "spearman": {
+          "estimable": true,
+          "spearman_rho": 0.7949,
+          "n": 158,
+          "p_raw": 1.1139405449798802e-35,
+          "magnitude": "large",
+          "ci95": [
+            0.7293,
+            0.8461
+          ],
+          "ci_method": "Fisher z transform"
+        },
+        "p_adjusted": 1.8565675749664668e-35,
+        "significant_after_correction": true
+      },
+      {
+        "x": "sepal_width_cm",
+        "y": "petal_length_cm",
+        "n": 152,
+        "primary": "spearman",
+        "p_used": 4.642656268009842e-05,
+        "pearson": {
+          "estimable": true,
+          "pearson_r": -0.4414,
+          "ci95": [
+            -0.5611,
+            -0.3035
+          ],
+          "ci_method": "Fisher z transform",
+          "n": 152,
+          "r_squared": 0.1948,
+          "magnitude": "medium"
+        },
+        "spearman": {
+          "estimable": true,
+          "spearman_rho": -0.3241,
+          "n": 152,
+          "p_raw": 4.642656268009842e-05,
+          "magnitude": "medium",
+          "ci95": [
+            -0.4596,
+            -0.1738
+          ],
+          "ci_method": "Fisher z transform"
+        },
+        "p_adjusted": 5.803320335012303e-05,
+        "significant_after_correction": true
+      },
+      {
+        "x": "sepal_width_cm",
+        "y": "petal_width_cm",
+        "n": 146,
+        "primary": "spearman",
+        "p_used": 0.00025963548985932674,
+        "pearson": {
+          "estimable": true,
+          "pearson_r": -0.376,
+          "ci95": [
+            -0.5075,
+            -0.2275
+          ],
+          "ci_method": "Fisher z transform",
+          "n": 146,
+          "r_squared": 0.1414,
+          "magnitude": "medium"
+        },
+        "spearman": {
+          "estimable": true,
+          "spearman_rho": -0.298,
+          "n": 146,
+          "p_raw": 0.00025963548985932674,
+          "magnitude": "small",
+          "ci95": [
+            -0.4391,
+            -0.1424
+          ],
+          "ci_method": "Fisher z transform"
+        },
+        "p_adjusted": 0.00028848387762147416,
+        "significant_after_correction": true
+      },
+      {
+        "x": "sepal_width_cm",
+        "y": "species_code",
+        "n": 152,
+        "primary": "spearman",
+        "p_used": 5.211595734675164e-09,
+        "pearson": {
+          "estimable": true,
+          "pearson_r": -0.4373,
+          "ci95": [
+            -0.5577,
+            -0.299
+          ],
+          "ci_method": "Fisher z transform",
+          "n": 152,
+          "r_squared": 0.1913,
+          "magnitude": "medium"
+        },
+        "spearman": {
+          "estimable": true,
+          "spearman_rho": -0.4516,
+          "n": 152,
+          "p_raw": 5.211595734675164e-09,
+          "magnitude": "medium",
+          "ci95": [
+            -0.5699,
+            -0.3151
+          ],
+          "ci_method": "Fisher z transform"
+        },
+        "p_adjusted": 7.445136763821663e-09,
+        "significant_after_correction": true
+      },
+      {
+        "x": "petal_length_cm",
+        "y": "petal_width_cm",
+        "n": 152,
+        "primary": "spearman",
+        "p_used": 3.5061989886278786e-70,
+        "pearson": {
+          "estimable": true,
+          "pearson_r": 0.961,
+          "ci95": [
+            0.9467,
+            0.9716
+          ],
+          "ci_method": "Fisher z transform",
+          "n": 152,
+          "r_squared": 0.9236,
+          "magnitude": "large"
+        },
+        "spearman": {
+          "estimable": true,
+          "spearman_rho": 0.9366,
+          "n": 152,
+          "p_raw": 3.5061989886278786e-70,
+          "magnitude": "large",
+          "ci95": [
+            0.9136,
+            0.9536
+          ],
+          "ci_method": "Fisher z transform"
+        },
+        "p_adjusted": 1.1687329962092928e-69,
+        "significant_after_correction": true
+      },
+      {
+        "x": "petal_length_cm",
+        "y": "species_code",
+        "n": 158,
+        "primary": "spearman",
+        "p_used": 9.476916753785176e-72,
+        "pearson": {
+          "estimable": true,
+          "pearson_r": 0.9483,
+          "ci95": [
+            0.9298,
+            0.962
+          ],
+          "ci_method": "Fisher z transform",
+          "n": 158,
+          "r_squared": 0.8992,
+          "magnitude": "large"
+        },
+        "spearman": {
+          "estimable": true,
+          "spearman_rho": 0.9343,
+          "n": 158,
+          "p_raw": 9.476916753785176e-72,
+          "magnitude": "large",
+          "ci95": [
+            0.911,
+            0.9516
+          ],
+          "ci_method": "Fisher z transform"
+        },
+        "p_adjusted": 9.476916753785176e-71,
+        "significant_after_correction": true
+      },
+      {
+        "x": "petal_width_cm",
+        "y": "species_code",
+        "n": 152,
+        "primary": "spearman",
+        "p_used": 5.9964852253855624e-71,
+        "pearson": {
+          "estimable": true,
+          "pearson_r": 0.9562,
+          "ci95": [
+            0.9402,
+            0.9681
+          ],
+          "ci_method": "Fisher z transform",
+          "n": 152,
+          "r_squared": 0.9144,
+          "magnitude": "large"
+        },
+        "spearman": {
+          "estimable": true,
+          "spearman_rho": 0.9381,
+          "n": 152,
+          "p_raw": 5.9964852253855624e-71,
+          "magnitude": "large",
+          "ci95": [
+            0.9156,
+            0.9547
+          ],
+          "ci_method": "Fisher z transform"
+        },
+        "p_adjusted": 2.9982426126927814e-70,
+        "significant_after_correction": true
+      }
+    ],
+    "family": {
+      "family_size": 10,
+      "method": "BH",
+      "raw": [
+        0.031644208340540554,
+        4.235679432764502e-53,
+        2.8502384930803862e-40,
+        1.1139405449798802e-35,
+        4.642656268009842e-05,
+        0.00025963548985932674,
+        5.211595734675164e-09,
+        3.5061989886278786e-70,
+        9.476916753785176e-72,
+        5.9964852253855624e-71
+      ],
+      "alpha": 0.05,
+      "n_dropped_non_finite": 0,
+      "dropped_note": null,
+      "rule_source": "references/nature-statistics-checklist.md#gate-5",
+      "adjusted": [
+        0.031644208340540554,
+        1.0589198581911254e-52,
+        5.7004769861607724e-40,
+        1.8565675749664668e-35,
+        5.803320335012303e-05,
+        0.00028848387762147416,
+        7.445136763821663e-09,
+        1.1687329962092928e-69,
+        9.476916753785176e-71,
+        2.9982426126927814e-70
+      ],
+      "n_significant_raw": 10,
+      "n_significant_adjusted": 10
+    },
+    "note": "exploratory only; correlation is not evidence of mechanism"
+  },
+  "rule_source": "references/nature-statistics-checklist.md#gates-3-5"
+}

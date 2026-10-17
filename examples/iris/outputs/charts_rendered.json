@@ -1,0 +1,65 @@
+{
+ "schema_version": "1.0",
+ "dtype_provenance": {
+  "dtype_source": "cleaning_run.json",
+  "dtype_manifest_path": "D:\\数据处理 skill\\examples\\iris\\outputs\\cleaned\\cleaning_run.json",
+  "n_columns_typed_from_manifest": 7,
+  "read_mode": "text"
+ },
+ "palette": [
+  "#1f77b4",
+  "#ff7f0e",
+  "#2ca02c",
+  "#d62728",
+  "#9467bd"
+ ],
+ "n_rendered": 3,
+ "n_skipped": 0,
+ "rendered": [
+  {
+   "path": "examples\\iris\\outputs\\charts\\fig01_distribution_panel.png",
+   "bytes": 102812,
+   "ink_ratio": 0.31835,
+   "non_blank": true,
+   "pixels": [
+    2073,
+    535
+   ],
+   "id": "fig01_distribution_panel",
+   "chart_type": "distribution_panel",
+   "title": "3 of 3 measured variables are skewed, so the analyses below summarise them by median rather than mean",
+   "ok": true
+  },
+  {
+   "path": "examples\\iris\\outputs\\charts\\fig02_small_multiples_ci.png",
+   "bytes": 162095,
+   "ink_ratio": 0.22969,
+   "non_blank": true,
+   "pixels": [
+    1974,
+    1215
+   ],
+   "id": "fig02_small_multiples_ci",
+   "chart_type": "small_multiples_ci",
+   "title": "4 of 4 measured outcomes differ across species after correction for multiple comparisons",
+   "ok": true
+  },
+  {
+   "path": "examples\\iris\\outputs\\charts\\fig03_scatter_panel.png",
+   "bytes": 147035,
+   "ink_ratio": 0.08847,
+   "non_blank": true,
+   "pixels": [
+    1803,
+    611
+   ],
+   "id": "fig03_scatter_panel",
+   "chart_type": "scatter_panel",
+   "title": "petal_length_cm and petal_width_cm are the strongest pair (spearman = 0.94)",
+   "ok": true
+  }
+ ],
+ "skipped": [],
+ "note": "ink_ratio is the fraction of non-white pixels; a figure below ~0.01 is suspect and should be opened before it is trusted",
+ "rule_source": "references/chart-decision-catalog.md#complexity-principles"
+}

@@ -1,0 +1,722 @@
+{
+  "schema_version": "1.1",
+  "source": "examples\\column_traps\\outputs\\cleaned\\cleaned.csv",
+  "group": "region",
+  "group_levels": [
+    "East",
+    "North",
+    "South",
+    "West"
+  ],
+  "group_sizes": {
+    "East": 64,
+    "North": 54,
+    "South": 56,
+    "West": 66
+  },
+  "alpha": 0.05,
+  "n_rows": 240,
+  "unit_of_analysis": {
+    "unit_key": null,
+    "n_rows": 240,
+    "note": "no --unit-key given; row is assumed to be the independent unit"
+  },
+  "tests": [
+    {
+      "outcome": "weight_kg",
+      "estimable": true,
+      "rows_dropped_for_missingness": 0,
+      "n_complete_cases": 240,
+      "design": "4-group numeric",
+      "method": "one-way ANOVA",
+      "statistic_name": "F",
+      "statistic": 1.6564884089083396,
+      "dof": 3,
+      "p_raw": 0.17712706538316594,
+      "n_groups": 4,
+      "n_total": 240,
+      "n_min": 54,
+      "group_means": {
+        "East": 71.779688,
+        "North": 69.316667,
+        "South": 72.207143,
+        "West": 73.648485
+      },
+      "group_medians": {
+        "East": 71.0,
+        "North": 70.65,
+        "South": 71.95,
+        "West": 71.7
+      },
+      "group_sds": {
+        "East": 10.110064,
+        "North": 9.769161,
+        "South": 11.839147,
+        "West": 10.914031
+      },
+      "group_n": {
+        "East": 64,
+        "North": 54,
+        "South": 56,
+        "West": 66
+      },
+      "assumptions": {
+        "normality": {
+          "East": {
+            "test": "Shapiro-Wilk",
+            "statistic": 0.99246,
+            "p": 0.965533,
+            "passes": true,
+            "n": 64,
+            "gating": false,
+            "note": null
+          },
+          "North": {
+            "test": "Shapiro-Wilk",
+            "statistic": 0.97425,
+            "p": 0.294569,
+            "passes": true,
+            "n": 54,
+            "gating": false,
+            "note": null
+          },
+          "South": {
+            "test": "Shapiro-Wilk",
+            "statistic": 0.98519,
+            "p": 0.720279,
+            "passes": true,
+            "n": 56,
+            "gating": false,
+            "note": null
+          },
+          "West": {
+            "test": "Shapiro-Wilk",
+            "statistic": 0.97582,
+            "p": 0.224155,
+            "passes": true,
+            "n": 66,
+            "gating": false,
+            "note": null
+          }
+        },
+        "variance": {
+          "test": "Levene",
+          "statistic": 0.44451,
+          "p": 0.721413,
+          "passes": true,
+          "equal_variance": true
+        }
+      },
+      "rejected_alternatives": [
+        {
+          "test": "Welch ANOVA",
+          "reason": "equal variance holds (Levene p > alpha); the pooled test is more powerful"
+        },
+        {
+          "test": "Kruskal-Wallis H",
+          "reason": "min n=54 >= 30; the mean statistic is robust by CLT"
+        }
+      ],
+      "effect_sizes": {
+        "eta_squared": 0.020623,
+        "omega_squared": 0.008139,
+        "omega_squared_ci95": {
+          "low": -0.008501,
+          "high": 0.065599,
+          "method": "bootstrap percentile, 2000 resamples, seed=42"
+        },
+        "omega_squared_formula": "(SS_b - (k-1)*MS_w) / (SS_t + MS_w)",
+        "eta_squared_note": "omega^2 <= eta^2 by construction; a negative omega^2 means the between-group spread is within sampling noise"
+      },
+      "robustness_cross_check": {
+        "test": "Kruskal-Wallis H",
+        "statistic": 3.09136,
+        "p_raw": 0.37775261,
+        "agrees_with_primary": true,
+        "note": "cross-check only"
+      },
+      "post_hoc": [
+        {
+          "group_a": "East",
+          "group_b": "North",
+          "n_a": 64,
+          "n_b": 54,
+          "mean_difference_ci95": {
+            "difference": 2.463021,
+            "se": 1.834237,
+            "dof": 113.853,
+            "ci_low": -1.17064,
+            "ci_high": 6.096681,
+            "ci_level": 0.95,
+            "excludes_zero": false
+          },
+          "welch_t_p_raw": 0.18200651700445603,
+          "mannwhitney_p_raw": 0.31242487564468013,
+          "cliffs_delta": {
+            "estimable": true,
+            "cliffs_delta": 0.1085,
+            "ci95": [
+              -0.1053,
+              0.3131
+            ],
+            "ci_method": "bootstrap, 10000 resamples, seed=42",
+            "n1": 64,
+            "n2": 54,
+            "magnitude": "negligible"
+          },
+          "p_adjusted_welch_BH": 0.36401303400891205,
+          "p_adjusted_mannwhitney_BH": 0.6248497512893603,
+          "significant_adjusted": false
+        },
+        {
+          "group_a": "East",
+          "group_b": "South",
+          "n_a": 64,
+          "n_b": 56,
+          "mean_difference_ci95": {
+            "difference": -0.427455,
+            "se": 2.024855,
+            "dof": 108.881,
+            "ci_low": -4.440702,
+            "ci_high": 3.585791,
+            "ci_level": 0.95,
+            "excludes_zero": false
+          },
+          "welch_t_p_raw": 0.8332005847370301,
+          "mannwhitney_p_raw": 0.7884796942658361,
+          "cliffs_delta": {
+            "estimable": true,
+            "cliffs_delta": -0.0287,
+            "ci95": [
+              -0.2411,
+              0.1833
+            ],
+            "ci_method": "bootstrap, 10000 resamples, seed=42",
+            "n1": 64,
+            "n2": 56,
+            "magnitude": "negligible"
+          },
+          "p_adjusted_welch_BH": 0.8332005847370301,
+          "p_adjusted_mannwhitney_BH": 0.7884796942658361,
+          "significant_adjusted": false
+        },
+        {
+          "group_a": "East",
+          "group_b": "West",
+          "n_a": 64,
+          "n_b": 66,
+          "mean_difference_ci95": {
+            "difference": -1.868797,
+            "se": 1.844417,
+            "dof": 127.736,
+            "ci_low": -5.518363,
+            "ci_high": 1.780768,
+            "ci_level": 0.95,
+            "excludes_zero": false
+          },
+          "welch_t_p_raw": 0.31287114378395886,
+          "mannwhitney_p_raw": 0.4204334475081769,
+          "cliffs_delta": {
+            "estimable": true,
+            "cliffs_delta": -0.0821,
+            "ci95": [
+              -0.2758,
+              0.1141
+            ],
+            "ci_method": "bootstrap, 10000 resamples, seed=42",
+            "n1": 64,
+            "n2": 66,
+            "magnitude": "negligible"
+          },
+          "p_adjusted_welch_BH": 0.4693067156759383,
+          "p_adjusted_mannwhitney_BH": 0.6306501712622654,
+          "significant_adjusted": false
+        },
+        {
+          "group_a": "North",
+          "group_b": "South",
+          "n_a": 54,
+          "n_b": 56,
+          "mean_difference_ci95": {
+            "difference": -2.890476,
+            "se": 2.06647,
+            "dof": 105.505,
+            "ci_low": -6.987675,
+            "ci_high": 1.206722,
+            "ci_level": 0.95,
+            "excludes_zero": false
+          },
+          "welch_t_p_raw": 0.1648204569569434,
+          "mannwhitney_p_raw": 0.248496414647842,
+          "cliffs_delta": {
+            "estimable": true,
+            "cliffs_delta": -0.128,
+            "ci95": [
+              -0.339,
+              0.0923
+            ],
+            "ci_method": "bootstrap, 10000 resamples, seed=42",
+            "n1": 54,
+            "n2": 56,
+            "magnitude": "negligible"
+          },
+          "p_adjusted_welch_BH": 0.36401303400891205,
+          "p_adjusted_mannwhitney_BH": 0.6248497512893603,
+          "significant_adjusted": false
+        },
+        {
+          "group_a": "North",
+          "group_b": "West",
+          "n_a": 54,
+          "n_b": 66,
+          "mean_difference_ci95": {
+            "difference": -4.331818,
+            "se": 1.890008,
+            "dof": 117.016,
+            "ci_low": -8.074875,
+            "ci_high": -0.588761,
+            "ci_level": 0.95,
+            "excludes_zero": true
+          },
+          "welch_t_p_raw": 0.023696058025154454,
+          "mannwhitney_p_raw": 0.08938632796535138,
+          "cliffs_delta": {
+            "estimable": true,
+            "cliffs_delta": -0.181,
+            "ci95": [
+              -0.381,
+              0.0297
+            ],
+            "ci_method": "bootstrap, 10000 resamples, seed=42",
+            "n1": 54,
+            "n2": 66,
+            "magnitude": "small"
+          },
+          "p_adjusted_welch_BH": 0.14217634815092672,
+          "p_adjusted_mannwhitney_BH": 0.5363179677921083,
+          "significant_adjusted": false
+        },
+        {
+          "group_a": "South",
+          "group_b": "West",
+          "n_a": 56,
+          "n_b": 66,
+          "mean_difference_ci95": {
+            "difference": -1.441342,
+            "se": 2.07551,
+            "dof": 113.139,
+            "ci_low": -5.553247,
+            "ci_high": 2.670564,
+            "ci_level": 0.95,
+            "excludes_zero": false
+          },
+          "welch_t_p_raw": 0.48882245744693825,
+          "mannwhitney_p_raw": 0.621836604150146,
+          "cliffs_delta": {
+            "estimable": true,
+            "cliffs_delta": -0.0522,
+            "ci95": [
+              -0.2595,
+              0.158
+            ],
+            "ci_method": "bootstrap, 10000 resamples, seed=42",
+            "n1": 56,
+            "n2": 66,
+            "magnitude": "negligible"
+          },
+          "p_adjusted_welch_BH": 0.5865869489363259,
+          "p_adjusted_mannwhitney_BH": 0.7462039249801752,
+          "significant_adjusted": false
+        }
+      ],
+      "post_hoc_note": "both parametric and rank p-values are BH-corrected within this outcome's pairwise family; report the one matching the omnibus test",
+      "rule_source": "scripts/stats_inferential.py#k_group_numeric",
+      "p_adjusted": 0.3542541307663319,
+      "significant_after_correction": false
+    },
+    {
+      "outcome": "turnover",
+      "estimable": true,
+      "rows_dropped_for_missingness": 0,
+      "n_complete_cases": 240,
+      "design": "4-group numeric",
+      "method": "one-way ANOVA",
+      "statistic_name": "F",
+      "statistic": 0.06685288672444704,
+      "dof": 3,
+      "p_raw": 0.9774442900255885,
+      "n_groups": 4,
+      "n_total": 240,
+      "n_min": 54,
+      "group_means": {
+        "East": 14462.587031,
+        "North": 14605.174074,
+        "South": 14747.480714,
+        "West": 13277.651364
+      },
+      "group_medians": {
+        "East": 5947.81,
+        "North": 7887.265,
+        "South": 7338.735,
+        "West": 8593.72
+      },
+      "group_sds": {
+        "East": 20770.562389,
+        "North": 22736.413675,
+        "South": 20696.809815,
+        "West": 18793.222523
+      },
+      "group_n": {
+        "East": 64,
+        "North": 54,
+        "South": 56,
+        "West": 66
+      },
+      "assumptions": {
+        "normality": {
+          "East": {
+            "test": "Shapiro-Wilk",
+            "statistic": 0.64373,
+            "p": 0.0,
+            "passes": false,
+            "n": 64,
+            "gating": false,
+            "note": null
+          },
+          "North": {
+            "test": "Shapiro-Wilk",
+            "statistic": 0.51384,
+            "p": 0.0,
+            "passes": false,
+            "n": 54,
+            "gating": false,
+            "note": null
+          },
+          "South": {
+            "test": "Shapiro-Wilk",
+            "statistic": 0.605,
+            "p": 0.0,
+            "passes": false,
+            "n": 56,
+            "gating": false,
+            "note": null
+          },
+          "West": {
+            "test": "Shapiro-Wilk",
+            "statistic": 0.54743,
+            "p": 0.0,
+            "passes": false,
+            "n": 66,
+            "gating": false,
+            "note": null
+          }
+        },
+        "variance": {
+          "test": "Levene",
+          "statistic": 0.14676,
+          "p": 0.931688,
+          "passes": true,
+          "equal_variance": true
+        }
+      },
+      "rejected_alternatives": [
+        {
+          "test": "Welch ANOVA",
+          "reason": "equal variance holds (Levene p > alpha); the pooled test is more powerful"
+        },
+        {
+          "test": "Kruskal-Wallis H",
+          "reason": "min n=54 >= 30; the mean statistic is robust by CLT"
+        }
+      ],
+      "effect_sizes": {
+        "eta_squared": 0.000849,
+        "omega_squared": -0.011802,
+        "omega_squared_ci95": {
+          "low": -0.011613,
+          "high": 0.029111,
+          "method": "bootstrap percentile, 2000 resamples, seed=42"
+        },
+        "omega_squared_formula": "(SS_b - (k-1)*MS_w) / (SS_t + MS_w)",
+        "eta_squared_note": "omega^2 <= eta^2 by construction; a negative omega^2 means the between-group spread is within sampling noise"
+      },
+      "robustness_cross_check": {
+        "test": "Kruskal-Wallis H",
+        "statistic": 1.16883,
+        "p_raw": 0.76049056,
+        "agrees_with_primary": true,
+        "note": "cross-check only"
+      },
+      "post_hoc": [
+        {
+          "group_a": "East",
+          "group_b": "North",
+          "n_a": 64,
+          "n_b": 54,
+          "mean_difference_ci95": {
+            "difference": -142.587043,
+            "se": 4039.050076,
+            "dof": 108.613,
+            "ci_low": -8148.172726,
+            "ci_high": 7862.99864,
+            "ci_level": 0.95,
+            "excludes_zero": false
+          },
+          "welch_t_p_raw": 0.971903628359758,
+          "mannwhitney_p_raw": 0.3514435891077231,
+          "cliffs_delta": {
+            "estimable": true,
+            "cliffs_delta": -0.1001,
+            "ci95": [
+              -0.3113,
+              0.1071
+            ],
+            "ci_method": "bootstrap, 10000 resamples, seed=42",
+            "n1": 64,
+            "n2": 54,
+            "magnitude": "negligible"
+          },
+          "p_adjusted_welch_BH": 0.9727095023956397,
+          "p_adjusted_mannwhitney_BH": 0.8448721524742094,
+          "significant_adjusted": false
+        },
+        {
+          "group_a": "East",
+          "group_b": "South",
+          "n_a": 64,
+          "n_b": 56,
+          "mean_difference_ci95": {
+            "difference": -284.893683,
+            "se": 3793.432214,
+            "dof": 116.002,
+            "ci_low": -7798.26246,
+            "ci_high": 7228.475093,
+            "ci_level": 0.95,
+            "excludes_zero": false
+          },
+          "welch_t_p_raw": 0.9402630574335755,
+          "mannwhitney_p_raw": 0.4224360762371048,
+          "cliffs_delta": {
+            "estimable": true,
+            "cliffs_delta": -0.0854,
+            "ci95": [
+              -0.2958,
+              0.1233
+            ],
+            "ci_method": "bootstrap, 10000 resamples, seed=42",
+            "n1": 64,
+            "n2": 56,
+            "magnitude": "negligible"
+          },
+          "p_adjusted_welch_BH": 0.9727095023956397,
+          "p_adjusted_mannwhitney_BH": 0.8448721524742094,
+          "significant_adjusted": false
+        },
+        {
+          "group_a": "East",
+          "group_b": "West",
+          "n_a": 64,
+          "n_b": 66,
+          "mean_difference_ci95": {
+            "difference": 1184.935668,
+            "se": 3477.379789,
+            "dof": 125.855,
+            "ci_low": -5696.773694,
+            "ci_high": 8066.645029,
+            "ci_level": 0.95,
+            "excludes_zero": false
+          },
+          "welch_t_p_raw": 0.7338559480260655,
+          "mannwhitney_p_raw": 0.38767183021195595,
+          "cliffs_delta": {
+            "estimable": true,
+            "cliffs_delta": -0.0881,
+            "ci95": [
+              -0.2912,
+              0.108
+            ],
+            "ci_method": "bootstrap, 10000 resamples, seed=42",
+            "n1": 64,
+            "n2": 66,
+            "magnitude": "negligible"
+          },
+          "p_adjusted_welch_BH": 0.9727095023956397,
+          "p_adjusted_mannwhitney_BH": 0.8448721524742094,
+          "significant_adjusted": false
+        },
+        {
+          "group_a": "North",
+          "group_b": "South",
+          "n_a": 54,
+          "n_b": 56,
+          "mean_difference_ci95": {
+            "difference": -142.30664,
+            "se": 4149.975336,
+            "dof": 106.198,
+            "ci_low": -8369.858852,
+            "ci_high": 8085.245572,
+            "ci_level": 0.95,
+            "excludes_zero": false
+          },
+          "welch_t_p_raw": 0.9727095023956397,
+          "mannwhitney_p_raw": 0.9071825054041661,
+          "cliffs_delta": {
+            "estimable": true,
+            "cliffs_delta": 0.0132,
+            "ci95": [
+              -0.2044,
+              0.2328
+            ],
+            "ci_method": "bootstrap, 10000 resamples, seed=42",
+            "n1": 54,
+            "n2": 56,
+            "magnitude": "negligible"
+          },
+          "p_adjusted_welch_BH": 0.9727095023956397,
+          "p_adjusted_mannwhitney_BH": 0.9768542681907831,
+          "significant_adjusted": false
+        },
+        {
+          "group_a": "North",
+          "group_b": "West",
+          "n_a": 54,
+          "n_b": 66,
+          "mean_difference_ci95": {
+            "difference": 1327.52271,
+            "se": 3863.203014,
+            "dof": 102.659,
+            "ci_low": -6334.53217,
+            "ci_high": 8989.577591,
+            "ci_level": 0.95,
+            "excludes_zero": false
+          },
+          "welch_t_p_raw": 0.7318253522809394,
+          "mannwhitney_p_raw": 0.9768542681907831,
+          "cliffs_delta": {
+            "estimable": true,
+            "cliffs_delta": -0.0034,
+            "ci95": [
+              -0.2138,
+              0.1992
+            ],
+            "ci_method": "bootstrap, 10000 resamples, seed=42",
+            "n1": 54,
+            "n2": 66,
+            "magnitude": "negligible"
+          },
+          "p_adjusted_welch_BH": 0.9727095023956397,
+          "p_adjusted_mannwhitney_BH": 0.9768542681907831,
+          "significant_adjusted": false
+        },
+        {
+          "group_a": "South",
+          "group_b": "West",
+          "n_a": 56,
+          "n_b": 66,
+          "mean_difference_ci95": {
+            "difference": 1469.829351,
+            "se": 3605.626155,
+            "dof": 112.347,
+            "ci_low": -5674.015856,
+            "ci_high": 8613.674558,
+            "ci_level": 0.95,
+            "excludes_zero": false
+          },
+          "welch_t_p_raw": 0.6843072537982167,
+          "mannwhitney_p_raw": 0.9569779758044603,
+          "cliffs_delta": {
+            "estimable": true,
+            "cliffs_delta": -0.006,
+            "ci95": [
+              -0.2154,
+              0.2008
+            ],
+            "ci_method": "bootstrap, 10000 resamples, seed=42",
+            "n1": 56,
+            "n2": 66,
+            "magnitude": "negligible"
+          },
+          "p_adjusted_welch_BH": 0.9727095023956397,
+          "p_adjusted_mannwhitney_BH": 0.9768542681907831,
+          "significant_adjusted": false
+        }
+      ],
+      "post_hoc_note": "both parametric and rank p-values are BH-corrected within this outcome's pairwise family; report the one matching the omnibus test",
+      "rule_source": "scripts/stats_inferential.py#k_group_numeric",
+      "p_adjusted": 0.9774442900255885,
+      "significant_after_correction": false
+    }
+  ],
+  "multiple_comparisons": {
+    "primary_family": {
+      "family_size": 2,
+      "method": "BH",
+      "raw": [
+        0.17712706538316594,
+        0.9774442900255885
+      ],
+      "alpha": 0.05,
+      "rule_source": "references/nature-statistics-checklist.md#gate-5",
+      "adjusted": [
+        0.3542541307663319,
+        0.9774442900255885
+      ],
+      "n_significant_raw": 0,
+      "n_significant_adjusted": 0
+    },
+    "note": "one outcome = one member of the family; correction applies across outcomes, and separately within each post-hoc pairwise family"
+  },
+  "correlations": {
+    "matrix": [
+      {
+        "x": "weight_kg",
+        "y": "turnover",
+        "n": 240,
+        "primary": "spearman",
+        "p_used": 0.2880053779632703,
+        "pearson": {
+          "estimable": true,
+          "pearson_r": 0.0528,
+          "ci95": [
+            -0.0744,
+            0.1782
+          ],
+          "ci_method": "Fisher z transform",
+          "n": 240,
+          "r_squared": 0.0028,
+          "magnitude": "negligible"
+        },
+        "spearman": {
+          "estimable": true,
+          "spearman_rho": 0.0689,
+          "n": 240,
+          "p_raw": 0.2880053779632703,
+          "magnitude": "negligible",
+          "ci95": [
+            -0.0583,
+            0.1938
+          ],
+          "ci_method": "Fisher z transform"
+        },
+        "p_adjusted": 0.2880053779632703,
+        "significant_after_correction": false
+      }
+    ],
+    "family": {
+      "family_size": 1,
+      "method": "BH",
+      "raw": [
+        0.2880053779632703
+      ],
+      "alpha": 0.05,
+      "rule_source": "references/nature-statistics-checklist.md#gate-5",
+      "adjusted": [
+        0.2880053779632703
+      ],
+      "n_significant_raw": 0,
+      "n_significant_adjusted": 0
+    },
+    "note": "exploratory only; correlation is not evidence of mechanism"
+  },
+  "rule_source": "references/nature-statistics-checklist.md#gates-3-5"
+}

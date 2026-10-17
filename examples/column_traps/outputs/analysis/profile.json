@@ -1,0 +1,667 @@
+{
+  "schema_version": "1.1",
+  "source": "D:\\数据处理 skill\\examples\\column_traps\\traps_dirty.csv",
+  "modality": "tabular",
+  "sampled": false,
+  "read_mode": "text",
+  "shape": {
+    "n_rows": 240,
+    "n_cols": 10
+  },
+  "memory_bytes": 36559,
+  "columns": {
+    "region": {
+      "dtype": "str",
+      "role": "categorical",
+      "n": 240,
+      "n_missing": 0,
+      "n_unique": 16,
+      "missing_pct": 0.0,
+      "min_len": 4,
+      "max_len": 9,
+      "mean_len": 5.708333,
+      "top": {
+        "West": 38,
+        "North": 31,
+        "East": 28,
+        "South": 20,
+        "  South  ": 16
+      },
+      "residual_case_variants_raw": {
+        "n_exact_levels": 8,
+        "n_after_casefold": 4,
+        "n_merged_groups": 4,
+        "merged_groups": [
+          {
+            "canonical": "East",
+            "variants": [
+              "EAST",
+              "East"
+            ],
+            "count": 64
+          },
+          {
+            "canonical": "North",
+            "variants": [
+              "NORTH",
+              "North"
+            ],
+            "count": 54
+          },
+          {
+            "canonical": "South",
+            "variants": [
+              "SOUTH",
+              "South"
+            ],
+            "count": 56
+          },
+          {
+            "canonical": "West",
+            "variants": [
+              "WEST",
+              "West"
+            ],
+            "count": 66
+          }
+        ],
+        "canonical_rule": "modal original spelling, lexicographic tie-break"
+      },
+      "residual_case_variants_post_hygiene": {
+        "n_exact_levels": 8,
+        "n_after_casefold": 4,
+        "n_merged_groups": 4,
+        "merged_groups": [
+          {
+            "canonical": "East",
+            "variants": [
+              "EAST",
+              "East"
+            ],
+            "count": 64
+          },
+          {
+            "canonical": "North",
+            "variants": [
+              "NORTH",
+              "North"
+            ],
+            "count": 54
+          },
+          {
+            "canonical": "South",
+            "variants": [
+              "SOUTH",
+              "South"
+            ],
+            "count": 56
+          },
+          {
+            "canonical": "West",
+            "variants": [
+              "WEST",
+              "West"
+            ],
+            "count": 66
+          }
+        ],
+        "canonical_rule": "modal original spelling, lexicographic tie-break"
+      }
+    },
+    "postcode": {
+      "dtype": "str",
+      "role": "categorical",
+      "n": 240,
+      "n_missing": 0,
+      "n_unique": 6,
+      "missing_pct": 0.0,
+      "min_len": 5,
+      "max_len": 5,
+      "mean_len": 5.0,
+      "top": {
+        "02139": 45,
+        "30302": 43,
+        "30301": 41,
+        "02134": 40,
+        "10002": 39
+      },
+      "coercion": {
+        "interesting": true,
+        "auto_numeric": false,
+        "auto_date": false,
+        "hold": "leading_zero",
+        "numeric": {
+          "n_non_null": 240,
+          "n_parsed": 240,
+          "n_failed": 0,
+          "all_parse": true,
+          "parse_fraction_of_non_null": 1.0,
+          "sample_failed": [],
+          "failed_are_blank_or_sentinel": false,
+          "has_currency_or_percent": false,
+          "currency_or_percent_samples": [],
+          "would_parse_after_symbol_strip": null,
+          "leading_zero_suspected_id": true,
+          "leading_zero_fraction": 0.3542,
+          "leading_zero_samples": [
+            "02134",
+            "02134",
+            "02139",
+            "02139",
+            "02139"
+          ],
+          "parser": "pd.to_numeric(errors='coerce') after removing thousands separators"
+        },
+        "date": {
+          "n_non_null": 240,
+          "n_parsed": 85,
+          "n_failed": 155,
+          "all_parse": false,
+          "parse_fraction_of_non_null": 0.3542,
+          "sample_failed": [
+            "30302",
+            "30302",
+            "10002",
+            "10001",
+            "30301"
+          ],
+          "parser": "pd.to_datetime(errors='coerce'), per-element format inference"
+        },
+        "role_hint": "identifier"
+      }
+    },
+    "weight_kg": {
+      "dtype": "str",
+      "role": "categorical",
+      "n": 240,
+      "n_missing": 0,
+      "n_unique": 181,
+      "missing_pct": 0.0,
+      "min_len": 4,
+      "max_len": 5,
+      "mean_len": 4.004167,
+      "top": {
+        "64.9": 4,
+        "70.8": 3,
+        "71.2": 3,
+        "64.6": 3,
+        "71.1": 3
+      },
+      "coercion": {
+        "interesting": true,
+        "auto_numeric": true,
+        "auto_date": false,
+        "hold": null,
+        "numeric": {
+          "n_non_null": 240,
+          "n_parsed": 240,
+          "n_failed": 0,
+          "all_parse": true,
+          "parse_fraction_of_non_null": 1.0,
+          "sample_failed": [],
+          "failed_are_blank_or_sentinel": false,
+          "has_currency_or_percent": false,
+          "currency_or_percent_samples": [],
+          "would_parse_after_symbol_strip": null,
+          "leading_zero_suspected_id": false,
+          "leading_zero_fraction": 0.0,
+          "leading_zero_samples": [],
+          "parser": "pd.to_numeric(errors='coerce') after removing thousands separators"
+        },
+        "date": {
+          "n_non_null": 240,
+          "n_parsed": 0,
+          "n_failed": 240,
+          "all_parse": false,
+          "parse_fraction_of_non_null": 0.0,
+          "sample_failed": [
+            "93.2",
+            "90.8",
+            "78.2",
+            "79.5",
+            "49.7"
+          ],
+          "parser": "pd.to_datetime(errors='coerce'), per-element format inference"
+        },
+        "role_hint": "numeric"
+      }
+    },
+    "turnover": {
+      "dtype": "str",
+      "role": "categorical",
+      "n": 240,
+      "n_missing": 0,
+      "n_unique": 240,
+      "missing_pct": 0.0,
+      "min_len": 6,
+      "max_len": 10,
+      "mean_len": 8.308333,
+      "top": {
+        "4,715.63": 1,
+        "8,723.17": 1,
+        "8,373.60": 1,
+        "4,350.13": 1,
+        "5,071.85": 1
+      },
+      "coercion": {
+        "interesting": true,
+        "auto_numeric": true,
+        "auto_date": false,
+        "hold": null,
+        "numeric": {
+          "n_non_null": 240,
+          "n_parsed": 240,
+          "n_failed": 0,
+          "all_parse": true,
+          "parse_fraction_of_non_null": 1.0,
+          "sample_failed": [],
+          "failed_are_blank_or_sentinel": false,
+          "has_currency_or_percent": false,
+          "currency_or_percent_samples": [],
+          "would_parse_after_symbol_strip": null,
+          "leading_zero_suspected_id": false,
+          "leading_zero_fraction": 0.0,
+          "leading_zero_samples": [],
+          "parser": "pd.to_numeric(errors='coerce') after removing thousands separators"
+        },
+        "date": {
+          "n_non_null": 240,
+          "n_parsed": 0,
+          "n_failed": 240,
+          "all_parse": false,
+          "parse_fraction_of_non_null": 0.0,
+          "sample_failed": [
+            "4,715.63",
+            "8,723.17",
+            "8,373.60",
+            "4,350.13",
+            "5,071.85"
+          ],
+          "parser": "pd.to_datetime(errors='coerce'), per-element format inference"
+        },
+        "role_hint": "numeric"
+      }
+    },
+    "signup_date": {
+      "dtype": "str",
+      "role": "categorical",
+      "n": 240,
+      "n_missing": 0,
+      "n_unique": 196,
+      "missing_pct": 0.0,
+      "min_len": 10,
+      "max_len": 10,
+      "mean_len": 10.0,
+      "top": {
+        "2024-12-23": 3,
+        "2024-11-05": 3,
+        "2025-04-09": 3,
+        "2024-12-06": 3,
+        "2025-01-30": 3
+      },
+      "coercion": {
+        "interesting": true,
+        "auto_numeric": false,
+        "auto_date": true,
+        "hold": null,
+        "numeric": {
+          "n_non_null": 240,
+          "n_parsed": 0,
+          "n_failed": 240,
+          "all_parse": false,
+          "parse_fraction_of_non_null": 0.0,
+          "sample_failed": [
+            "2024-06-19",
+            "2025-01-16",
+            "2024-09-29",
+            "2024-01-30",
+            "2024-07-17"
+          ],
+          "failed_are_blank_or_sentinel": false,
+          "has_currency_or_percent": false,
+          "currency_or_percent_samples": [],
+          "would_parse_after_symbol_strip": null,
+          "leading_zero_suspected_id": false,
+          "leading_zero_fraction": 0.0,
+          "leading_zero_samples": [],
+          "parser": "pd.to_numeric(errors='coerce') after removing thousands separators"
+        },
+        "date": {
+          "n_non_null": 240,
+          "n_parsed": 240,
+          "n_failed": 0,
+          "all_parse": true,
+          "parse_fraction_of_non_null": 1.0,
+          "sample_failed": [],
+          "parser": "pd.to_datetime(errors='coerce'), per-element format inference"
+        },
+        "role_hint": "datetime"
+      }
+    },
+    "phone": {
+      "dtype": "str",
+      "role": "categorical",
+      "n": 240,
+      "n_missing": 0,
+      "n_unique": 240,
+      "missing_pct": 0.0,
+      "min_len": 15,
+      "max_len": 15,
+      "mean_len": 15.0,
+      "top": {
+        "(0153) 456-7674": 1,
+        "(0162) 456-4277": 1,
+        "(0140) 456-8259": 1,
+        "(0134) 456-1972": 1,
+        "(0134) 456-4449": 1
+      }
+    },
+    "revenue": {
+      "dtype": "str",
+      "role": "categorical",
+      "n": 240,
+      "n_missing": 0,
+      "n_unique": 240,
+      "missing_pct": 0.0,
+      "min_len": 9,
+      "max_len": 11,
+      "mean_len": 9.854167,
+      "top": {
+        "$67,887.87": 1,
+        "$8,342.54": 1,
+        "$25,176.74": 1,
+        "$73,244.89": 1,
+        "$18,738.23": 1
+      },
+      "coercion": {
+        "interesting": true,
+        "auto_numeric": false,
+        "auto_date": false,
+        "hold": "currency_or_rate",
+        "numeric": {
+          "n_non_null": 240,
+          "n_parsed": 0,
+          "n_failed": 240,
+          "all_parse": false,
+          "parse_fraction_of_non_null": 0.0,
+          "sample_failed": [
+            "$67,887.87",
+            "$8,342.54",
+            "$25,176.74",
+            "$73,244.89",
+            "$18,738.23"
+          ],
+          "failed_are_blank_or_sentinel": false,
+          "has_currency_or_percent": true,
+          "currency_or_percent_samples": [
+            "$67,887.87",
+            "$8,342.54",
+            "$25,176.74",
+            "$73,244.89",
+            "$18,738.23"
+          ],
+          "would_parse_after_symbol_strip": 1.0,
+          "leading_zero_suspected_id": false,
+          "leading_zero_fraction": 0.0,
+          "leading_zero_samples": [],
+          "parser": "pd.to_numeric(errors='coerce') after removing thousands separators"
+        },
+        "date": {
+          "n_non_null": 240,
+          "n_parsed": 0,
+          "n_failed": 240,
+          "all_parse": false,
+          "parse_fraction_of_non_null": 0.0,
+          "sample_failed": [
+            "$67,887.87",
+            "$8,342.54",
+            "$25,176.74",
+            "$73,244.89",
+            "$18,738.23"
+          ],
+          "parser": "pd.to_datetime(errors='coerce'), per-element format inference"
+        }
+      }
+    },
+    "growth_pct": {
+      "dtype": "str",
+      "role": "categorical",
+      "n": 240,
+      "n_missing": 0,
+      "n_unique": 179,
+      "missing_pct": 0.0,
+      "min_len": 4,
+      "max_len": 6,
+      "mean_len": 4.604167,
+      "top": {
+        "-4.6%": 4,
+        "5.2%": 4,
+        "1.1%": 3,
+        "15.2%": 3,
+        "9.3%": 3
+      },
+      "coercion": {
+        "interesting": true,
+        "auto_numeric": false,
+        "auto_date": false,
+        "hold": "currency_or_rate",
+        "numeric": {
+          "n_non_null": 240,
+          "n_parsed": 0,
+          "n_failed": 240,
+          "all_parse": false,
+          "parse_fraction_of_non_null": 0.0,
+          "sample_failed": [
+            "-8.1%",
+            "9.7%",
+            "14.1%",
+            "10.1%",
+            "15.3%"
+          ],
+          "failed_are_blank_or_sentinel": false,
+          "has_currency_or_percent": true,
+          "currency_or_percent_samples": [
+            "-8.1%",
+            "9.7%",
+            "14.1%",
+            "10.1%",
+            "15.3%"
+          ],
+          "would_parse_after_symbol_strip": 1.0,
+          "leading_zero_suspected_id": false,
+          "leading_zero_fraction": 0.0,
+          "leading_zero_samples": [],
+          "parser": "pd.to_numeric(errors='coerce') after removing thousands separators"
+        },
+        "date": {
+          "n_non_null": 240,
+          "n_parsed": 0,
+          "n_failed": 240,
+          "all_parse": false,
+          "parse_fraction_of_non_null": 0.0,
+          "sample_failed": [
+            "-8.1%",
+            "9.7%",
+            "14.1%",
+            "10.1%",
+            "15.3%"
+          ],
+          "parser": "pd.to_datetime(errors='coerce'), per-element format inference"
+        }
+      }
+    },
+    "mostly_text": {
+      "dtype": "str",
+      "role": "categorical",
+      "n": 240,
+      "n_missing": 0,
+      "n_unique": 135,
+      "missing_pct": 0.0,
+      "min_len": 4,
+      "max_len": 7,
+      "mean_len": 4.3,
+      "top": {
+        "unknown": 24,
+        "50.8": 4,
+        "46.2": 4,
+        "52.4": 4,
+        "48.7": 4
+      },
+      "coercion": {
+        "interesting": true,
+        "auto_numeric": false,
+        "auto_date": false,
+        "hold": "mixed_with_text",
+        "numeric": {
+          "n_non_null": 240,
+          "n_parsed": 216,
+          "n_failed": 24,
+          "all_parse": false,
+          "parse_fraction_of_non_null": 0.9,
+          "sample_failed": [
+            "unknown",
+            "unknown",
+            "unknown",
+            "unknown",
+            "unknown"
+          ],
+          "failed_are_blank_or_sentinel": false,
+          "has_currency_or_percent": false,
+          "currency_or_percent_samples": [],
+          "would_parse_after_symbol_strip": null,
+          "leading_zero_suspected_id": false,
+          "leading_zero_fraction": 0.0,
+          "leading_zero_samples": [],
+          "parser": "pd.to_numeric(errors='coerce') after removing thousands separators"
+        },
+        "date": {
+          "n_non_null": 240,
+          "n_parsed": 0,
+          "n_failed": 240,
+          "all_parse": false,
+          "parse_fraction_of_non_null": 0.0,
+          "sample_failed": [
+            "unknown",
+            "41.2",
+            "44.8",
+            "54.9",
+            "58.6"
+          ],
+          "parser": "pd.to_datetime(errors='coerce'), per-element format inference"
+        }
+      }
+    },
+    "batch_code": {
+      "dtype": "str",
+      "role": "categorical",
+      "n": 240,
+      "n_missing": 0,
+      "n_unique": 177,
+      "missing_pct": 0.0,
+      "min_len": 5,
+      "max_len": 5,
+      "mean_len": 5.0,
+      "top": {
+        "B0118": 4,
+        "B0179": 4,
+        "B0392": 3,
+        "B0294": 3,
+        "B0007": 3
+      }
+    }
+  },
+  "column_roles": {
+    "region": "categorical",
+    "postcode": "categorical",
+    "weight_kg": "categorical",
+    "turnover": "categorical",
+    "signup_date": "categorical",
+    "phone": "categorical",
+    "revenue": "categorical",
+    "growth_pct": "categorical",
+    "mostly_text": "categorical",
+    "batch_code": "categorical"
+  },
+  "anomalies": {
+    "flags": [
+      {
+        "type": "residual_case_variants",
+        "column": "region",
+        "severity": "P2",
+        "n_exact_levels": 8,
+        "n_after_casefold": 4,
+        "n_merged_groups": 4,
+        "n_exact_levels_raw": 8,
+        "note": "levels still differ only by case AFTER the automatic whitespace and quote hygiene; this is the state the case-merge op will see"
+      },
+      {
+        "type": "likely_id_column",
+        "column": "phone",
+        "severity": "P3",
+        "uniqueness_ratio": 1.0
+      }
+    ],
+    "n_flags": 2
+  },
+  "target_candidate": {
+    "candidates": [
+      {
+        "column": "postcode",
+        "n_unique": 6,
+        "score": 0.166667
+      },
+      {
+        "column": "region",
+        "n_unique": 16,
+        "score": 0.0625
+      }
+    ],
+    "note": "integer-coded class label or small-cardinality outcome"
+  },
+  "group_candidate": {
+    "candidates": [
+      {
+        "column": "postcode",
+        "n_unique": 6,
+        "balance_entropy": 0.997,
+        "n_levels_observed": 6,
+        "score": 0.332832
+      },
+      {
+        "column": "region",
+        "n_unique": 16,
+        "balance_entropy": 0.9387,
+        "n_levels_observed": 16,
+        "score": 0.12117
+      },
+      {
+        "column": "mostly_text",
+        "n_unique": 135,
+        "balance_entropy": 0.9438,
+        "n_levels_observed": 135,
+        "score": 0.014399
+      },
+      {
+        "column": "batch_code",
+        "n_unique": 177,
+        "balance_entropy": 0.9829,
+        "n_levels_observed": 177,
+        "score": 0.011203
+      },
+      {
+        "column": "growth_pct",
+        "n_unique": 179,
+        "balance_entropy": 0.9809,
+        "n_levels_observed": 179,
+        "score": 0.011067
+      }
+    ],
+    "rejected": [],
+    "note": "low cardinality balanced categorical column; balance is entropy normalised by log(levels), columns with fewer than 2 observed levels are excluded"
+  },
+  "timeseries_candidate": {
+    "is_timeseries": false
+  },
+  "independent_unit_hint": "row",
+  "pandas_version": "3.0.3"
+}
