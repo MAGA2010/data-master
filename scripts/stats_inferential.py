@@ -557,6 +557,262 @@ def binary_outcome(group: pd.Series, outcome: pd.Series) -> Dict[str, Any]:
     }
 
 
+# ---------------- unit-of-analysis structure ----------------
+
+def analyze_unit_structure(df: pd.DataFrame, group: str,
+                           unit_key: Optional[str]) -> Dict[str, Any]:
+    """Classify how rows map to independent units, before any test is chosen.
+
+    Detecting that rows repeat within units and then running row-level tests
+    anyway would report an inflated n with a warning beside it. This function
+    decides which analysis level is defensible so `main` can run the primary
+    analysis there and keep the row-level version as a labelled secondary.
+
+    Structures:
+      undeclared           no unit key; rows assumed independent (recorded as an
+                           assumption, not a finding)
+      independent_rows     one row per unit
+      clustered            each unit sits in exactly one group but has several
+                           rows (technical replicates / repeated measures within
+                           group) -> aggregate to unit level
+      paired               each unit appears in exactly 2 groups -> paired tests
+      complete_blocks      each unit appears in every group -> Friedman
+      incomplete_repeated  units appear in several but not all groups ->
+                           unit-by-group cell means, with the residual clustering
+                           disclosed rather than hidden
+    """
+    if not unit_key or unit_key not in df.columns:
+        return {"structure": "undeclared",
+                "note": "no --unit-key given; the row is assumed to be the "
+                        "independent unit, and every test below inherits that "
+                        "assumption"}
+    n_rows = int(len(df))
+    n_units = int(df[unit_key].nunique(dropna=True))
+    if n_units == 0:
+        return {"structure": "undeclared",
+                "note": f"unit key {unit_key!r} holds no usable values"}
+    gpu = df.groupby(unit_key)[group].nunique(dropna=True)
+    g_min = int(gpu.min()) if len(gpu) else 0
+    g_max = int(gpu.max()) if len(gpu) else 0
+    k = int(df[group].nunique(dropna=True))
+    base = {
+        "unit_key": unit_key,
+        "n_rows": n_rows,
+        "n_units": n_units,
+        "rows_per_unit": round(n_rows / n_units, 3),
+        "groups_per_unit_min": g_min,
+        "groups_per_unit_max": g_max,
+    }
+    if n_units == n_rows:
+        return {**base, "structure": "independent_rows"}
+    if g_max <= 1:
+        return {**base, "structure": "clustered",
+                "note": "every unit belongs to exactly one group; multiple rows "
+                        "per unit are replicates, and the primary analysis is "
+                        "run on per-unit means"}
+    if g_min == g_max == 2 and k == 2:
+        return {**base, "structure": "paired",
+                "note": "every unit is measured under both groups; the primary "
+                        "analysis is the paired comparison of per-unit differences"}
+    if g_min == g_max == k and k >= 3:
+        return {**base, "structure": "complete_blocks",
+                "note": f"every unit is measured under all {k} conditions; "
+                        "the primary analysis is Friedman over complete blocks"}
+    return {**base, "structure": "incomplete_repeated",
+            "note": "units appear in several but not all groups; the primary "
+                    "analysis uses unit-by-group cell means and the residual "
+                    "within-unit correlation is disclosed, not modelled -- a "
+                    "mixed-effects model is the correct next step and is marked "
+                    "AUTHOR_INPUT_NEEDED"}
+
+
+def aggregate_to_units(df: pd.DataFrame, group: str, unit_key: str,
+                       numeric_cols: List[str]) -> pd.DataFrame:
+    """One row per unit: the mean of every numeric outcome plus its group.
+
+    Mean-per-unit is the aggregation the pseudoreplication literature defaults
+    to for a first analysis: it uses exactly the information the unit-level
+    question allows (one number per unit) and adds no model the data has not
+    asked for. The row-level analysis is preserved as a secondary so nothing
+    is hidden by the aggregation.
+    """
+    cols = [unit_key, group] + [c for c in numeric_cols
+                                if c in df.columns and c != unit_key and c != group]
+    agg = (df[cols].groupby(unit_key, as_index=False)
+           .agg({group: "first",
+                 **{c: "mean" for c in numeric_cols
+                    if c in df.columns and c != unit_key and c != group}}))
+    return agg
+
+
+def paired_two_group(df: pd.DataFrame, group: str, oc: str,
+                     lv_a: str, lv_b: str, unit_key: str,
+                     alpha: float = ALPHA) -> Dict[str, Any]:
+    """Paired comparison on per-unit differences (paired t / Wilcoxon signed-rank).
+
+    Units observed under only one level are dropped, loudly: a pair that does
+    not exist is not missing data to impute, it is a unit the design did not
+    measure twice, and the n that enters the test must say so.
+    """
+    sub = df[[unit_key, group, oc]].dropna()
+    wide = sub.pivot_table(index=unit_key, columns=group, values=oc, aggfunc="mean")
+    if not {lv_a, lv_b}.issubset(wide.columns):
+        return {"estimable": False,
+                "reason": "the group levels are not both present after pivoting "
+                          "on the unit key"}
+    wide = wide.dropna(subset=[lv_a, lv_b])
+    a = wide[lv_a].astype(float).values
+    b = wide[lv_b].astype(float).values
+    n = len(a)
+    n_dropped = int(sub[unit_key].nunique() - n)
+    if n < 8:
+        return {"estimable": False, "n_pairs": n, "n_units_dropped": n_dropped,
+                "reason": f"only {n} complete pairs; below the n>=8 minimum"}
+    d = a - b
+    checks = normality(d)
+    assumptions: Dict[str, Any] = {"normality_of_differences": checks}
+    rejected: List[Dict[str, str]] = []
+    if n < NORMALITY_GATE and checks.get("passes") is False:
+        w, p = stats.wilcoxon(d)
+        method, stat_name, dof = "Wilcoxon signed-rank (paired)", "W", n - 1
+        rejected.append({"test": "paired t-test",
+                         "reason": f"n={n} < {NORMALITY_GATE} with non-normal "
+                                   "differences; the rank test does not need "
+                                   "normality of the differences"})
+        primary_is_rank = True
+    else:
+        t, p = stats.ttest_rel(a, b)
+        method, stat_name, dof = "Paired t-test", "t", n - 1
+        rejected.append({"test": "Wilcoxon signed-rank",
+                         "reason": f"n={n} differences, "
+                                   + ("normality not rejected" if checks.get("passes")
+                                      else f"n>= {NORMALITY_GATE}; the mean of the "
+                                           "differences is robust by CLT")})
+        primary_is_rank = False
+
+    # mean difference with a t interval on the differences
+    dm = float(d.mean())
+    sd = float(d.std(ddof=1)) if n > 1 else 0.0
+    se = sd / np.sqrt(n) if n > 1 else None
+    if se:
+        tcrit = stats.t.ppf(1 - alpha / 2, n - 1)
+        ci = {"difference": round(dm, 6), "se": round(se, 6), "dof": n - 1,
+              "ci_low": round(dm - tcrit * se, 6),
+              "ci_high": round(dm + tcrit * se, 6), "ci_level": 1 - alpha,
+              "excludes_zero": bool(dm - tcrit * se > 0 or dm + tcrit * se < 0)}
+    else:
+        ci = {"difference": dm, "se": None, "ci_low": None, "ci_high": None,
+              "note": "zero standard error; interval undefined"}
+    dz = (dm / sd) if sd else None
+    effect = {
+        "mean_difference_ci95": ci,
+        "cohens_dz": round(float(dz), 6) if dz is not None else None,
+        "cohens_dz_note": "mean difference / sd of differences (paired standardised "
+                          "mean difference)",
+    }
+
+    robustness = None
+    if not primary_is_rank:
+        try:
+            w2, p2 = stats.wilcoxon(d)
+            robustness = {"test": "Wilcoxon signed-rank", "statistic": round(float(w2), 5),
+                          "p_raw": round(float(p2), 8),
+                          "agrees_with_primary": bool((p2 < alpha) == (p < alpha)),
+                          "note": "cross-check only; the primary test is reported above"}
+        except Exception:
+            robustness = None
+
+    return {
+        "method": method,
+        "statistic_name": stat_name,
+        "statistic": float(w) if primary_is_rank else float(t),
+        "dof": dof,
+        "p_raw": float(p),
+        "n_pairs": n,
+        "n_units_dropped_incomplete": n_dropped,
+        "means_a_b": [round(float(a.mean()), 6), round(float(b.mean()), 6)],
+        "assumptions": assumptions,
+        "rejected_alternatives": rejected,
+        "effect_sizes": effect,
+        "robustness_cross_check": robustness,
+        "group_a": lv_a, "group_b": lv_b,
+        "analysis_level": "paired",
+        "rule_source": "scripts/stats_inferential.py#paired_two_group",
+    }
+
+
+def friedman_complete_blocks(df: pd.DataFrame, group: str, oc: str,
+                             unit_key: str, alpha: float = ALPHA) -> Dict[str, Any]:
+    """Friedman test over complete unit blocks, with Kendall's W.
+
+    Each unit must be observed under every group level (repeated measures
+    across k conditions). Cells with replicate rows are reduced to their mean
+    first, and the reduction is disclosed in the record.
+    """
+    sub = df[[unit_key, group, oc]].dropna()
+    cells = sub.groupby([unit_key, group], as_index=False)[oc].mean()
+    levels = sorted(pd.unique(cells[group]), key=str)
+    wide = cells.pivot(index=unit_key, columns=group, values=oc)
+    complete = wide.dropna()
+    n = len(complete)
+    n_units_total = int(sub[unit_key].nunique())
+    if n < 8 or len(levels) < 3:
+        return {"estimable": False, "n_complete_blocks": n,
+                "n_units_total": n_units_total,
+                "reason": f"{n} complete blocks across {len(levels)} conditions; "
+                          "Friedman needs n>=8 and k>=3"}
+    cols = [complete[str(lv)] for lv in map(str, levels)]
+    h, p = stats.friedmanchisquare(*cols)
+    k = len(levels)
+    w_kendall = float(h) / (n * (k - 1))
+    # pairwise signed-rank within this outcome's family
+    post_hoc = []
+    for lv_a, lv_b in itertools.combinations(levels, 2):
+        diff = complete[str(lv_a)] - complete[str(lv_b)]
+        try:
+            stat_, p_ = stats.wilcoxon(diff.astype(float).values)
+        except Exception:
+            continue
+        post_hoc.append({"group_a": str(lv_a), "group_b": str(lv_b),
+                         "n_pairs": n, "statistic": round(float(stat_), 5),
+                         "p_raw": float(p_),
+                         "mean_difference": round(float(diff.mean()), 6)})
+    fam = correct_pvalues([h_["p_raw"] for h_ in post_hoc], "BH", alpha)
+    for h_, adj in zip(post_hoc, fam.get("adjusted", [])):
+        h_["p_adjusted_BH"] = float(adj)
+        h_["significant_adjusted"] = bool(adj < alpha)
+    return {
+        "method": f"Friedman test (complete blocks, k={k})",
+        "statistic_name": "chi2_F",
+        "statistic": round(float(h), 6),
+        "dof": k - 1,
+        "p_raw": float(p),
+        "n_complete_blocks": n,
+        "n_units_total": n_units_total,
+        "n_blocks_dropped_incomplete": n_units_total - n,
+        "cell_reduction": "replicate rows within a unit-by-condition cell were "
+                          "reduced to their mean before ranking",
+        "effect_sizes": {"kendalls_w": round(w_kendall, 6),
+                         "kendalls_w_note": "0=no concordance, 1=perfect "
+                                            "concordance across conditions"},
+        "assumptions": {"note": "rank-based; no normality requirement. Units are "
+                                "blocks, so within-unit correlation is the design, "
+                                "not a violation"},
+        "rejected_alternatives": [
+            {"test": "repeated-measures ANOVA",
+             "reason": "sphericity is an extra assumption the data did not "
+                       "volunteer; Friedman needs none"},
+            {"test": "one-way ANOVA on rows",
+             "reason": "rows repeat within units; that analysis would report an "
+                       "inflated n"}],
+        "post_hoc": post_hoc,
+        "post_hoc_note": "pairwise Wilcoxon signed-rank, BH-corrected within this "
+                         "outcome's pairwise family",
+        "analysis_level": "unit (complete blocks)",
+        "rule_source": "scripts/stats_inferential.py#friedman_complete_blocks",
+    }
+
+
 # ---------------- multiple comparison correction ----------------
 
 def correct_pvalues(pvals: List[float], method: str = "BH",
@@ -607,6 +863,148 @@ def correct_pvalues(pvals: List[float], method: str = "BH",
 
 # ---------------- driver ----------------
 
+def _outcome_tests(frame: pd.DataFrame, group: str, levels: List[Any],
+                   outcome_cols: List[str], alpha: float,
+                   analysis_level: str) -> List[Dict[str, Any]]:
+    """Run the row-level dispatch for every outcome column on `frame`.
+
+    Shared by the primary analysis (whatever level the unit structure makes
+    defensible) and the secondary row-level analysis, so both are produced by
+    the same code and differ only in the frame and the label.
+    """
+    tests: List[Dict[str, Any]] = []
+    for oc in outcome_cols:
+        if oc not in frame.columns:
+            continue
+        sub = frame[[group, oc]].dropna()
+        dropped = int(len(frame) - len(sub))
+        if len(sub) < 8:
+            tests.append({"outcome": oc, "estimable": False,
+                          "reason": f"only {len(sub)} complete rows; below the n>=8 minimum",
+                          "rows_dropped_for_missingness": dropped})
+            continue
+
+        s = frame[oc]
+        is_numeric = pd.api.types.is_numeric_dtype(s)
+        # An outcome that is a restatement of the grouping variable cannot be
+        # evidence about it. species_code is a relabelling of species, so
+        # "do the groups differ in species_code" has the answer built into the
+        # question; running the test anyway buries a tautology among four real
+        # comparisons and inflates the family the correction is applied to.
+        per_group_values = [sub.loc[sub[group] == lv, oc].dropna().nunique()
+                            for lv in levels]
+        if (all(v == 1 for v in per_group_values)
+                and s.nunique(dropna=True) > 1):
+            tests.append({
+                "outcome": oc, "estimable": False,
+                "reason": ("every row in each group holds the same value of this column, and the "
+                           "groups differ, so the column is determined by the grouping variable "
+                           "rather than measured independently of it"),
+                "p_raw": None, "p_adjusted": None,
+                "rows_dropped_for_missingness": dropped,
+                "n_complete_cases": int(len(sub)),
+            })
+            continue
+        is_binary = is_numeric and s.nunique(dropna=True) == 2
+        rec: Dict[str, Any] = {"outcome": oc, "estimable": True,
+                               "rows_dropped_for_missingness": dropped,
+                               "n_complete_cases": int(len(sub))}
+        if is_binary:
+            rec.update({"design": "binary outcome", **binary_outcome(frame[group], s)})
+        elif not is_numeric:
+            rec.update({"design": "categorical outcome",
+                        **categorical_2x_k(frame[group], s, alpha)})
+        elif len(levels) == 2:
+            a = sub.loc[sub[group] == levels[0], oc].astype(float).values
+            b = sub.loc[sub[group] == levels[1], oc].astype(float).values
+            rec.update({"design": "2-group numeric",
+                        **two_group_numeric(a, b, str(levels[0]), str(levels[1]), alpha)})
+        else:
+            g = {str(lv): sub.loc[sub[group] == lv, oc].astype(float).values for lv in levels}
+            rec.update({"design": f"{len(levels)}-group numeric",
+                        **k_group_numeric(g, alpha)})
+        rec["analysis_level"] = analysis_level
+        tests.append(rec)
+    return tests
+
+
+def _paired_outcome_tests(df: pd.DataFrame, group: str, levels: List[Any],
+                          outcome_cols: List[str], unit_key: str,
+                          alpha: float) -> List[Dict[str, Any]]:
+    """Paired dispatch: numeric -> paired t / Wilcoxon; binary -> exact McNemar."""
+    if len(levels) != 2:
+        lv_note = f"{len(levels)} conditions per unit; paired dispatch needs exactly 2"
+    tests: List[Dict[str, Any]] = []
+    for oc in outcome_cols:
+        if oc not in df.columns:
+            continue
+        s = df[oc]
+        is_numeric = pd.api.types.is_numeric_dtype(s)
+        rec: Dict[str, Any]
+        if not is_numeric:
+            tests.append({"outcome": oc, "estimable": False, "p_raw": None,
+                          "analysis_level": "paired",
+                          "reason": "paired nominal outcome: no defensible automatic "
+                                    "test; AUTHOR_INPUT_NEEDED"})
+            continue
+        if len(levels) != 2:
+            tests.append({"outcome": oc, "estimable": False, "p_raw": None,
+                          "analysis_level": "paired", "reason": lv_note})
+            continue
+        sub = df[[unit_key, group, oc]].dropna()
+        if s.nunique(dropna=True) == 2:
+            wide = sub.pivot_table(index=unit_key, columns=group, values=oc,
+                                   aggfunc="mean")
+            if set(map(str, levels)) <= set(map(str, wide.columns)):
+                wide = wide.dropna(subset=[str(levels[0]), str(levels[1])])
+                a = (wide[str(levels[0])] > 0.5).astype(int)
+                b = (wide[str(levels[1])] > 0.5).astype(int)
+                b01 = int(((a == 0) & (b == 1)).sum())
+                b10 = int(((a == 1) & (b == 0)).sum())
+                nd = b01 + b10
+                if nd >= 8:
+                    p = float(min(1.0, 2 * stats.binom.cdf(min(b01, b10), nd, 0.5)))
+                    rec = {"outcome": oc, "estimable": True,
+                           "design": "binary paired outcome",
+                           "method": "Exact McNemar test (binomial on discordant pairs)",
+                           "statistic_name": "discordant pairs", "statistic": nd,
+                           "dof": None, "p_raw": p, "n_pairs": int(len(wide)),
+                           "discordant": {"01": b01, "10": b10},
+                           "effect_sizes": {"odds_ratio_discordant":
+                                            round(b10 / b01, 4) if b01 else None},
+                           "rejected_alternatives": [
+                               {"test": "paired t-test on the 0/1 values",
+                                "reason": "binary outcome; the exact test needs no "
+                                          "approximation"}],
+                           "analysis_level": "paired",
+                           "rule_source": "scripts/stats_inferential.py#_paired_outcome_tests"}
+                    tests.append(rec)
+                    continue
+        rec = {"outcome": oc, "estimable": True,
+               **paired_two_group(df, group, oc, str(levels[0]), str(levels[1]),
+                                  unit_key, alpha)}
+        tests.append(rec)
+    return tests
+
+
+def _blocks_outcome_tests(df: pd.DataFrame, group: str, levels: List[Any],
+                          outcome_cols: List[str], unit_key: str,
+                          alpha: float) -> List[Dict[str, Any]]:
+    tests: List[Dict[str, Any]] = []
+    for oc in outcome_cols:
+        if oc not in df.columns:
+            continue
+        if not pd.api.types.is_numeric_dtype(df[oc]):
+            tests.append({"outcome": oc, "estimable": False, "p_raw": None,
+                          "analysis_level": "unit (complete blocks)",
+                          "reason": "nominal outcome across k>2 repeated conditions: "
+                                    "no defensible automatic test; AUTHOR_INPUT_NEEDED"})
+            continue
+        tests.append({"outcome": oc, "estimable": True,
+                      **friedman_complete_blocks(df, group, oc, unit_key, alpha)})
+    return tests
+
+
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -618,8 +1016,10 @@ def main() -> int:
     p.add_argument("--correction", default="BH", choices=["BH", "bonferroni", "holm"])
     p.add_argument("--alpha", type=float, default=ALPHA)
     p.add_argument("--unit-key", default=None,
-                   help="column identifying the independent unit; when it is present and "
-                        "rows-per-unit > 1, a pseudoreplication warning is emitted")
+                   help="column identifying the independent unit; when rows repeat "
+                        "within units, the primary analysis moves to the level the "
+                        "structure supports and row-level results are kept as a "
+                        "labelled secondary")
     args = p.parse_args()
 
     df = _read(Path(args.clean))
@@ -629,91 +1029,92 @@ def main() -> int:
 
     outcome_cols = ([c.strip() for c in args.outcomes.split(",") if c.strip()]
                     if args.outcomes else
-                    [c for c in df.select_dtypes(include=[np.number]).columns if c != args.group])
+                    [c for c in df.select_dtypes(include=[np.number]).columns
+                     if c != args.group and c != args.unit_key])
 
     levels = sorted(pd.unique(df[args.group].dropna()), key=str)
     if len(levels) < 2:
         print(f"ERROR: group column {args.group!r} has {len(levels)} level(s); cannot compare")
         return 1
 
-    # ---- pseudoreplication check (Gate 1: unit of analysis) ----
-    unit_info: Dict[str, Any] = {"unit_key": args.unit_key, "n_rows": int(len(df))}
-    pseudorep_warning = None
-    if args.unit_key and args.unit_key in df.columns:
-        n_units = int(df[args.unit_key].nunique(dropna=True))
-        unit_info.update({"n_units": n_units, "rows_per_unit": round(len(df) / n_units, 3) if n_units else None})
-        if n_units < len(df):
-            pseudorep_warning = (
-                f"column {args.unit_key!r} yields {n_units} independent units across {len(df)} rows. "
-                "Treating rows as independent inflates the effective sample size. The tests below "
-                "are row-level; if observations repeat within a unit, aggregate to the unit first "
-                "or fit a mixed-effects model."
-            )
-            unit_info["warning"] = pseudorep_warning
+    # ---- unit of analysis: decide the level BEFORE choosing any test (Gate 1) ----
+    structure_info = analyze_unit_structure(df, args.group, args.unit_key)
+    structure = structure_info["structure"]
+    unit_info: Dict[str, Any] = dict(structure_info)
+    warnings: List[str] = []
+
+    numeric_outcomes = [c for c in outcome_cols
+                        if c in df.columns and pd.api.types.is_numeric_dtype(df[c])]
+
+    primary_level = "row"
+    analysis_df = df
+    if structure == "clustered":
+        analysis_df = aggregate_to_units(df, args.group, args.unit_key, numeric_outcomes)
+        primary_level = "unit"
+        unit_info["primary_analysis"] = (
+            "per-unit means (mean aggregation disclosed); n below is the number of "
+            "units, not rows")
+        warnings.append(
+            f"{structure_info['n_rows']} rows collapse to {structure_info['n_units']} "
+            f"units; the primary tests below run on units. Row-level results are "
+            "kept as a secondary analysis and are not the evidence.")
+    elif structure == "paired":
+        primary_level = "paired"
+        unit_info["primary_analysis"] = "paired per-unit differences"
+    elif structure == "complete_blocks":
+        primary_level = "unit (complete blocks)"
+        unit_info["primary_analysis"] = "Friedman over complete unit blocks"
+    elif structure == "incomplete_repeated":
+        cell = (df[[args.unit_key, args.group] + numeric_outcomes]
+                .groupby([args.unit_key, args.group], as_index=False)
+                .agg({c: "mean" for c in numeric_outcomes}))
+        # one row per unit so row-level dispatch treats cells as the unit of record
+        analysis_df = cell
+        primary_level = "unit x group cell"
+        unit_info["primary_analysis"] = (
+            "unit-by-group cell means; within-unit correlation across groups is "
+            "disclosed, not modelled -- a mixed-effects model is the correct next "
+            "step and is marked AUTHOR_INPUT_NEEDED")
+        warnings.append(
+            "units appear in several but not all groups; cell means remove "
+            "within-cell replication but residual within-unit correlation across "
+            "groups remains unmodelled (AUTHOR_INPUT_NEEDED: mixed-effects fit)")
+    elif structure == "undeclared":
+        unit_info["note"] = structure_info.get("note")
+
+    # ---- primary tests, at the level the structure supports ----
+    if structure == "paired":
+        tests = _paired_outcome_tests(df, args.group, levels, outcome_cols,
+                                      args.unit_key, args.alpha)
+    elif structure == "complete_blocks":
+        tests = _blocks_outcome_tests(df, args.group, levels, outcome_cols,
+                                      args.unit_key, args.alpha)
     else:
-        unit_info["note"] = "no --unit-key given; row is assumed to be the independent unit"
+        tests = _outcome_tests(analysis_df, args.group, levels, outcome_cols,
+                               args.alpha, primary_level)
 
-    tests: List[Dict[str, Any]] = []
-    for oc in outcome_cols:
-        if oc not in df.columns:
-            continue
-        sub = df[[args.group, oc]].dropna()
-        dropped = int(len(df) - len(sub))
-        if len(sub) < 8:
-            tests.append({"outcome": oc, "estimable": False,
-                          "reason": f"only {len(sub)} complete rows; below the n>=8 minimum",
-                          "rows_dropped_for_missingness": dropped})
-            continue
-
-        s = df[oc]
-        is_numeric = pd.api.types.is_numeric_dtype(s)
-        # An outcome that is a restatement of the grouping variable cannot be
-        # evidence about it. species_code is a relabelling of species, so
-        # "do the groups differ in species_code" has the answer built into the
-        # question; running the test anyway buries a tautology among four real
-        # comparisons and inflates the family the correction is applied to.
-        #
-        # The test is structural rather than a value comparison, because a
-        # relabelling need not reuse the original labels -- species_code holds
-        # 1/2/3 while species holds setosa/versicolor/virginica, so comparing
-        # value sets finds nothing. What makes it a restatement is that each
-        # group carries exactly one outcome value.
-        per_group_values = [sub.loc[sub[args.group] == lv, oc].dropna().nunique()
-                            for lv in levels]
-        if (all(v == 1 for v in per_group_values)
-                and s.nunique(dropna=True) > 1):
-            tautology = {
-                "outcome": oc, "estimable": False,
-                "reason": ("every row in each group holds the same value of this column, and the "
-                           "groups differ, so the column is determined by the grouping variable "
-                           "rather than measured independently of it"),
-                "p_raw": None, "p_adjusted": None,
-                "rows_dropped_for_missingness": dropped,
-                "n_complete_cases": int(len(sub)),
-            }
-            tests.append(tautology)
-            continue
-        is_binary = is_numeric and s.nunique(dropna=True) == 2
-        rec: Dict[str, Any] = {"outcome": oc, "estimable": True,
-                               "rows_dropped_for_missingness": dropped,
-                               "n_complete_cases": int(len(sub))}
-        if is_binary:
-            rec.update({"design": "binary outcome", **binary_outcome(df[args.group], s)})
-        elif not is_numeric:
-            rec.update({"design": "categorical outcome",
-                        **categorical_2x_k(df[args.group], s, args.alpha)})
-        elif len(levels) == 2:
-            a = sub.loc[sub[args.group] == levels[0], oc].astype(float).values
-            b = sub.loc[sub[args.group] == levels[1], oc].astype(float).values
-            rec.update({"design": "2-group numeric",
-                        **two_group_numeric(a, b, str(levels[0]), str(levels[1]), args.alpha)})
-        else:
-            g = {str(lv): sub.loc[sub[args.group] == lv, oc].astype(float).values for lv in levels}
-            rec.update({"design": f"{len(levels)}-group numeric",
-                        **k_group_numeric(g, args.alpha)})
-        if pseudorep_warning:
-            rec["pseudoreplication_warning"] = pseudorep_warning
-        tests.append(rec)
+    # ---- secondary row-level analysis, when the primary is not row-level ----
+    secondary: Optional[Dict[str, Any]] = None
+    if primary_level != "row":
+        sec_tests = _outcome_tests(df, args.group, levels, outcome_cols,
+                                   args.alpha, "row (secondary)")
+        for t in sec_tests:
+            if t.get("estimable"):
+                t["pseudoreplication_warning"] = (
+                    "rows repeat within units; this row-level result treats them as "
+                    "independent and its n is inflated accordingly -- it is shown "
+                    "for comparison only and is not the primary evidence")
+        fam_idx = [i for i, t in enumerate(sec_tests)
+                   if t.get("estimable") and t.get("p_raw") is not None]
+        sec_family = (correct_pvalues([sec_tests[i]["p_raw"] for i in fam_idx],
+                                      args.correction, args.alpha)
+                      if fam_idx else {"family_size": 0, "adjusted": []})
+        for j, i in enumerate(fam_idx):
+            sec_tests[i]["p_adjusted"] = sec_family["adjusted"][j]
+        secondary = {"analysis_level": "row",
+                     "role": "secondary; retained for comparison, not evidence",
+                     "tests": sec_tests,
+                     "multiple_comparisons": sec_family}
 
     # ---- multiplicity across the primary family ----
     fam_idx = [i for i, t in enumerate(tests) if t.get("estimable") and t.get("p_raw") is not None]
@@ -723,12 +1124,13 @@ def main() -> int:
         tests[i]["p_adjusted"] = family["adjusted"][j]
         tests[i]["significant_after_correction"] = bool(family["adjusted"][j] < args.alpha)
 
-    # ---- exploratory correlation family ----
-    num_cols = [c for c in outcome_cols if c in df.columns
-                and pd.api.types.is_numeric_dtype(df[c])]
+    # ---- exploratory correlation family, at the primary analysis level ----
+    corr_frame = analysis_df if structure in ("clustered", "incomplete_repeated") else df
+    num_cols = [c for c in outcome_cols if c in corr_frame.columns
+                and pd.api.types.is_numeric_dtype(corr_frame[c])]
     corrs: List[Dict[str, Any]] = []
     for a, b in itertools.combinations(num_cols, 2):
-        sub2 = df[[a, b]].dropna()
+        sub2 = corr_frame[[a, b]].dropna()
         if len(sub2) < 8:
             continue
         pr, sr = pearson_r(sub2[a].astype(float).values, sub2[b].astype(float).values), \
@@ -747,15 +1149,17 @@ def main() -> int:
             c["p_adjusted"] = None
 
     result = {
-        "schema_version": "1.1",
+        "schema_version": "1.2",
         "source": str(args.clean),
         "group": args.group,
         "group_levels": [str(lv) for lv in levels],
         "group_sizes": {str(lv): int((df[args.group] == lv).sum()) for lv in levels},
         "alpha": args.alpha,
         "n_rows": int(len(df)),
+        "primary_level": primary_level,
         "unit_of_analysis": unit_info,
         "tests": tests,
+        "secondary_row_level": secondary,
         "multiple_comparisons": {
             "primary_family": family,
             "note": "one outcome = one member of the family; correction applies across "
@@ -763,12 +1167,13 @@ def main() -> int:
         },
         "correlations": {
             "matrix": corrs, "family": corr_family,
+            "analysis_level": ("unit" if corr_frame is not df else "row"),
             "note": "exploratory only; correlation is not evidence of mechanism",
         },
-        "rule_source": "references/nature-statistics-checklist.md#gates-3-5",
+        "rule_source": "references/nature-statistics-checklist.md#gates-1-3-5",
     }
-    if pseudorep_warning:
-        result["warnings"] = [pseudorep_warning]
+    if warnings:
+        result["warnings"] = warnings
 
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -776,6 +1181,11 @@ def main() -> int:
 
     n_ok = sum(1 for t in tests if t.get("estimable"))
     print(f"stats_inferential written: {out}")
+    print(f"  unit structure : {structure}  primary level: {primary_level}")
+    if structure not in ("undeclared", "independent_rows"):
+        print(f"  units          : {structure_info.get('n_units')} units across "
+              f"{structure_info.get('n_rows')} rows "
+              f"(rows/unit={structure_info.get('rows_per_unit')})")
     print(f"  tests: {n_ok}/{len(tests)} estimable  family_size={family.get('family_size')}  "
           f"correction={args.correction}")
     print(f"  significant raw={family.get('n_significant_raw')} "
@@ -784,8 +1194,10 @@ def main() -> int:
         if t.get("estimable"):
             print(f"    {t['outcome']:22s} {t.get('method','?'):48s} "
                   f"p={t.get('p_raw')} p_adj={t.get('p_adjusted')}")
-    if pseudorep_warning:
-        print("  WARNING: pseudoreplication risk -- see unit_of_analysis in the JSON")
+    if secondary:
+        print("  secondary row-level analysis recorded (not the primary evidence)")
+    for w in warnings:
+        print("  WARNING: %s" % w)
     return 0
 
 

@@ -21,7 +21,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 CATALOG = "references/cleaning-rule-catalog.md"
 NEVER_LIST = "references/never-automatic-list.md"
@@ -113,7 +113,8 @@ def build_plan(profile: Dict[str, Any], user_opts: Dict[str, str]) -> Dict[str, 
 
     def flag(op: str, columns: List[str], reason: str, ask: str, default: str,
              severity: str = "P1", detail: Any = None) -> None:
-        e = {"op": op, "columns": columns, "reason": reason, "ask_user": ask,
+        e = {"id": flag_id(op, columns),
+             "op": op, "columns": columns, "reason": reason, "ask_user": ask,
              "default_if_silent": default, "severity": severity,
              "rule_source": f"{NEVER_LIST}#conditional-never"}
         if detail is not None:
@@ -244,6 +245,7 @@ def build_plan(profile: Dict[str, Any], user_opts: Dict[str, str]) -> Dict[str, 
         if raw_n and raw_n != cv["n_exact_levels"]:
             counts += f" ({raw_n} levels on raw input, before the automatic whitespace/quote hygiene)"
         never.append({
+            "id": flag_id("merge_case_variants", [c]),
             "op": "merge_case_variants",
             "columns": [c],
             "reason": f"once the automatic whitespace/quote hygiene has run, {cv['n_merged_groups']} label "
@@ -365,10 +367,231 @@ def build_plan(profile: Dict[str, Any], user_opts: Dict[str, str]) -> Dict[str, 
 # dm_types.numeric_like_report / date_like_report is now the only implementation.
 
 
+# ---------------- answers file: the human-in-the-loop half ----------------
+#
+# A held conversion used to dead-end the one-command runner: cleaning_plan.py
+# accepted --force-coerce-numeric and friends, but run_pipeline.py never exposed
+# them, and nothing recorded who decided or why. The answers file closes that
+# loop. Each decision is validated against the flag it claims to answer, is
+# applied only through the same auto_actions the executor already runs, and
+# carries provenance (who, when, why, from which file) into the plan.
+
+def flag_id(op: str, columns: List[str]) -> str:
+    """Stable, deterministic id for a never-automatic flag.
+
+    The id must survive a re-run on the same profile unchanged, because it is
+    what an answers file references. op plus the sorted column list is enough;
+    row-level flags (no columns) get the __rows__ marker.
+    """
+    return "%s@%s" % (op, ",".join(sorted(columns)) if columns else "__rows__")
+
+
+# op -> {action: effect}
+#   None            the action is a deliberate no-op (e.g. keep_as_text): the flag
+#                   is resolved and no operation is added
+#   (rule_id, how)  an auto action is added; how is "columns" (target the flag's
+#                   own columns) or "roles" (target every column the rule's role
+#                   matches, as the CLI flags do)
+#   "UNDO"          remove the columns from an already-added automatic op
+ANSWER_ACTIONS: Dict[str, Dict[str, Any]] = {
+    "coerce_numeric": {
+        "keep_as_text": None,
+        "coerce": ("t-coerce-numeric", "columns"),
+    },
+    "coerce_numeric_currency": {
+        "keep_as_text": None,
+        "strip_symbol": ("t-coerce-numeric", "columns"),
+    },
+    "coerce_numeric_or_date": {
+        "keep_as_text": None,
+        "integers": ("t-coerce-numeric", "columns"),
+        "dates": ("t-coerce-dates", "columns"),
+    },
+    "dedupe_exact": {
+        "keep_all": None,
+        "drop_duplicates": ("t-dedupe-exact", "roles"),
+    },
+    "drop_impossible": {
+        "flag_only": None,
+    },
+    "impute_numeric": {
+        "leave_as_nan": None,
+        "mean": ("t-impute-mean", "roles"),
+        "median": ("t-impute-median", "roles"),
+        "mode": ("t-impute-mode", "roles"),
+        "knn": ("t-impute-knn", "roles"),
+        "mice": ("t-impute-mice", "roles"),
+    },
+    "impute_categorical": {
+        "leave_as_nan": None,
+        "mode": ("t-impute-mode", "roles"),
+    },
+    "outliers": {
+        "leave": None,
+        "flag_zscore_3": ("t-flag-outliers-z", "roles"),
+        "winsorize": ("t-winsorize", "roles"),
+    },
+    "merge_case_variants": {
+        "merge": None,
+        "keep_asis": "UNDO",
+    },
+}
+
+_ACTIONS_EXECUTABLE = {
+    op: sorted(actions) for op, actions in ANSWER_ACTIONS.items()}
+
+
+def allowed_actions_for(flag: Dict[str, Any]) -> List[str]:
+    """The actions this plan can actually execute for this flag.
+
+    An action the user is invited to choose in ask_user but that no automatic
+    op implements (drop_rows on impossible values, listwise_delete on missing)
+    is deliberately absent here: offering it would resurrect the exact failure
+    the answers file exists to prevent -- a decision recorded as applied that
+    execution silently skipped.
+    """
+    return _ACTIONS_EXECUTABLE.get(flag.get("op"), [])
+
+
+def load_answers(path: Path) -> List[Dict[str, Any]]:
+    doc = json.loads(path.read_text(encoding="utf-8"))
+    decisions = doc.get("decisions")
+    if not isinstance(decisions, list):
+        raise ValueError("answers file must hold a list under 'decisions'")
+    out: List[Dict[str, Any]] = []
+    for i, dec in enumerate(decisions):
+        if not isinstance(dec, dict) or not dec.get("id") or not dec.get("action"):
+            raise ValueError("decision #%d needs 'id' and 'action'" % (i + 1))
+        out.append(dec)
+    return out
+
+
+def apply_answers(plan: Dict[str, Any], answers: List[Dict[str, Any]],
+                  source: Path, profile: Dict[str, Any]) -> Tuple[List[str], List[str]]:
+    """Validate every decision against its flag and apply the executable ones.
+
+    Returns (applied, errors). A single unknown id or unsupported action fails
+    the whole file: applying four of five decisions and silently skipping the
+    fifth is how a plan comes to say one thing and do another.
+    """
+    roles: Dict[str, str] = profile.get("column_roles") or {
+        c: e["role"] for c, e in (profile.get("columns") or {}).items()}
+    by_id = {f.get("id"): f for f in plan.get("never_automatic_flags", [])}
+    applied: List[str] = []
+    errors: List[str] = []
+
+    for dec in answers:
+        fid, action = dec["id"], dec["action"]
+        flag = by_id.get(fid)
+        if flag is None:
+            errors.append("unknown decision id %r; the plan holds: %s"
+                          % (fid, ", ".join(sorted(by_id)) or "(no flags)"))
+            continue
+        allowed = allowed_actions_for(flag)
+        if action not in allowed:
+            errors.append("flag %r (%s) accepts %s, got %r"
+                          % (fid, flag.get("op"),
+                             " / ".join(allowed) or "no automatic action", action))
+            continue
+        effect = ANSWER_ACTIONS[flag["op"]][action]
+        if effect == "UNDO":
+            undone = set(flag.get("columns") or [])
+            for a in plan.get("auto_actions", []):
+                if a.get("id") == "t-merge-case-variants":
+                    keep = [c for c in (a.get("columns") or []) if c not in undone]
+                    a["columns"] = keep
+                    if not keep:
+                        plan["auto_actions"] = [
+                            x for x in plan["auto_actions"]
+                            if x is not a]
+                    break
+        elif isinstance(effect, tuple):
+            rule_id, how = effect
+            r = TABLE_RULES[rule_id]
+            if how == "columns":
+                cols = list(flag.get("columns") or [])
+            else:
+                cols = _targets_for(r["roles"], roles, [])
+            plan.setdefault("auto_actions", []).append({
+                "id": rule_id,
+                "op": r["op"],
+                "columns": cols,
+                "severity": r["severity"],
+                "rule_source": f"{CATALOG}#tabular:{rule_id}",
+                "user_opt_in": {"flag": "--answers", "param": action,
+                                "decision_id": fid},
+            })
+        provenance = {
+            "action": action,
+            "decided_by": dec.get("decided_by") or "user",
+            "decided_at": dec.get("decided_at") or _now_iso(),
+            "rationale": dec.get("rationale") or "",
+            "source": str(source),
+        }
+        flag["resolved"] = provenance
+        plan.setdefault("user_decisions", []).append({"id": fid, **provenance})
+        applied.append(fid)
+
+    # re-deduplicate auto actions (an answers op may repeat a rule+columns pair)
+    seen = set()
+    dedup = []
+    for a in plan.get("auto_actions", []):
+        k = (a["id"], tuple(a.get("columns") or []))
+        if k in seen:
+            continue
+        seen.add(k)
+        dedup.append(a)
+    plan["auto_actions"] = dedup
+    return applied, errors
+
+
+def _now_iso() -> str:
+    from datetime import datetime, timezone
+    return datetime.now(timezone.utc).isoformat()
+
+
+def write_answers_template(plan: Dict[str, Any], path: Path) -> bool:
+    """Emit a fillable decisions file for every unresolved decision-class flag.
+
+    Returns True when the template was written. INFO-severity flags are
+    disclosures, not open questions, so they are omitted.
+    """
+    pending = [f for f in plan.get("never_automatic_flags", [])
+               if f.get("severity") != "INFO" and not f.get("resolved")]
+    if not pending:
+        return False
+    doc = {
+        "schema_version": "1.0",
+        "instructions": (
+            "Answer every decision below by keeping one entry per id, filling "
+            "'action' with one of the listed choices, and adding 'rationale'. "
+            "Then re-run the pipeline with --answers <this file>. A decision "
+            "applies to every column listed on the flag. Actions not listed "
+            "here have no automatic implementation and are rejected rather "
+            "than silently skipped."),
+        "decisions": [
+            {"id": f["id"],
+             "action": None,
+             "allowed_actions": allowed_actions_for(f),
+             "default_if_silent": f.get("default_if_silent"),
+             "columns": f.get("columns"),
+             "question": f.get("ask_user"),
+             "rationale": "",
+             "decided_by": "user"}
+            for f in pending],
+    }
+    path.write_text(json.dumps(doc, indent=2, ensure_ascii=False) + "\n",
+                    encoding="utf-8")
+    return True
+
+
 def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--profile", required=True)
     p.add_argument("--out", required=True)
+    p.add_argument("--answers", default=None,
+                   help="decisions.json answering never-automatic flags by id; "
+                        "every id and action is validated before anything applies")
     p.add_argument("--impute")
     p.add_argument("--remove-outliers")
     p.add_argument("--winsorize")
@@ -401,8 +624,25 @@ def main() -> int:
             user_opts[f"--{name.replace('_', '-')}"] = str(val)
 
     plan = build_plan(profile, user_opts)
+
+    if args.answers:
+        answers_path = Path(args.answers)
+        try:
+            answers = load_answers(answers_path)
+        except (ValueError, json.JSONDecodeError) as exc:
+            print(f"ERROR: answers file could not be read: {exc}", file=sys.stderr)
+            return 2
+        applied, errors = apply_answers(plan, answers, answers_path, profile)
+        if errors:
+            print("ERROR: answers file rejected -- nothing was applied:", file=sys.stderr)
+            for e in errors:
+                print("  - %s" % e, file=sys.stderr)
+            return 2
+        for fid in applied:
+            print("answers : resolved %s" % fid)
+
     plan.update({
-        "schema_version": "1.2",
+        "schema_version": "1.3",
         "source": profile["source"],
         # The executor must re-read the raw file exactly as the profiler did, or
         # the plan describes a dataset that never existed on disk.
@@ -416,11 +656,18 @@ def main() -> int:
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     Path(args.out).write_text(json.dumps(plan, indent=2, ensure_ascii=False), encoding="utf-8")
 
+    template_path = Path(args.out).parent / "answers.template.json"
+    if write_answers_template(plan, template_path):
+        print(f"answers : {template_path} holds the unresolved decisions "
+              f"(fill it and re-run with --answers)")
+
     print(f"cleaning_plan written: {args.out}")
     print(f"  auto actions        : {len(plan['auto_actions'])}")
     print(f"  never-automatic     : {len(plan['never_automatic_flags'])}  (default_if_silent = keep data as-is)")
     for f in plan["never_automatic_flags"]:
-        print(f"    [{f['severity']}] {f['op']}: {f['columns'] or 'rows'} -> default={f['default_if_silent']}")
+        state = "resolved via answers: %s" % f["resolved"]["action"] if f.get("resolved") \
+            else "default=%s" % f["default_if_silent"]
+        print(f"    [{f['severity']}] {f['id']}: -> {state}")
     return 0
 
 

@@ -1,6 +1,6 @@
 {
   "title": "Iris morphometrics",
-  "generated": "2026-10-17 17:47 中国标准时间",
+  "generated": "2026-10-18 12:21 中国标准时间",
   "template": "nature",
   "verdict": "NOT SUBMISSION-READY",
   "gates": [
@@ -10,7 +10,7 @@
       "status": "FAIL",
       "evidence": "n is recorded per outcome (e.g. n=158) and per group, but the independent unit is not declared in the input.",
       "issues": [
-        "independent unit not declared: no --unit-key given; row is assumed to be the independent unit"
+        "independent unit not declared: no --unit-key given; the row is assumed to be the independent unit, and every test below inherits that assumption"
       ],
       "fix": "pass --unit-key with what one row represents, or record it in the run manifest; the report already marks this AUTHOR_INPUT_NEEDED."
     },
@@ -50,7 +50,7 @@
       "gate": 6,
       "name": "sensitivity tested",
       "status": "PASS",
-      "evidence": "all 4 estimable outcomes carry a rank-based cross-check, and Appendix A1 lists the analyses that were not run as gaps.",
+      "evidence": "64 perturbation(s) ran across 4 outcome(s) (leave-one-group-out, block jackknife, extreme-value fence, strict complete cases) and every one agreed with the primary verdict at alpha=0.05. Appendix A1 reports them.",
       "issues": [],
       "fix": ""
     },
@@ -58,7 +58,7 @@
       "gate": 7,
       "name": "no association-to-mechanism upgrade",
       "status": "PASS",
-      "evidence": "no forbidden construction appears outside a disclaimer (11 patterns checked across 393 lines).",
+      "evidence": "no forbidden construction appears outside a disclaimer (11 patterns checked across 466 lines).",
       "issues": [],
       "fix": ""
     },
@@ -95,7 +95,7 @@
     {
       "check": "PDF delivered",
       "status": "PASS",
-      "detail": "backend reportlab, 485637 bytes"
+      "detail": "backend reportlab, 498582 bytes"
     },
     {
       "check": "writer self-audit",
@@ -180,13 +180,13 @@
       "status": "FAIL",
       "evidence": "n is recorded per outcome (e.g. n=158) and per group, but the independent unit is not declared in the input.",
       "issues": [
-        "independent unit not declared: no --unit-key given; row is assumed to be the independent unit"
+        "independent unit not declared: no --unit-key given; the row is assumed to be the independent unit, and every test below inherits that assumption"
       ],
       "fix": "pass --unit-key with what one row represents, or record it in the run manifest; the report already marks this AUTHOR_INPUT_NEEDED."
     }
   ],
   "blocking": [
-    "Gate 1 (n explicit and unit-defined): independent unit not declared: no --unit-key given; row is assumed to be the independent unit"
+    "Gate 1 (n explicit and unit-defined): independent unit not declared: no --unit-key given; the row is assumed to be the independent unit, and every test below inherits that assumption"
   ],
   "relaxed_gates": [],
   "n_pass": 7,

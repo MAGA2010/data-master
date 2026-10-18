@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.1",
+  "schema_version": "1.2",
   "source": "D:\\数据处理 skill\\examples\\iris\\outputs\\cleaned\\cleaned.csv",
   "group": "species",
   "group_levels": [
@@ -14,10 +14,10 @@
   },
   "alpha": 0.05,
   "n_rows": 158,
+  "primary_level": "row",
   "unit_of_analysis": {
-    "unit_key": null,
-    "n_rows": 158,
-    "note": "no --unit-key given; row is assumed to be the independent unit"
+    "structure": "undeclared",
+    "note": "no --unit-key given; the row is assumed to be the independent unit, and every test below inherits that assumption"
   },
   "tests": [
     {
@@ -221,6 +221,7 @@
       ],
       "post_hoc_note": "both parametric and rank p-values are BH-corrected within this outcome's pairwise family; report the one matching the omnibus test",
       "rule_source": "scripts/stats_inferential.py#k_group_numeric",
+      "analysis_level": "row",
       "p_adjusted": 1.2277826947663131e-23,
       "significant_after_correction": true
     },
@@ -425,6 +426,7 @@
       ],
       "post_hoc_note": "both parametric and rank p-values are BH-corrected within this outcome's pairwise family; report the one matching the omnibus test",
       "rule_source": "scripts/stats_inferential.py#k_group_numeric",
+      "analysis_level": "row",
       "p_adjusted": 9.26628902939057e-19,
       "significant_after_correction": true
     },
@@ -629,6 +631,7 @@
       ],
       "post_hoc_note": "both parametric and rank p-values are BH-corrected within this outcome's pairwise family; report the one matching the omnibus test",
       "rule_source": "scripts/stats_inferential.py#k_group_numeric",
+      "analysis_level": "row",
       "p_adjusted": 3.697009975363455e-69,
       "significant_after_correction": true
     },
@@ -833,6 +836,7 @@
       ],
       "post_hoc_note": "both parametric and rank p-values are BH-corrected within this outcome's pairwise family; report the one matching the omnibus test",
       "rule_source": "scripts/stats_inferential.py#k_group_numeric",
+      "analysis_level": "row",
       "p_adjusted": 7.810978381408557e-65,
       "significant_after_correction": true
     },
@@ -846,6 +850,7 @@
       "n_complete_cases": 158
     }
   ],
+  "secondary_row_level": null,
   "multiple_comparisons": {
     "primary_family": {
       "family_size": 4,
@@ -1238,7 +1243,8 @@
       "n_significant_raw": 10,
       "n_significant_adjusted": 10
     },
+    "analysis_level": "row",
     "note": "exploratory only; correlation is not evidence of mechanism"
   },
-  "rule_source": "references/nature-statistics-checklist.md#gates-3-5"
+  "rule_source": "references/nature-statistics-checklist.md#gates-1-3-5"
 }

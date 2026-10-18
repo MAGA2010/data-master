@@ -142,6 +142,7 @@
   ],
   "never_automatic_flags": [
     {
+      "id": "coerce_numeric_currency@growth_pct",
       "op": "coerce_numeric_currency",
       "columns": [
         "growth_pct"
@@ -199,6 +200,7 @@
       }
     },
     {
+      "id": "coerce_numeric@mostly_text",
       "op": "coerce_numeric",
       "columns": [
         "mostly_text"
@@ -251,6 +253,7 @@
       }
     },
     {
+      "id": "coerce_numeric@postcode",
       "op": "coerce_numeric",
       "columns": [
         "postcode"
@@ -303,6 +306,7 @@
       }
     },
     {
+      "id": "coerce_numeric_currency@revenue",
       "op": "coerce_numeric_currency",
       "columns": [
         "revenue"
@@ -360,6 +364,7 @@
       }
     },
     {
+      "id": "merge_case_variants@region",
       "op": "merge_case_variants",
       "columns": [
         "region"
@@ -412,7 +417,7 @@
     }
   ],
   "n_rows": 240,
-  "schema_version": "1.2",
+  "schema_version": "1.3",
   "source": "D:\\数据处理 skill\\examples\\column_traps\\traps_dirty.csv",
   "read_mode": "text",
   "user_flags": {},

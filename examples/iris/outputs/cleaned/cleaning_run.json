@@ -255,6 +255,7 @@
   "failed": [],
   "never_automatic_flags": [
     {
+      "id": "coerce_numeric@height_m",
       "op": "coerce_numeric",
       "columns": [
         "height_m"
@@ -307,6 +308,7 @@
       }
     },
     {
+      "id": "merge_case_variants@species",
       "op": "merge_case_variants",
       "columns": [
         "species"
@@ -350,6 +352,7 @@
       }
     },
     {
+      "id": "dedupe_exact@__rows__",
       "op": "dedupe_exact",
       "columns": [],
       "reason": "9 exact-duplicate rows (5.7% of rows)",
@@ -363,6 +366,7 @@
       }
     },
     {
+      "id": "impute_categorical@petal_width_cm,sepal_width_cm",
       "op": "impute_categorical",
       "columns": [
         "petal_width_cm",

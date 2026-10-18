@@ -10,6 +10,7 @@
 | Reproducible script | `clean_iris_dirty.py` |
 | Ops applied | 10 |
 | Decisions pending | 3 |
+| Decisions answered via answers file | 0 |
 
 > The raw file is never modified. Everything below is additive.
 
@@ -53,6 +54,7 @@ These were **not** applied. Each one changes the analysis and needs an explicit 
 - **Question**: Choose: keep_as_text (default) / coerce and accept the loss --force-coerce-numeric height_m / map the listed tokens to missing by editing the source file
 - **If you say nothing**: `keep_as_text`
 - **Rule**: references/never-automatic-list.md#conditional-never
+- **Answer with**: fill `answers.template.json` (id `coerce_numeric@height_m`) and re-run with `--answers`
 
 ### `dedupe_exact` (P1)
 
@@ -61,6 +63,7 @@ These were **not** applied. Each one changes the analysis and needs an explicit 
 - **Question**: Choose: drop_duplicates / keep_all
 - **If you say nothing**: `keep_all`
 - **Rule**: references/never-automatic-list.md#conditional-never
+- **Answer with**: fill `answers.template.json` (id `dedupe_exact@__rows__`) and re-run with `--answers`
 
 ### `impute_categorical` (P1)
 
@@ -69,6 +72,7 @@ These were **not** applied. Each one changes the analysis and needs an explicit 
 - **Question**: Choose: mode / sentinel_value / listwise_delete / leave_as_nan
 - **If you say nothing**: `leave_as_nan`
 - **Rule**: references/never-automatic-list.md#conditional-never
+- **Answer with**: fill `answers.template.json` (id `impute_categorical@petal_width_cm,sepal_width_cm`) and re-run with `--answers`
 
 ## 4. Disclosures (already applied, reversible)
 

@@ -29,8 +29,10 @@ Most automated analysis tools optimize for the shortest path to a polished answe
 | A reader silently changes `02134` to `2134` | All text cells are read as text; conversions are explicit plan operations |
 | Cleaning changes columns nobody approved | Every changed value must belong to a named operation; untouched columns are audited |
 | A statistical test is selected without explanation | Tests, assumptions, alternatives, effect sizes, and confidence intervals are recorded |
+| Repeated rows inflate the sample size | The unit structure is classified (clustered / paired / blocks) and the primary analysis runs at the level it supports; row-level results are demoted to a labelled secondary |
+| "Sensitivity tested" means one robustness check | Leave-one-group-out, block jackknife, extreme-value fence, and complete-case refits run in `analysis/sensitivity.json`; gate 6 reads that artifact |
 | A report overstates the study design | A shared phrase audit blocks unsupported causal upgrades |
-| Outputs cannot be reproduced | Cleaning replay is checked byte-for-byte; inputs are fingerprinted |
+| Outputs cannot be reproduced | Cleaning replay is checked byte-for-byte; inputs are fingerprinted; the pipeline commit is recorded and `--export-lockfile` pins exact versions |
 | A failed run starts from zero | `state.json` records stage status, commands, duration, and evidence for resume |
 | Non-tabular data receives invented inference | Unsupported modalities receive an explicitly labelled profile-only report |
 
@@ -135,12 +137,14 @@ that a statistical model or causal analysis was performed.
 | `--group COLUMN` | Override automatic grouping selection |
 | `--outcomes A,B` | Restrict inferential outcomes |
 | `--unit TEXT` | Describe what one row represents |
-| `--unit-key COLUMN` | Declare the independent-unit identifier |
-| `--journal auto|nature|nejm|science|lancet` | Journal checklist family |
+| `--unit-key COLUMN` | Declare the independent-unit identifier; repeated rows trigger unit-level, paired, or repeated-measures analysis automatically |
+| `--journal auto\|nature\|nejm\|science\|lancet` | Journal checklist family |
 | `--design ID` | EQUATOR study-design identifier |
 | `--modality NAME` | Force a routing modality |
+| `--answers FILE` | Answer the plan's never-automatic decisions by id (`answers.template.json` is written for you) |
+| `--export-lockfile` | Write `lockfile.txt` with the exact dependency versions that ran |
 | `--profile-only` | Stop after profiling and report generation |
-| `--pdf-backend auto|reportlab|fpdf2|headless-browser` | Select the PDF backend |
+| `--pdf-backend auto\|reportlab\|fpdf2\|headless-browser` | Select the PDF backend |
 | `--resume STATE` | Resume an existing `state.json` |
 | `--force` | Re-run stages instead of reusing completed evidence |
 
@@ -163,13 +167,16 @@ input file / folder / glob
         +---- one tabular file
                  |
                  v
-             cleaning plan
+             cleaning plan  (never-automatic holds -> answers.template.json)
                  |
                  v
       execute -> validate -> describe
                  |
                  v
-           inferential analysis
+           inferential analysis  (unit-aware: clustered / paired / blocks)
+                 |
+                 v
+           sensitivity suite  (leave-one-group-out, jackknife, fence, complete case)
                  |
                  v
         chart decisions -> charts
@@ -192,11 +199,12 @@ whether a stage can be reused.
 | [`scripts/run_pipeline.py`](scripts/run_pipeline.py) | One-command orchestration and execution mode selection |
 | [`scripts/route_input.py`](scripts/route_input.py) | File inspection and modality routing |
 | [`scripts/profile_*.py`](scripts/) | Modality-specific structural profiling |
-| [`scripts/cleaning_plan.py`](scripts/cleaning_plan.py) | Explicit, reviewable cleaning plan |
+| [`scripts/cleaning_plan.py`](scripts/cleaning_plan.py) | Explicit, reviewable cleaning plan plus the answers-file loop |
 | [`scripts/execute_cleaning.py`](scripts/execute_cleaning.py) | Additive cleaning with a replayable script |
-| [`scripts/stats_*.py`](scripts/) | Descriptive and inferential statistics |
+| [`scripts/stats_*.py`](scripts/) | Descriptive and unit-aware inferential statistics |
+| [`scripts/sensitivity_analysis.py`](scripts/sensitivity_analysis.py) | Leave-one-group-out, block jackknife, extreme-value fence, complete-case refits |
 | [`scripts/final_audit.py`](scripts/final_audit.py) | Machine-derived report and journal audit |
-| [`scripts/pipeline_state.py`](scripts/pipeline_state.py) | Input fingerprints and stage ledger |
+| [`scripts/pipeline_state.py`](scripts/pipeline_state.py) | Input fingerprints, stage ledger, and pipeline provenance |
 | [`scripts/state_keeper.py`](scripts/state_keeper.py) | State inspection, evidence validation, and resume entry point |
 
 ## Supported inputs
@@ -228,6 +236,7 @@ outputs/
 |-- preflight.json
 |-- cleaning_plan.json
 |-- charts_rendered.json
+|-- answers.template.json
 |-- audit/
 |   |-- final_audit.json
 |   `-- final_audit.md
@@ -235,6 +244,7 @@ outputs/
 |   |-- profile.json
 |   |-- descriptive.json
 |   |-- inferential.json
+|   |-- sensitivity.json
 |   `-- chart_decisions.json
 |-- cleaned/
 |   |-- cleaned.csv
@@ -249,10 +259,13 @@ The important files are:
 
 - `report.pdf`: the primary human-readable deliverable.
 - `report.md`: the citable report source.
-- `report_build.json`: hashes, provenance, PDF backend, and registered report values.
-- `analysis/*.json`: machine-readable statistical and chart decisions.
+- `report_build.json`: hashes, provenance, PDF backend, pipeline commit, and registered report values.
+- `analysis/*.json`: machine-readable statistical, sensitivity, and chart decisions.
 - `audit/final_audit.*`: the final audit verdict and actionable failures.
 - `state.json`: completed stages, commands, durations, and evidence paths.
+- `answers.template.json`: every never-automatic decision this dataset raised,
+  fillable and fed back with `--answers` (with `--export-lockfile`,
+  `lockfile.txt` pins the exact dependency versions that ran).
 
 ## Reproducibility and data safety
 
@@ -293,6 +306,23 @@ python scripts/run_pipeline.py --resume outputs/state.json
 Completed stages are reused only when their evidence still exists and the input
 fingerprint is unchanged. Use `--force` when the intent is to rebuild artifacts.
 
+## Answering held decisions
+
+Whenever the cleaning plan holds a conversion or flags a destructive operation,
+it writes `outputs/answers.template.json` listing every open decision with its
+stable id, the actions the pipeline can actually execute, and the question it
+needs answered. Fill in the `action` and `rationale` fields and re-run:
+
+```bash
+python scripts/run_pipeline.py --resume outputs/state.json --answers outputs/answers.template.json
+```
+
+Every id and action is validated against the plan before anything applies, the
+decision is recorded with who decided, when, and why, and a changed answers
+file invalidates the cleaning and downstream stages rather than silently
+reusing their old evidence. Actions with no automatic implementation
+(`drop_rows`, `listwise_delete`) are rejected instead of skipped.
+
 ## Report audit
 
 The default audit is journal-oriented and derives results from saved artifacts,
@@ -300,12 +330,12 @@ not from the report's own claims.
 
 | Gate | Requirement |
 |---|---|
-| 1 | Sample size and independent unit are explicit |
+| 1 | Sample size and independent unit are explicit, and the primary analysis lives at the level the unit structure supports |
 | 2 | Missingness mechanism is declared |
 | 3 | Effect size accompanies p-values |
 | 4 | Uncertainty is visible |
 | 5 | Multiple comparisons are corrected |
-| 6 | Sensitivity analysis is reported |
+| 6 | The sensitivity suite (`analysis/sensitivity.json`) perturbed the primary analysis and every conflict is reported |
 | 7 | Association is not upgraded to mechanism |
 | 8 | Unknowns are marked `AUTHOR_INPUT_NEEDED` |
 
@@ -362,7 +392,11 @@ python -m compileall scripts tests
 The suite covers type preservation, all-or-nothing conversions, untouched-column
 auditing, dtype replay, byte-reproducible cleaning, multiplicity safeguards,
 Welch denominator degrees of freedom, causal-language consistency, routing,
-profile-only scope, state transitions, and end-to-end report generation.
+profile-only scope, state transitions, unit-structure classification
+(clustered / paired / incomplete repeated), the gate-1 clustering block, the
+sensitivity suite and its gate-6 wiring, the answers-file round trip and
+resume invalidation, pipeline-commit provenance, lockfile export, and
+end-to-end report generation.
 
 GitHub Actions runs the project on Windows and Linux with Python 3.11, 3.12, and
 3.13, including the one-command tabular and profile-only paths.
@@ -390,8 +424,11 @@ Current limitations are explicit:
 
 - Full inferential analysis currently applies to a single tabular file.
 - Non-tabular and mixed inputs produce profile-only reports.
-- Leave-one-group-out sensitivity automation is not complete.
-- Mixed-effects model selection is not automated.
+- Mixed-effects model selection is not automated; incomplete repeated-measures
+  designs are analysed at the unit-by-group cell level with the residual
+  clustering disclosed and flagged `AUTHOR_INPUT_NEEDED`.
+- Answers-file actions cover the operations the executor implements; row
+  deletion choices beyond exact deduplication still require editing the plan.
 - PDF, DOCX, HTML, and video conversion are outside the v1 scope.
 - The audit supports reporting discipline; it does not validate scientific truth.
 

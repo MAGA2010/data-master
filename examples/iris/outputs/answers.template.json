@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0",
+  "instructions": "Answer every decision below by keeping one entry per id, filling 'action' with one of the listed choices, and adding 'rationale'. Then re-run the pipeline with --answers <this file>. A decision applies to every column listed on the flag. Actions not listed here have no automatic implementation and are rejected rather than silently skipped.",
+  "decisions": [
+    {
+      "id": "coerce_numeric@height_m",
+      "action": null,
+      "allowed_actions": [
+        "coerce",
+        "keep_as_text"
+      ],
+      "default_if_silent": "keep_as_text",
+      "columns": [
+        "height_m"
+      ],
+      "question": "Choose: keep_as_text (default) / coerce and accept the loss --force-coerce-numeric height_m / map the listed tokens to missing by editing the source file",
+      "rationale": "",
+      "decided_by": "user"
+    },
+    {
+      "id": "dedupe_exact@__rows__",
+      "action": null,
+      "allowed_actions": [
+        "drop_duplicates",
+        "keep_all"
+      ],
+      "default_if_silent": "keep_all",
+      "columns": [],
+      "question": "Choose: drop_duplicates / keep_all",
+      "rationale": "",
+      "decided_by": "user"
+    },
+    {
+      "id": "impute_categorical@petal_width_cm,sepal_width_cm",
+      "action": null,
+      "allowed_actions": [
+        "leave_as_nan",
+        "mode"
+      ],
+      "default_if_silent": "leave_as_nan",
+      "columns": [
+        "petal_width_cm",
+        "sepal_width_cm"
+      ],
+      "question": "Choose: mode / sentinel_value / listwise_delete / leave_as_nan",
+      "rationale": "",
+      "decided_by": "user"
+    }
+  ]
+}

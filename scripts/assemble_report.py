@@ -985,6 +985,17 @@ class ReportBuilder:
         self.w("- **Interpreter**: Python %s on %s" % (env.get("python"), env.get("platform")))
         self.w("- **Libraries**: " + ", ".join("%s %s" % (k, v)
                                                 for k, v in sorted(env.get("libs", {}).items())))
+        prov = env.get("pipeline") or {}
+        if prov.get("git_commit"):
+            self.w("- **Pipeline code**: data-master commit `%s`%s -- this report "
+                   "names the exact code that produced every number in it."
+                   % (prov["git_commit"][:12],
+                      " (working tree was dirty; the commit alone does not "
+                       "reproduce it)" if prov.get("git_dirty") else ""))
+        lockfile = ctx.get("outdir") / "lockfile.txt"
+        if lockfile.exists():
+            self.w("- **Exact versions**: `lockfile.txt` beside this report pins "
+                   "every dependency to the version that ran.")
         seeds = set()
         for t in (ctx["inferential"] or {}).get("tests") or []:
             for m in re.findall(r"seed=(\d+)",
@@ -1120,15 +1131,66 @@ class ReportBuilder:
         """The three appendices a reviewer actually turns to, plus one ledger.
 
         A1 is the page that decides whether the report is honest. A sensitivity
-        analysis that was not run must be printed as *not run*, never as *passed*:
-        an absent check that reads like a passed check is the single most
-        expensive failure mode in a report of this kind.
+        analysis that was not run must be printed as *not run*, never as
+        *passed*: an absent check that reads like a passed check is the single
+        most expensive failure mode in a report of this kind. A1 therefore
+        reads analysis/sensitivity.json -- the perturbations that actually ran
+        -- and falls back to naming the gap when the artifact is absent.
         """
         inf = self.ctx["inferential"] or {}
         run = self.ctx["cleaning_run"] or {}
+        sens = self.ctx["sensitivity"] or {}
 
         self.w("## Appendix A1. Sensitivity and stability")
         self.w()
+        summary = sens.get("summary") or {}
+        if sens and (sens.get("outcomes") or sens.get("skipped")):
+            self.w("The primary analysis was re-run under perturbation by "
+                   "`scripts/sensitivity_analysis.py` (seed %s, %s blocks for the "
+                   "jackknife). Agreement means the significance verdict did not "
+                   "flip at alpha=%s."
+                   % ((sens.get("jackknife") or {}).get("seed", "--"),
+                      (sens.get("jackknife") or {}).get("blocks", "--"),
+                      sens.get("alpha", "--")))
+            self.w()
+            rows = []
+            for o in (sens.get("outcomes") or []):
+                for p_ in (o.get("perturbations") or []):
+                    if p_.get("status") != "ran":
+                        continue
+                    rows.append([
+                        "`%s`" % o.get("outcome"),
+                        "%s%s" % (p_.get("name"),
+                                  " (%s)" % p_["parameter"] if p_.get("parameter") else ""),
+                        "%s = %s" % (p_.get("method") or "--",
+                                     fmt(p_.get("statistic"), 2)),
+                        fmt_p(p_.get("p_raw")),
+                        "agrees" if p_.get("agrees") else
+                        ("**DISAGREES**" if p_.get("agrees") is False else "no verdict"),
+                    ])
+            if rows:
+                self.w(md_table(["Outcome", "Perturbation", "Statistic", "p", "Verdict"],
+                                rows))
+            else:
+                self.w("No perturbation was runnable for any outcome; every "
+                       "entry below explains why.")
+            n_conf = summary.get("n_conflicting") or 0
+            if n_conf:
+                self.w()
+                self.w("**%d perturbation(s) DISAGREE with the primary verdict.** "
+                       "These are limits of the finding, not errors in it: the "
+                       "conclusion depends on the data that the perturbation "
+                       "removed. Each one is listed above and must be carried "
+                       "into any use of this result." % n_conf)
+            self.w()
+        else:
+            self.w("**NOT RUN** -- `analysis/sensitivity.json` does not exist, so "
+                   "no perturbation of the primary analysis backs this report. "
+                   "Re-run the pipeline; gate 6 of the audit fails until this "
+                   "artifact exists.")
+            self.w()
+
+        # the assumption cross-checks remain, clearly labelled as what they are
         rows = []
         for t in (inf.get("tests") or []):
             rc = t.get("robustness_cross_check")
@@ -1141,14 +1203,14 @@ class ReportBuilder:
                     "agrees" if rc.get("agrees_with_primary") else "**DISAGREES**",
                 ])
         if rows:
-            self.w(md_table(["Outcome", "Perturbation", "Statistic", "p", "Verdict"], rows))
+            self.w("Assumption robustness (distinct from the perturbations above):")
+            self.w()
+            self.w(md_table(["Outcome", "Check", "Statistic", "p", "Verdict"], rows))
             self.w("Each primary parametric test was repeated with its rank-based "
                    "equivalent. Agreement means the conclusion does not depend on the "
                    "normality assumption the parametric test makes; a disagreement would "
                    "have meant the parametric test had to go, not be defended.")
-        else:
-            self.w("No rank-based cross-check was recorded for any outcome.")
-        self.w()
+            self.w()
 
         # -- what was NOT done, stated as loudly as what was ----------------
         dup = next((a for a in ((self.ctx["profile"] or {}).get("anomalies") or {}).get("flags", [])
@@ -1173,17 +1235,24 @@ class ReportBuilder:
                 "P0 rules are applied unconditionally by the contract; there is no "
                 "branch in which they are skipped, so there is nothing to compare against.",
             ])
-        gaps.append([
-            "leave-one-group-out refit of the primary effect size",
-            "**NOT RUN**",
-            "Not implemented in this pipeline. With three groups this would show whether "
-            "one group alone carries the effect; its absence means the reported effect "
-            "size is a single estimate with no leave-one-out envelope around it.",
-        ])
-        self.w(md_table(["Sensitivity analysis", "Status", "What that means"], gaps))
-        self.w("These are listed as gaps so that nobody reads the absence of a "
-               "disagreement in A1 as evidence that no disagreement exists. A check that "
-               "did not run cannot pass.")
+        unit = (inf.get("unit_of_analysis") or {})
+        if unit.get("structure") == "incomplete_repeated":
+            gaps.append([
+                "mixed-effects refit with a unit-level random intercept",
+                "**NOT RUN -- AUTHOR_INPUT_NEEDED**",
+                "Units appear in several but not all groups; cell means remove "
+                "within-cell replication but the residual within-unit correlation "
+                "across groups is disclosed, not modelled.",
+            ])
+        if gaps:
+            self.w(md_table(["Sensitivity analysis", "Status", "What that means"], gaps))
+            self.w("These are listed as gaps so that nobody reads the absence of a "
+                   "disagreement above as evidence that no disagreement exists. A check that "
+                   "did not run cannot pass.")
+        else:
+            self.w("None -- every perturbation that applies to this design ran, "
+                   "and the ones that do not apply are marked as such in "
+                   "`analysis/sensitivity.json`.")
         self.w()
 
         # -- A2 cleaning ledger ---------------------------------------------
@@ -1238,16 +1307,33 @@ class ReportBuilder:
             self.w()
 
         held = run.get("never_automatic_flags") or []
-        if held:
+        outstanding = [f for f in held if not f.get("resolved")]
+        resolved = [f for f in held if f.get("resolved")]
+        if outstanding:
             self.w("**Never-automatic -- conversions that were held back by policy.** "
                    "These are the cases where a conversion was technically possible but "
                    "would have destroyed information, so the policy refuses it without "
-                   "asking.")
+                   "asking. Each can be answered by filling `answers.template.json` "
+                   "and re-running with `--answers`; until then the default applies.")
             self.w()
-            for f in held:
+            for f in outstanding:
                 self.w("- `%s` on %s -- %s"
                        % (f.get("op"), ", ".join("`%s`" % c for c in (f.get("columns") or [])),
                           f.get("reason", "")))
+            self.w()
+        if resolved:
+            self.w("**Answered by the user through the answers file.** These were "
+                   "held by policy and then decided by a named human decision, "
+                   "recorded with who decided, when, and why; `cleaning_plan.json` "
+                   "carries the full record.")
+            self.w()
+            for f in resolved:
+                r = f["resolved"]
+                self.w("- `%s` on %s -- decided `%s` by %s%s."
+                       % (f.get("op"),
+                          ", ".join("`%s`" % c for c in (f.get("columns") or [])) or "rows",
+                          r.get("action"), r.get("decided_by"),
+                          " -- %s" % r["rationale"] if r.get("rationale") else ""))
             self.w()
 
         ua = run.get("untouched_column_audit") or {}
@@ -1590,6 +1676,7 @@ def load_context(raw: Optional[str], outdir: Path, title: str,
         "profile": load_json(ana / "profile.json"),
         "descriptive": load_json(ana / "descriptive.json"),
         "inferential": load_json(ana / "inferential.json"),
+        "sensitivity": load_json(ana / "sensitivity.json"),
         "decisions": load_json(ana / "chart_decisions.json"),
         "rendered": load_json(outdir / "charts_rendered.json"),
         "cleaning_run": load_json(cleaned_dir / "cleaning_run.json"),
@@ -1630,6 +1717,11 @@ def load_context(raw: Optional[str], outdir: Path, title: str,
         "libs": libs,
         "assembled_at": ctx["generated"],
     }
+    try:
+        from pipeline_state import pipeline_provenance
+        ctx["environment"]["pipeline"] = pipeline_provenance(HERE.parent)
+    except Exception:
+        pass
     return ctx
 
 

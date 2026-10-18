@@ -1,11 +1,11 @@
 # Final audit -- Iris morphometrics
 
-_Generated 2026-10-17 17:47 中国标准时间 by scripts/final_audit.py from the artifacts on disk. This audit reads the report; it does not trust it._
+_Generated 2026-10-18 12:21 中国标准时间 by scripts/final_audit.py from the artifacts on disk. This audit reads the report; it does not trust it._
 
 **Verdict: NOT SUBMISSION-READY**
 
 Blocking issues:
-- Gate 1 (n explicit and unit-defined): independent unit not declared: no --unit-key given; row is assumed to be the independent unit
+- Gate 1 (n explicit and unit-defined): independent unit not declared: no --unit-key given; the row is assumed to be the independent unit, and every test below inherits that assumption
 
 | Gate | Name | Status |
 |---|---|---|
@@ -22,7 +22,7 @@ Blocking issues:
 
 - **Evidence**: n is recorded per outcome (e.g. n=158) and per group, but the independent unit is not declared in the input.
 - **Issues**:
-  - independent unit not declared: no --unit-key given; row is assumed to be the independent unit
+  - independent unit not declared: no --unit-key given; the row is assumed to be the independent unit, and every test below inherits that assumption
 - **Fix**: pass --unit-key with what one row represents, or record it in the run manifest; the report already marks this AUTHOR_INPUT_NEEDED.
 
 ## Gate 2 -- missing data mechanism declared   [PASS]
@@ -43,11 +43,11 @@ Blocking issues:
 
 ## Gate 6 -- sensitivity tested   [PASS]
 
-- **Evidence**: all 4 estimable outcomes carry a rank-based cross-check, and Appendix A1 lists the analyses that were not run as gaps.
+- **Evidence**: 64 perturbation(s) ran across 4 outcome(s) (leave-one-group-out, block jackknife, extreme-value fence, strict complete cases) and every one agreed with the primary verdict at alpha=0.05. Appendix A1 reports them.
 
 ## Gate 7 -- no association-to-mechanism upgrade   [PASS]
 
-- **Evidence**: no forbidden construction appears outside a disclaimer (11 patterns checked across 393 lines).
+- **Evidence**: no forbidden construction appears outside a disclaimer (11 patterns checked across 466 lines).
 
 ## Gate 8 -- unknowns flagged   [PASS]
 
@@ -61,7 +61,7 @@ Blocking issues:
 | at least one caveat | **PASS** | 6 caveat(s) |
 | figure title / caption / body | **PASS** | all 3 figure(s) carry title, caption and a three-part body |
 | number provenance | **PASS** | 11 registered claim(s) in report_build.json |
-| PDF delivered | **PASS** | backend reportlab, 485637 bytes |
+| PDF delivered | **PASS** | backend reportlab, 498582 bytes |
 | writer self-audit | **PASS** | 0 forbidden phrases in the writer's own scan |
 
 ## Journal routing

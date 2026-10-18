@@ -740,7 +740,10 @@ def build_report(src: Path, n_raw: int, n_clean: int, raw_hash: str, clean_hash:
                  case_maps: List[Dict[str, Any]], plan: Dict[str, Any],
                  withheld: List[Dict[str, Any]],
                  col_before: List[str], col_after: List[str]) -> str:
-    decisions, disclosures = split_flags(plan.get("never_automatic_flags", []))
+    all_flags = plan.get("never_automatic_flags", [])
+    decisions, disclosures = split_flags(all_flags)
+    decisions = [f for f in decisions if not f.get("resolved")]
+    resolved = [f for f in all_flags if f.get("resolved")]
 
     L: List[str] = [
         f"# Cleaning Report — {src.name}",
@@ -755,6 +758,7 @@ def build_report(src: Path, n_raw: int, n_clean: int, raw_hash: str, clean_hash:
         f"| Reproducible script | `{script_name}` |",
         f"| Ops applied | {len(applied)} |",
         f"| Decisions pending | {len(decisions)} |",
+        f"| Decisions answered via answers file | {len(resolved)} |",
         "",
         "> The raw file is never modified. Everything below is additive.",
         "",
@@ -810,10 +814,25 @@ def build_report(src: Path, n_raw: int, n_clean: int, raw_hash: str, clean_hash:
                 f"- **Question**: {f.get('ask_user', '')}",
                 f"- **If you say nothing**: `{f.get('default_if_silent', '')}`",
                 f"- **Rule**: {f.get('rule_source', '')}",
+                f"- **Answer with**: fill `answers.template.json` (id `{f.get('id', '--')}`) and re-run with `--answers`",
                 "",
             ]
     else:
         L.append("None.")
+        L.append("")
+
+    if resolved:
+        L += ["## 3b. Decisions answered through the answers file", ""]
+        L.append("Each was held by policy, then decided by a recorded human "
+                 "decision. The full provenance (who, when, why, which file) is in "
+                 "`cleaning_plan.json` under `user_decisions`.")
+        L.append("")
+        for f in resolved:
+            r = f["resolved"]
+            cols = ", ".join(f"`{c}`" for c in f.get("columns", [])) or "rows"
+            L.append(f"- `{f['op']}` on {cols} -- decided `{r.get('action')}` by "
+                     f"{r.get('decided_by')}"
+                     + (f" -- {r['rationale']}" if r.get("rationale") else ""))
         L.append("")
 
     L += ["## 4. Disclosures (already applied, reversible)", ""]

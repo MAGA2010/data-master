@@ -338,7 +338,7 @@ def build_decisions(df, profile: Dict[str, Any], desc: Dict[str, Any],
                 "argument_task": "show which measured variables move together, and which do not",
                 "chart_type": "scatter_panel",
                 "spec": {"panels": apanels, "smoother": "LOWESS"},
-                "uncertainty": "LOWESS smoother; coefficient and 95% CI in the caption",
+                "uncertainty": "LOWESS smoother with a bootstrap 95% band; Pearson r with a 95% CI",
                 "title": (f"{lead['x']} and {lead['y']} are the strongest pair "
                           f"({lead['statistic']} = {_fmt(lead['value'])})"
                           + (", and the second-strongest is independent of it"

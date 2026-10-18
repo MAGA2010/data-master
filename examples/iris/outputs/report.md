@@ -1,9 +1,9 @@
 # Iris morphometrics -- Statistical Report
 
-> **Template**: nature | **Generated**: 2026-10-17 17:47 中国标准时间 | **Pipeline**: data-master
+> **Template**: nature | **Generated**: 2026-10-18 12:21 中国标准时间 | **Pipeline**: data-master
 > **Raw input**: `iris_dirty.csv` (sha256 `d5e5668ecd92e4d3...`) | **Analysed file**: `cleaned.csv`
 > **Rows**: 158 raw -> 158 analysed | **Columns**: 7 | **Modality**: tabular
-> **Independent unit**: no --unit-key given; row is assumed to be the independent unit
+> **Independent unit**: no --unit-key given; the row is assumed to be the independent unit, and every test below inherits that assumption
 > **Types**: `cleaning_run.json` (7 columns replayed from the cleaning manifest, never re-guessed)
 
 ## Executive summary
@@ -191,13 +191,13 @@ Every number above is traceable to a script. Nothing in this report was typed by
 | Stage | Script | Artifact | sha256 (first 16) |
 |---|---|---|---|
 | Profile | scripts/profile_tabular.py | analysis/profile.json | 3dc825cd3a941c53 |
-| Plan | scripts/cleaning_plan.py | cleaning_plan.json | b0560ae42f2688c1 |
+| Plan | scripts/cleaning_plan.py | cleaning_plan.json | 116e4b77d3b21f93 |
 | Clean | scripts/execute_cleaning.py | cleaned/cleaned.csv | 7c1b8a3004c28c85 |
 | Validate | scripts/validate_clean.py | cleaned/validation.json | 070ee266feb052fd |
 | Describe | scripts/stats_descriptive.py | analysis/descriptive.json | 3f23de383020cb3c |
-| Infer | scripts/stats_inferential.py | analysis/inferential.json | e6ad35f2bd09f998 |
-| Decide figures | scripts/chart_decision.py | analysis/chart_decisions.json | 1a61453e5217f232 |
-| Render figures | scripts/render_chart.py | charts/*.png | ac1c79a69a930c1e |
+| Infer | scripts/stats_inferential.py | analysis/inferential.json | 10e814cea9b118d1 |
+| Decide figures | scripts/chart_decision.py | analysis/chart_decisions.json | e0548e975a90e8d1 |
+| Render figures | scripts/render_chart.py | charts/*.png | 9af1b767b65bb0c5 |
 | Assemble | scripts/assemble_report.py | report.md / report.pdf | self-referential -- see report_build.json |
 
 
@@ -205,6 +205,8 @@ A document cannot contain its own hash, so the hash of `report.md` and `report.p
 
 - **Interpreter**: Python 3.13.15 on Windows-11-10.0.26200-SP0
 - **Libraries**: numpy 2.4.6, pandas 3.0.3, scipy 1.18.1
+- **Pipeline code**: data-master commit `08534bd586c6` (working tree was dirty; the commit alone does not reproduce it) -- this report names the exact code that produced every number in it.
+- **Exact versions**: `lockfile.txt` beside this report pins every dependency to the version that ran.
 - **Random seeds**: 42 -- every resampling interval is seeded, so it reproduces exactly.
 - **Columns any operation was permitted to touch**: `petal_length_cm`, `petal_width_cm`, `sepal_length_cm`, `sepal_width_cm`, `species`, `species_code`
 
@@ -249,9 +251,9 @@ Each figure carries one argument and its title states that argument as a finding
 - **What it shows**: petal_length_cm and petal_width_cm move together (spearman = 0.94, 95% CI 0.91 to 0.95, p = 3.506e-70, n = 152); sepal_length_cm and petal_length_cm move together (spearman = 0.88, 95% CI 0.84 to 0.91, p = 4.236e-53, n = 158).
 - **How to read it**: A visible curve that a straight line would miss is the reason the smoother is drawn at all.
 - **What follows**: Correlation here is a screening result. It says which relationships deserve a model, not which are real.
-- **Uncertainty shown**: LOWESS smoother; coefficient and 95% CI in the caption
+- **Uncertainty shown**: LOWESS smoother with a bootstrap 95% band; Pearson r with a 95% CI
 - **Chart alternatives rejected**: 3D scatter -- a third axis encodes nothing here; full correlation heatmap -- with this many columns it becomes a grid of numbers rather than an argument; the pairs that matter get their own panel
-- **Source**: `scripts/chart_decision.py` -> `charts/fig03_scatter_panel.png` rendered by `scripts/render_chart.py`, 147,035 bytes, ink ratio 0.0885
+- **Source**: `scripts/chart_decision.py` -> `charts/fig03_scatter_panel.png` rendered by `scripts/render_chart.py`, 146,228 bytes, ink ratio 0.1202
 
 ## 8. Figure specifications
 
@@ -264,7 +266,79 @@ Each figure carries one argument and its title states that argument as a finding
 
 ## Appendix A1. Sensitivity and stability
 
+The primary analysis was re-run under perturbation by `scripts/sensitivity_analysis.py` (seed 42, 10 blocks for the jackknife). Agreement means the significance verdict did not flip at alpha=0.05.
+
 | Outcome | Perturbation | Statistic | p | Verdict |
+|---|---|---|---|---|
+| `sepal_length_cm` | leave_one_group_out (setosa) | Student two-sample t-test (pooled variance) = -5.73 | = 9.8e-08 | agrees |
+| `sepal_length_cm` | leave_one_group_out (versicolor) | Student two-sample t-test (pooled variance) = -11.02 | = 4.0e-19 | agrees |
+| `sepal_length_cm` | leave_one_group_out (virginica) | Student two-sample t-test (pooled variance) = -7.22 | = 9.0e-11 | agrees |
+| `sepal_length_cm` | block_jackknife (block 1) | one-way ANOVA = 69.11 | = 1.5e-21 | agrees |
+| `sepal_length_cm` | block_jackknife (block 2) | one-way ANOVA = 62.32 | = 4.8e-20 | agrees |
+| `sepal_length_cm` | block_jackknife (block 3) | one-way ANOVA = 72.15 | = 3.2e-22 | agrees |
+| `sepal_length_cm` | block_jackknife (block 4) | one-way ANOVA = 65.11 | = 1.1e-20 | agrees |
+| `sepal_length_cm` | block_jackknife (block 5) | Welch ANOVA (unequal variance) = 138.89 | = 5.5e-28 | agrees |
+| `sepal_length_cm` | block_jackknife (block 6) | one-way ANOVA = 64.85 | = 1.3e-20 | agrees |
+| `sepal_length_cm` | block_jackknife (block 7) | one-way ANOVA = 64.47 | = 1.6e-20 | agrees |
+| `sepal_length_cm` | block_jackknife (block 8) | one-way ANOVA = 65.46 | = 9.3e-21 | agrees |
+| `sepal_length_cm` | block_jackknife (block 9) | one-way ANOVA = 67.15 | = 3.6e-21 | agrees |
+| `sepal_length_cm` | block_jackknife (block 10) | one-way ANOVA = 62.59 | = 3.8e-20 | agrees |
+| `sepal_length_cm` | exclude_extremes (2 value(s) excluded) | Welch ANOVA (unequal variance) = 155.53 | = 5.4e-31 | agrees |
+| `sepal_length_cm` | strict_complete_case (n=146 of 158 rows) | one-way ANOVA = 70.05 | = 6.2e-22 | agrees |
+| `sepal_length_cm` | rank_cross_check | Kruskal-Wallis H = 101.56 | < 1e-300 | agrees |
+| `sepal_width_cm` | leave_one_group_out (setosa) | Student two-sample t-test (pooled variance) = -3.58 | = 5.4e-04 | agrees |
+| `sepal_width_cm` | leave_one_group_out (versicolor) | Student two-sample t-test (pooled variance) = 6.96 | = 3.5e-10 | agrees |
+| `sepal_width_cm` | leave_one_group_out (virginica) | Student two-sample t-test (pooled variance) = 9.81 | = 3.1e-16 | agrees |
+| `sepal_width_cm` | block_jackknife (block 1) | one-way ANOVA = 46.36 | = 5.3e-16 | agrees |
+| `sepal_width_cm` | block_jackknife (block 2) | one-way ANOVA = 50.10 | = 5.3e-17 | agrees |
+| `sepal_width_cm` | block_jackknife (block 3) | one-way ANOVA = 48.10 | = 1.8e-16 | agrees |
+| `sepal_width_cm` | block_jackknife (block 4) | one-way ANOVA = 48.33 | = 1.6e-16 | agrees |
+| `sepal_width_cm` | block_jackknife (block 5) | one-way ANOVA = 46.57 | = 4.4e-16 | agrees |
+| `sepal_width_cm` | block_jackknife (block 6) | one-way ANOVA = 52.24 | = 1.8e-17 | agrees |
+| `sepal_width_cm` | block_jackknife (block 7) | one-way ANOVA = 56.30 | = 1.9e-18 | agrees |
+| `sepal_width_cm` | block_jackknife (block 8) | one-way ANOVA = 50.91 | = 3.6e-17 | agrees |
+| `sepal_width_cm` | block_jackknife (block 9) | one-way ANOVA = 49.12 | = 1.0e-16 | agrees |
+| `sepal_width_cm` | block_jackknife (block 10) | one-way ANOVA = 52.21 | = 1.7e-17 | agrees |
+| `sepal_width_cm` | exclude_extremes (3 value(s) excluded) | one-way ANOVA = 71.00 | = 2.9e-22 | agrees |
+| `sepal_width_cm` | strict_complete_case (n=146 of 158 rows) | one-way ANOVA = 53.55 | = 4.4e-18 | agrees |
+| `sepal_width_cm` | rank_cross_check | Kruskal-Wallis H = 67.66 | < 1e-300 | agrees |
+| `petal_length_cm` | leave_one_group_out (setosa) | Student two-sample t-test (pooled variance) = -12.89 | = 2.8e-23 | agrees |
+| `petal_length_cm` | leave_one_group_out (versicolor) | Welch two-sample t-test (unequal variance) = -51.39 | = 1.6e-52 | agrees |
+| `petal_length_cm` | leave_one_group_out (virginica) | Welch two-sample t-test (unequal variance) = -39.90 | = 1.7e-47 | agrees |
+| `petal_length_cm` | block_jackknife (block 1) | Welch ANOVA (unequal variance) = 1797.15 | = 5.7e-63 | agrees |
+| `petal_length_cm` | block_jackknife (block 2) | Welch ANOVA (unequal variance) = 1764.37 | = 2.1e-63 | agrees |
+| `petal_length_cm` | block_jackknife (block 3) | Welch ANOVA (unequal variance) = 1717.06 | = 3.2e-61 | agrees |
+| `petal_length_cm` | block_jackknife (block 4) | Welch ANOVA (unequal variance) = 1588.18 | = 3.9e-59 | agrees |
+| `petal_length_cm` | block_jackknife (block 5) | Welch ANOVA (unequal variance) = 1739.06 | = 5.9e-63 | agrees |
+| `petal_length_cm` | block_jackknife (block 6) | Welch ANOVA (unequal variance) = 1699.22 | = 2.5e-62 | agrees |
+| `petal_length_cm` | block_jackknife (block 7) | Welch ANOVA (unequal variance) = 1776.18 | = 2.1e-64 | agrees |
+| `petal_length_cm` | block_jackknife (block 8) | Welch ANOVA (unequal variance) = 1663.99 | = 2.2e-63 | agrees |
+| `petal_length_cm` | block_jackknife (block 9) | Welch ANOVA (unequal variance) = 1773.93 | = 5.7e-64 | agrees |
+| `petal_length_cm` | block_jackknife (block 10) | Welch ANOVA (unequal variance) = 1727.51 | = 2.7e-63 | agrees |
+| `petal_length_cm` | exclude_extremes (7 value(s) excluded) | Welch ANOVA (unequal variance) = 2165.17 | = 5.0e-68 | agrees |
+| `petal_length_cm` | strict_complete_case (n=146 of 158 rows) | Welch ANOVA (unequal variance) = 1732.44 | = 5.7e-63 | agrees |
+| `petal_length_cm` | rank_cross_check | Kruskal-Wallis H = 137.08 | < 1e-300 | agrees |
+| `petal_width_cm` | leave_one_group_out (setosa) | Welch two-sample t-test (unequal variance) = -14.81 | = 3.0e-26 | agrees |
+| `petal_width_cm` | leave_one_group_out (versicolor) | Welch two-sample t-test (unequal variance) = -43.79 | = 4.4e-50 | agrees |
+| `petal_width_cm` | leave_one_group_out (virginica) | Welch two-sample t-test (unequal variance) = -33.20 | = 1.3e-46 | agrees |
+| `petal_width_cm` | block_jackknife (block 1) | Welch ANOVA (unequal variance) = 1175.50 | = 5.1e-58 | agrees |
+| `petal_width_cm` | block_jackknife (block 2) | Welch ANOVA (unequal variance) = 1141.70 | = 1.6e-59 | agrees |
+| `petal_width_cm` | block_jackknife (block 3) | Welch ANOVA (unequal variance) = 1194.94 | = 4.0e-58 | agrees |
+| `petal_width_cm` | block_jackknife (block 4) | Welch ANOVA (unequal variance) = 1111.55 | = 9.5e-56 | agrees |
+| `petal_width_cm` | block_jackknife (block 5) | Welch ANOVA (unequal variance) = 1136.82 | = 1.1e-58 | agrees |
+| `petal_width_cm` | block_jackknife (block 6) | Welch ANOVA (unequal variance) = 1113.96 | = 6.3e-58 | agrees |
+| `petal_width_cm` | block_jackknife (block 7) | Welch ANOVA (unequal variance) = 1219.54 | = 2.4e-59 | agrees |
+| `petal_width_cm` | block_jackknife (block 8) | Welch ANOVA (unequal variance) = 1249.67 | = 4.4e-60 | agrees |
+| `petal_width_cm` | block_jackknife (block 9) | Welch ANOVA (unequal variance) = 1091.76 | = 4.1e-58 | agrees |
+| `petal_width_cm` | block_jackknife (block 10) | Welch ANOVA (unequal variance) = 1196.79 | = 2.3e-59 | agrees |
+| `petal_width_cm` | exclude_extremes (2 value(s) excluded) | Welch ANOVA (unequal variance) = 1435.05 | = 1.7e-64 | agrees |
+| `petal_width_cm` | strict_complete_case (n=146 of 158 rows) | Welch ANOVA (unequal variance) = 1281.47 | = 2.4e-62 | agrees |
+| `petal_width_cm` | rank_cross_check | Kruskal-Wallis H = 132.92 | < 1e-300 | agrees |
+
+
+Assumption robustness (distinct from the perturbations above):
+
+| Outcome | Check | Statistic | p | Verdict |
 |---|---|---|---|---|
 | `sepal_length_cm` | rank-based cross-check of the primary test | Kruskal-Wallis H = 101.56 | < 1e-300 | agrees |
 | `sepal_width_cm` | rank-based cross-check of the primary test | Kruskal-Wallis H = 67.66 | < 1e-300 | agrees |
@@ -278,9 +352,8 @@ Each primary parametric test was repeated with its rank-based equivalent. Agreem
 | Sensitivity analysis | Status | What that means |
 |---|---|---|
 | drop the 9 duplicate rows and re-run every test | **NOT RUN -- this is a gap, not a pass** | Duplicate rows were deliberately left in place. Removing them is a decision about whether repeated observations are independent, and that decision belongs to the author. Until it is made, the reported n and every interval derived from it stand unchanged. |
-| leave-one-group-out refit of the primary effect size | **NOT RUN** | Not implemented in this pipeline. With three groups this would show whether one group alone carries the effect; its absence means the reported effect size is a single estimate with no leave-one-out envelope around it. |
 
-These are listed as gaps so that nobody reads the absence of a disagreement in A1 as evidence that no disagreement exists. A check that did not run cannot pass.
+These are listed as gaps so that nobody reads the absence of a disagreement above as evidence that no disagreement exists. A check that did not run cannot pass.
 
 ## Appendix A2. Cleaning ledger
 
@@ -310,7 +383,7 @@ Nothing was withheld.
 
 No operation failed.
 
-**Never-automatic -- conversions that were held back by policy.** These are the cases where a conversion was technically possible but would have destroyed information, so the policy refuses it without asking.
+**Never-automatic -- conversions that were held back by policy.** These are the cases where a conversion was technically possible but would have destroyed information, so the policy refuses it without asking. Each can be answered by filling `answers.template.json` and re-running with `--answers`; until then the default applies.
 
 - `coerce_numeric` on `height_m` -- 153 of 158 non-null values parse as numbers and the other 5 do not (e.g. '--', '--', '--'). Converting would turn those into missing values, after which a recorded category (say 'unknown') would be indistinguishable from a value that was never collected. The failures are all blank or conventional sentinels, so treating them as missing is defensible -- but 'not recorded' is a claim about the study, not a formatting detail, and it stays yours to make.
 - `merge_case_variants` on `species` -- once the automatic whitespace/quote hygiene has run, 3 label group(s) still differ only by case (6 levels -> 3 after casefold); collapsed automatically because this is a lossless canonicalisation
@@ -342,7 +415,7 @@ A test is a choice. Listing only the test that was run hides the fact that a dif
 | `petal_width_cm` | 3-group numeric | `Kruskal-Wallis H` | Welch is already robust to unequal variance and n=50 >= 30 |
 
 
-The rule that made these choices is `references/nature-statistics-checklist.md#gates-3-5`. It was applied mechanically; there is no per-dataset override, because a rule that is quietly overridden is a rule that cannot be checked.
+The rule that made these choices is `references/nature-statistics-checklist.md#gates-1-3-5`. It was applied mechanically; there is no per-dataset override, because a rule that is quietly overridden is a rule that cannot be checked.
 
 ## Appendix A4. Where every number came from
 
@@ -390,4 +463,4 @@ Of these, 3 are already reflected as caveats in section 5.
 
 ---
 
-*End of report. Generated 2026-10-17 17:47 中国标准时间 by data-master. The raw input was never modified: every value above was read from the cleaned file or from a recorded artifact. Each number is registered in `report_build.json`; the gate verdict, including anything that failed, is in `audit/final_audit.md`.*
+*End of report. Generated 2026-10-18 12:21 中国标准时间 by data-master. The raw input was never modified: every value above was read from the cleaned file or from a recorded artifact. Each number is registered in `report_build.json`; the gate verdict, including anything that failed, is in `audit/final_audit.md`.*

@@ -13,16 +13,20 @@ Turn **any data** into a **cleaned, audited, Nature-grade report + charts** with
 - **Input**: `$ARGUMENTS` = a file, a folder, or a glob. Optional flags:
   - `--report nature` (default) | `standard` | `executive` — report template.
   - `--out <dir>` — overrides the output root.
+  - `--answers <file>` — answers `answers.template.json` decisions by id; every id and action is validated, and changing the file invalidates the stale cleaning stages on resume.
+  - `--export-lockfile` — writes `lockfile.txt` with the exact dependency versions that ran.
 - **Output** (all under `<dataset_dir>\outputs\`):
   - `cleaned/` — cleaned data + `cleaning_plan.json` + `cleaning_report.md` + reproducible `clean_*.py`
-  - `analysis/` — `profile.json`, `stats.json`, `validation_report.md`, `chart_decisions.json`
+  - `analysis/` — `profile.json`, `stats.json`, `validation_report.md`, `chart_decisions.json`, `sensitivity.json`
   - `charts/` — `*.png` figures
   - `report.md` — main report (the citable source text)
   - `report.pdf` — **primary deliverable**; rendered by a three-tier cascade
   - `executive_summary.md` — 1-page TL;DR
-  - `report_build.json` — provenance for every number + PDF backend trail + self-audit
+  - `report_build.json` — provenance for every number + PDF backend trail + self-audit + pipeline commit
   - `audit/final_audit.md` — 8-gate + journal-checklist verdict
   - `charts_rendered.json` — per-figure ink ratio and blank-page check
+  - `answers.template.json` — the never-automatic decisions this dataset raised, fillable and fed back with `--answers`
+  - `lockfile.txt` — (with `--export-lockfile`) exact dependency versions that ran
 - **Invariant — additive only**: NEVER modify, move, or delete any raw input file. Re-runs may overwrite `outputs/`.
 - **Full-auto with gates**: never block on a method choice; always pick the most defensible default and document. ONLY ask the user when the input itself is ambiguous.
 - **Method provenance**: every AI judgment records `rule_source` + `alternative_considered` + `rejected_reason`. Every number cites the script that produced it.
@@ -95,7 +99,7 @@ one gate. Load only the stage you are executing, plus the reference it names.
 | 4 | [data-explorer](skills/data-explorer/SKILL.md) | 2a | `descriptive.json` | mean *and* median, missingness screened |
 | 5 | [data-validator](skills/data-validator/SKILL.md) | 3c | `audit/final_audit.*` | 8 Nature gates + journal checklist |
 | 6 | [data-transformer](skills/data-transformer/SKILL.md) | 2b | `transform_ledger.json` | every derived column reversible and recorded |
-| 7 | [statistical-analyzer](skills/statistical-analyzer/SKILL.md) | 2c | `inferential.json` | effect size + CI, family corrected, no NaN p |
+| 7 | [statistical-analyzer](skills/statistical-analyzer/SKILL.md) | 2c | `inferential.json` | effect size + CI, family corrected, no NaN p, primary at the unit level the structure supports |
 | 8 | [deep-analyzer](skills/deep-analyzer/SKILL.md) | 2d | `model.json` | every coefficient has a CI and a diagnostic |
 | 9 | [visualizer](skills/visualizer/SKILL.md) | 3a | `chart_decisions.json` + `charts/*.png` | one argument per figure, blank-page check |
 | 10 | [report-generator](skills/report-generator/SKILL.md) | 3b | `report.md` + `report.pdf` | every number traced, no forbidden phrasing |
@@ -106,14 +110,19 @@ before audit.
 
 ## Routing
 
-| File pattern | Modality | Stage 1 rule | Stage 2 stack |
+The table states what ACTUALLY runs today. Non-tabular modalities take the
+profile-only branch: routing, profiling, a profile-only PDF and an integrity
+audit — no inferential claim. Do not improvise the unimplemented stages; a
+reference file that does not exist is a stop, not a suggestion.
+
+| File pattern | Modality | Stage 1 rule | Stage 2 stack (as implemented) |
 |---|---|---|---|
-| `*.csv *.tsv *.txt *.xlsx *.json *.jsonl *.parquet` | tabular | `references/cleaning-rule-catalog.md#tabular` | profiler → stats → charts |
-| `*.txt` (free text, no delimiter) | text-corpus | `references/cleaning-rule-catalog.md#text` | profiler (length/lang/duplicates) → cleaning → token stats |
-| timestamped tabular / `*.csv` with date column | time-series | `references/cleaning-rule-catalog.md#timeseries` | resampling → decomposition → ACF/PACF → forecast (optional) |
-| `*.jpg *.png *.webp` | image-set | `references/cleaning-rule-catalog.md#image` | corrupt check → dedup → size/aspect histogram |
-| `*.wav *.mp3 *.flac` | audio-set | `references/cleaning-rule-catalog.md#audio` | decode → silence/clipping → duration histogram |
-| `*.tif` with geo tag | geospatial | `references/cleaning-rule-catalog.md#geo` | CRS check → bounds → overlap |
+| `*.csv *.tsv *.xlsx *.json *.jsonl *.parquet` | tabular | `references/cleaning-rule-catalog.md#tabular` | profiler → stats (unit-aware) → sensitivity → charts |
+| `*.txt` (free text, no delimiter) | text-corpus | `references/cleaning-rule-catalog.md#text` | profiler (duplicates / empty / encoding) — **profile-only** |
+| timestamped tabular / `*.csv` with date column | time-series | `references/cleaning-rule-catalog.md#timeseries` | profiler (gaps / duplicate stamps / regime change / ADF screen) — **profile-only**; decomposition and forecast are NOT implemented |
+| `*.jpg *.png *.webp` | image-set | `references/cleaning-rule-catalog.md#image` | profiler (corrupt / near-duplicate / blank) — **profile-only** |
+| `*.wav *.mp3 *.flac` | audio-set | `references/cleaning-rule-catalog.md#audio` | profiler (duration / clipping / silence) — **profile-only** |
+| `*.tif` with geo tag | geospatial | `references/cleaning-rule-catalog.md#geo` | profiler (CRS / bounds / null island / coincidence) — **profile-only** |
 | anything else / no extension | research-track | `references/research-protocol.md` | ad-hoc via WebSearch / WebFetch |
 
 Full table in [references/modality-routing.md](references/modality-routing.md).
@@ -137,19 +146,20 @@ The agent executing this skill should follow this loop. Each step has full instr
 2. **Route modality** (`references/modality-routing.md`). Read file extensions, sniff a small sample, pick one of the 7 modalities. Mixed folder → run one branch per modality and merge reports.
 3. **Check dependencies** (`scripts/check_deps.py --modalities <list>`). Install missing libs one at a time, never silent-install.
 4. **Profile** (`scripts/profile_<modality>.py`). Produce `profile.json`. Always do this; it grounds every later decision.
-5. **Plan cleaning** (`scripts/cleaning_plan.py`). Read `references/cleaning-rule-catalog.md` and `references/never-automatic-list.md`. Produce `cleaning_plan.json`. Any never-automatic item becomes a USER_INPUT_NEEDED flag.
+5. **Plan cleaning** (`scripts/cleaning_plan.py`). Read `references/cleaning-rule-catalog.md` and `references/never-automatic-list.md`. Produce `cleaning_plan.json`. Any never-automatic item becomes a USER_INPUT_NEEDED flag — and `answers.template.json` is written beside the plan so the user can answer every flag by id and re-run with `--answers <file>`. Every answer is validated against the flag it names and recorded with who/when/why.
 6. **Execute cleaning** (`scripts/execute_cleaning.py`). Run only the safe subset automatically. Write `clean_<slug>.py` so the user can re-run. Write `cleaning_report.md`.
 7. **Validate** (`scripts/validate_clean.py`). Gate: row loss < 30% (else fail), no NaN inflation, target/label cardinality preserved, no column dropped without a plan entry, and every dtype matches the recorded manifest. Note what `dtype_stable` compares: the cleaned types against **what the run decided and recorded**, not against what pandas guessed about the raw file. Comparing against the guess condemns the run for refusing to repeat the guess.
 8. **Re-derive, do not re-read.** Every analysis stage opens the cleaned data through `dm_types.load_cleaned`, which applies the manifest. Never call `read_csv` on a cleaned file directly — that is the same type-guessing mistake one stage earlier.
-9. **Stats** (`scripts/stats_descriptive.py` + `scripts/stats_inferential.py` + `scripts/effect_size.py`). Always run descriptive; run inferential only when the data has a comparison structure. Cite every p-value with test name, n, df, CI, effect size.
-10. **Charts** (`scripts/chart_decision.py` + `scripts/render_chart.py`). 1 chart per argument task. 2D preferred; 3D only when it changes the ranking. Title = conclusion, caption = definition, body = fact → interpretation → implication.
-11. **Report** (`scripts/assemble_report.py`). Builds `report.md`, `executive_summary.md`,
+9. **Stats** (`scripts/stats_descriptive.py` + `scripts/stats_inferential.py` + `scripts/effect_size.py`). Always run descriptive; run inferential only when the data has a comparison structure. When `--unit-key` shows rows repeating within units, the inferential stage classifies the structure (clustered / paired / complete blocks / incomplete repeated) and runs the primary analysis at the level the structure supports — per-unit means, paired tests, or Friedman — keeping the row-level results as a labelled secondary. Cite every p-value with test name, n, df, CI, effect size.
+10. **Sensitivity** (`scripts/sensitivity_analysis.py`). Perturb the primary analysis — leave-one-group-out, block jackknife, pre-specified extreme-value fence, strict complete cases, imputation sensitivity — and write `analysis/sensitivity.json`. Gate 6 reads this artifact; the rank cross-check alone no longer satisfies it.
+11. **Charts** (`scripts/chart_decision.py` + `scripts/render_chart.py`). 1 chart per argument task. 2D preferred; 3D only when it changes the ranking. Title = conclusion, caption = definition, body = fact → interpretation → implication. Scatter panels carry a bootstrap band on the smoother and a CI on r.
+12. **Report** (`scripts/assemble_report.py`). Builds `report.md`, `executive_summary.md`,
     `report_build.json`, then renders `report.pdf` through reportlab -> fpdf2 ->
     headless browser -> BLOCKED. The backend that actually ran is recorded, never assumed:
     ```powershell
     python scripts/assemble_report.py --raw <raw.csv> --outdir outputs --title "<title>"
     ```
-12. **Audit** (`scripts/final_audit.py`). Re-derives all 8 gates from the artifacts (it
+13. **Audit** (`scripts/final_audit.py`). Re-derives all 8 gates from the artifacts (it
     does not trust the prose), routes the run to its EQUATOR checklist and journal family,
     and writes `audit/final_audit.md`. Exit 1 means the report exists but is not
     submission-ready:
@@ -157,8 +167,9 @@ The agent executing this skill should follow this loop. Each step has full instr
     python scripts/final_audit.py --outdir outputs --journal nature
     python scripts/final_audit.py --outdir outputs --journal nejm --design randomized_trial
     ```
-13. **State** (`scripts/state_keeper.py`). Inspect or validate `state.json`; resume
+14. **State** (`scripts/state_keeper.py`). Inspect or validate `state.json`; resume
     with either `state_keeper.py --resume` or `run_pipeline.py --resume <state>`.
+    `--export-lockfile` writes `lockfile.txt` pinning the exact versions that ran.
 
 Agent meta-rules:
 - If a step is missing a reference, stop and read the linked file — do NOT improvise on methods.
@@ -169,12 +180,12 @@ Agent meta-rules:
 
 Drawn from `nature-statistics` and applied as a gate, not decoration:
 
-1. **n is explicit and unit-defined.** Independent experimental unit ≠ technical replicate ≠ repeated measure. Always distinguished.
+1. **n is explicit and unit-defined.** Independent experimental unit ≠ technical replicate ≠ repeated measure. Always distinguished — and when rows repeat within the declared unit, the primary analysis runs at the level the structure supports (unit means / paired / blocks), with the row-level results demoted to a labelled secondary.
 2. **Missing data mechanism is declared.** MCAR / MAR / MNAR. Any imputation labelled.
 3. **Effect size > p-value.** Cohen d / Cliff delta / odds ratio + 95% CI always reported.
-4. **Uncertainty is visible.** Every number has a CI / SE / IQR; every chart has error bars or bands.
+4. **Uncertainty is visible.** Every number has a CI / SE / IQR; every chart has error bars, a band, or a stated smoother interval.
 5. **Multiple comparisons corrected.** Bonferroni / BH / Holm as appropriate.
-6. **Sensitivity tested.** Leave-one-out / re-sampling / re-imputation results in a `appendix_sensitivity.md`.
+6. **Sensitivity tested — for real.** `scripts/sensitivity_analysis.py` re-runs the primary question on perturbed data (leave-one-group-out, block jackknife, extreme-value fence, strict complete cases, imputation sensitivity) and writes `analysis/sensitivity.json`; Appendix A1 reports every conflict. The rank cross-check alone is assumption robustness, not sensitivity, and no longer passes this gate.
 7. **No upgrade from association to mechanism.** Claims stay bounded to evidence.
 8. **Unknowns are flagged AUTHOR_INPUT_NEEDED.** Never invented sample sizes, p-values, or methods.
 
@@ -204,6 +215,7 @@ data-master/
 |-- skills/                             # 10 sub-skills, one stage each
 |-- scripts/                            # deterministic Python tools
 |   |-- assemble_report.py              # markdown + PDF cascade + provenance
+|   |-- sensitivity_analysis.py         # LOGO / jackknife / fence / complete-case perturbations
 |   |-- final_audit.py                  # 8 gates + journal checklist
 |   `-- profile_tabular.py ...          # profiler, cleaner, stats, charts
 |-- examples/iris/                      # end-to-end iris example

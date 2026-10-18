@@ -264,7 +264,7 @@
     ],
     "smoother": "LOWESS"
    },
-   "uncertainty": "LOWESS smoother; coefficient and 95% CI in the caption",
+   "uncertainty": "LOWESS smoother with a bootstrap 95% band; Pearson r with a 95% CI",
    "title": "petal_length_cm and petal_width_cm are the strongest pair (spearman = 0.94)",
    "caption": "Each point is one observation. The line is a LOWESS smoother. Association only: this figure carries no direction of causation. Columns that restate the grouping variable are excluded.",
    "body": {

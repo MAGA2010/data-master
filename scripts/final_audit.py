@@ -101,7 +101,13 @@ def _pct(x: Any) -> str:
 # ------------------------------------------------------------------- gates
 
 def gate_1_n_unit(ctx: Dict[str, Any]) -> Dict[str, Any]:
-    """n is explicit and the independent unit is defined."""
+    """n is explicit, the independent unit is defined, and the analysis lives there.
+
+    Declaring a unit key used to be the whole gate. It no longer is: a run that
+    declares units, detects rows-per-unit > 1, and then reports row-level tests
+    as primary has answered the question on paper and ignored it in the
+    numbers, which is worse than not asking.
+    """
     inf = ctx["inferential"] or {}
     unit = inf.get("unit_of_analysis") or {}
     tests = [t for t in (inf.get("tests") or []) if t.get("estimable")]
@@ -112,12 +118,28 @@ def gate_1_n_unit(ctx: Dict[str, Any]) -> Dict[str, Any]:
 
     missing_n = [t.get("outcome") for t in tests if not t.get("n_total")]
     unit_key = unit.get("unit_key")
+    rows_per_unit = unit.get("rows_per_unit")
+    primary_level = inf.get("primary_level") or "row"
+    clustered = rows_per_unit is not None and float(rows_per_unit) > 1.0
+
     issues = []
     if missing_n:
         issues.append("no n recorded for: %s" % ", ".join(str(x) for x in missing_n))
     if not unit_key:
         issues.append("independent unit not declared: %s"
                       % (unit.get("note") or "no --unit-key given"))
+
+    if clustered and primary_level == "row":
+        return gate(1, "n explicit and unit-defined", "FAIL",
+                    "rows repeat within units (rows_per_unit=%s) and the primary "
+                    "tests still treat every row as independent; the declared unit "
+                    "and the analysed unit are different objects."
+                    % rows_per_unit,
+                    ["primary_level is %r with rows_per_unit=%s"
+                     % (primary_level, rows_per_unit)],
+                    "re-run the inferential stage with --unit-key; it now moves the "
+                    "primary analysis to the unit level (or pairs the units) "
+                    "automatically once the structure is known")
 
     n_total = tests[0].get("n_total") if tests else None
     if issues:
@@ -131,9 +153,16 @@ def gate_1_n_unit(ctx: Dict[str, Any]) -> Dict[str, Any]:
                     "pass --unit-key with what one row represents, or record it in "
                     "the run manifest; the report already marks this "
                     "AUTHOR_INPUT_NEEDED.")
-    return gate(1, "n explicit and unit-defined", "PASS",
-                "unit `%s` declared; n=%s across %d outcome(s)."
-                % (unit_key, n_total, len(tests)))
+    evidence = ("unit `%s` declared; primary analysis at the %s level; n=%s "
+                "across %d outcome(s)."
+                % (unit_key, primary_level, n_total, len(tests)))
+    if clustered:
+        evidence = ("unit `%s` declared (%s rows -> %s units, structure: %s); the "
+                    "primary analysis runs at the `%s` level and the row-level "
+                    "results are kept as a labelled secondary; n=%s."
+                    % (unit_key, unit.get("n_rows"), unit.get("n_units"),
+                       unit.get("structure"), primary_level, n_total))
+    return gate(1, "n explicit and unit-defined", "PASS", evidence)
 
 
 def gate_2_missing(ctx: Dict[str, Any]) -> Dict[str, Any]:
@@ -232,7 +261,8 @@ def gate_4_uncertainty(ctx: Dict[str, Any]) -> Dict[str, Any]:
 
     no_se = [c for c, s in (desc.get("numeric") or {}).items() if s.get("se") is None]
     fig_no_unc = [d.get("id") for d in (decisions.get("decisions") or [])
-                  if d.get("chart_type") in ("small_multiples_ci", "distribution_panel")
+                  if d.get("chart_type") in ("small_multiples_ci", "distribution_panel",
+                                             "scatter_panel")
                   and not d.get("uncertainty")]
 
     p_no_ci: List[str] = []
@@ -313,40 +343,79 @@ def gate_5_multiplicity(ctx: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def gate_6_sensitivity(ctx: Dict[str, Any]) -> Dict[str, Any]:
-    """The primary analysis was perturbed, and the gaps are stated as gaps."""
+    """The primary analysis was perturbed, and the conflicts are named as conflicts.
+
+    A rank-based cross-check of the primary test is assumption robustness: it
+    asks whether the test survives a different distributional assumption. This
+    gate asks for more -- an artifact from scripts/sensitivity_analysis.py that
+    re-ran the primary question on perturbed data (leave-one-group-out, block
+    jackknife, disclosed extreme-value exclusion, strict complete cases). The
+    cross-check alone no longer satisfies the gate, because a report stamped
+    "sensitivity tested" on the strength of it claimed more than it did.
+    """
     inf = ctx["inferential"] or {}
     report = ctx["report_text"]
+    sens = ctx.get("sensitivity") or {}
     tests = [t for t in (inf.get("tests") or []) if t.get("estimable")]
-    if not tests:
+    if not tests or inf.get("skipped"):
         return gate(6, "sensitivity tested", "N/A", "no test was estimable")
-    crossed = [t.get("outcome") for t in tests if t.get("robustness_cross_check")]
-    has_appendix = bool(re.search(r"^##\s+Appendix A1\.", report, re.M))
-    has_gap_statement = "NOT RUN" in report
 
-    if not crossed:
+    if not sens:
         return gate(6, "sensitivity tested", "FAIL",
-                    "no alternative analysis was run for any outcome.",
-                    ["no robustness_cross_check recorded"],
-                    "re-run each primary test with its rank-based or "
-                    "variance-robust equivalent.")
+                    "no sensitivity artifact exists (analysis/sensitivity.json). "
+                    "The rank cross-checks below test assumptions, not the data; "
+                    "they cannot stand in for a perturbation of the analysis.",
+                    ["scripts/sensitivity_analysis.py did not run"],
+                    "re-run the pipeline (the sensitivity stage follows the "
+                    "inferential stage), or run scripts/sensitivity_analysis.py "
+                    "--clean cleaned/cleaned.csv --inferential "
+                    "analysis/inferential.json --out analysis/sensitivity.json")
+
+    summary = sens.get("summary") or {}
+    covered = {o.get("outcome") for o in (sens.get("outcomes") or [])}
+    uncovered = [t.get("outcome") for t in tests if t.get("outcome") not in covered]
+    n_conf = int(summary.get("n_conflicting") or 0)
+    conflicts = summary.get("conflicts") or []
+    has_appendix = bool(re.search(r"^##\s+Appendix A1\.", report, re.M))
+
+    if uncovered:
+        return gate(6, "sensitivity tested", "FAIL",
+                    "the sensitivity artifact exists but %d estimable outcome(s) "
+                    "carry no perturbation." % len(uncovered),
+                    ["not covered: %s" % ", ".join(str(x) for x in uncovered)],
+                    "re-run scripts/sensitivity_analysis.py so every estimable "
+                    "outcome is perturbed, or record why it cannot be.")
     if not has_appendix:
         return gate(6, "sensitivity tested", "FAIL",
-                    "%d outcome(s) carry a cross-check but the report has no "
-                    "Appendix A1." % len(crossed),
+                    "%d outcome(s) were perturbed but the report has no Appendix A1."
+                    % len(covered),
                     ["Appendix A1 missing"], "add the sensitivity appendix.")
-    if len(crossed) < len(tests):
+    if n_conf:
         return gate(6, "sensitivity tested", "WARN",
-                    "%d of %d outcomes were cross-checked; the rest are reported "
-                    "without a perturbation." % (len(crossed), len(tests)),
-                    ["not cross-checked: %s" % ", ".join(
-                        str(t.get("outcome")) for t in tests
-                        if not t.get("robustness_cross_check"))],
-                    "cross-check the remaining outcomes or mark them not run.")
+                    "%d perturbation(s) across %d outcome(s) changed the "
+                    "significance verdict; these are reported as conflicts, not "
+                    "errors, and the report must carry them."
+                    % (n_conf, summary.get("n_outcomes")),
+                    ["%s / %s: p %s -> %s" % (c.get("outcome"),
+                                              c.get("perturbation"),
+                                              c.get("primary_p"),
+                                              c.get("perturbed_p"))
+                     for c in conflicts[:6]],
+                    "state the conflicts in Appendix A1 and either justify the "
+                    "primary choice or change it; a conflict that is disclosed is "
+                    "a limit, one that is not is a defect.")
     return gate(6, "sensitivity tested", "PASS",
-                "all %d estimable outcomes carry a rank-based cross-check, and "
-                "Appendix A1 %s."
-                % (len(tests), "lists the analyses that were not run as gaps"
-                   if has_gap_statement else "reports the cross-checks"))
+                "%s perturbation(s) ran across %d outcome(s) (leave-one-group-out, "
+                "block jackknife, extreme-value fence, strict complete cases%s) "
+                "and every one agreed with the primary verdict at alpha=%s. "
+                "Appendix A1 reports them."
+                % (summary.get("n_perturbations"), summary.get("n_outcomes"),
+                   ", imputation sensitivity" if any(
+                       p.get("name") == "imputation_sensitivity" and
+                       p.get("status") == "ran"
+                       for o in (sens.get("outcomes") or [])
+                       for p in (o.get("perturbations") or [])) else "",
+                   sens.get("alpha")))
 
 
 def gate_7_no_upgrade(ctx: Dict[str, Any]) -> Dict[str, Any]:
@@ -375,12 +444,19 @@ def gate_7_no_upgrade(ctx: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def gate_8_unknowns(ctx: Dict[str, Any]) -> Dict[str, Any]:
-    """Every field without evidence is written AUTHOR_INPUT_NEEDED, not invented."""
+    """Every field without evidence is written AUTHOR_INPUT_NEEDED, not invented.
+
+    A never-automatic flag answered through the answers file carries a
+    `resolved` record (who decided, when, and why); answered questions are no
+    longer unknowns, and only the unanswered ones count against this gate.
+    """
     inf = ctx["inferential"] or {}
     run = ctx["cleaning_run"] or {}
     report = ctx["report_text"]
     unit_missing = not (inf.get("unit_of_analysis") or {}).get("unit_key")
-    held = run.get("never_automatic_flags") or []
+    all_flags = run.get("never_automatic_flags") or []
+    held = [f for f in all_flags if not f.get("resolved")]
+    resolved = [f for f in all_flags if f.get("resolved")]
     has_appendix_b = bool(re.search(r"^##\s+Appendix B\.", report, re.M))
     has_marker = "AUTHOR_INPUT_NEEDED" in report
 
@@ -398,11 +474,18 @@ def gate_8_unknowns(ctx: Dict[str, Any]) -> Dict[str, Any]:
                     issues,
                     "add AUTHOR_INPUT_NEEDED for each unknown and list it in "
                     "Appendix B.")
+    if resolved and not has_marker:
+        # answered questions carry their own provenance; the marker may still be
+        # present for other reasons, but a resolution without any marker is fine
+        pass
     return gate(8, "unknowns flagged", "PASS",
                 "every unknown the pipeline detected is written AUTHOR_INPUT_NEEDED "
                 "and repeated in Appendix B (%s)."
                 % ("unit undeclared" if unit_missing
                    else "%d withheld decision(s)" % len(held) if held
+                   else "%d decision(s) were answered via the answers file and "
+                        "carry their provenance; no unknowns remain"
+                        % len(resolved) if resolved
                    else "no unknowns detected"))
 
 
@@ -670,6 +753,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         "profile": load_json(outdir / "analysis" / "profile.json") or {},
         "descriptive": load_json(outdir / "analysis" / "descriptive.json") or {},
         "inferential": load_json(outdir / "analysis" / "inferential.json") or {},
+        "sensitivity": load_json(outdir / "analysis" / "sensitivity.json") or {},
         "decisions": load_json(outdir / "analysis" / "chart_decisions.json") or {},
         "cleaning_run": load_json(outdir / "cleaned" / "cleaning_run.json") or {},
         "build": build,

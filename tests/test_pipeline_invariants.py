@@ -678,6 +678,282 @@ def test_check_deps_truthful():
             "%s is listed as a dependency but no script imports it" % lib
 
 
+# --------------------------------------------- unit-of-analysis structure
+
+def _clustered_frame(seed=7):
+    """30 units x 3 arms x 4 replicate rows, one real effect."""
+    rng = np.random.default_rng(seed)
+    n_per, reps = 30, 4
+    return pd.DataFrame({
+        "pid": np.repeat(np.arange(n_per * 3), reps),
+        "arm": np.repeat(np.array(["ctrl", "low", "high"]), [n_per * reps]),
+        "y": np.repeat(np.repeat(np.array([0.0, 0.4, 1.0]), [n_per]), reps)
+            + np.repeat(rng.normal(0, 1.0, n_per * 3), reps)
+            + rng.normal(0, 0.3, n_per * 3 * reps),
+    })
+
+
+@check("repeated rows within units move the primary analysis to the unit level")
+def test_clustered_runs_at_unit_level():
+    with tempfile.TemporaryDirectory() as td:
+        csv = Path(td) / "clustered.csv"
+        _clustered_frame().to_csv(csv, index=False)
+        out = Path(td) / "inf.json"
+        p = _run("stats_inferential.py", "--clean", csv, "--out", out,
+                 "--group", "arm", "--unit-key", "pid")
+        eq(p.returncode, 0, p.stderr)
+        d = json.loads(out.read_text(encoding="utf-8"))
+        eq(d["primary_level"], "unit", "the primary analysis stayed on rows")
+        t = d["tests"][0]
+        eq(t["analysis_level"], "unit", "the test record does not state its level")
+        eq(t["n_total"], 90, "n should be the 90 units, not the 360 rows")
+        assert d.get("secondary_row_level"), \
+            "the row-level results vanished instead of being kept as a secondary"
+        sec = d["secondary_row_level"]["tests"][0]
+        assert sec.get("pseudoreplication_warning"), \
+            "the secondary row-level test carries no inflation warning"
+
+
+@check("a paired design gets paired tests, not two independent samples")
+def test_paired_design_runs_paired_tests():
+    rng = np.random.default_rng(3)
+    n = 25
+    df = pd.DataFrame({
+        "pid": np.tile(np.arange(n), 2),
+        "time": ["pre"] * n + ["post"] * n,
+        "y": np.concatenate([rng.normal(0, 1, n), rng.normal(0.9, 1, n)])
+             + np.tile(rng.normal(0, 0.8, n), 2),
+    })
+    with tempfile.TemporaryDirectory() as td:
+        csv = Path(td) / "paired.csv"
+        df.to_csv(csv, index=False)
+        out = Path(td) / "inf.json"
+        p = _run("stats_inferential.py", "--clean", csv, "--out", out,
+                 "--group", "time", "--unit-key", "pid")
+        eq(p.returncode, 0, p.stderr)
+        d = json.loads(out.read_text(encoding="utf-8"))
+        eq(d["primary_level"], "paired", "a paired structure was not detected")
+        t = d["tests"][0]
+        assert "paired" in t["method"].lower() or "Wilcoxon" in t["method"], \
+            "an unpaired test was run on paired data: %r" % t["method"]
+        assert t["effect_sizes"].get("cohens_dz") is not None, \
+            "the paired test reports no dz effect size"
+
+
+@check("units in exactly 2 of 3 groups are incomplete repeated, not paired")
+def test_incomplete_repeated_classification():
+    # regression: g_min == g_max == 2 used to be labelled 'paired' even with a
+    # 3-level group, which the paired dispatch cannot answer
+    df = pd.DataFrame({
+        "pid": [0, 0, 1, 1, 2, 2, 3, 3],
+        "cond": ["x", "y", "x", "z", "y", "z", "x", "z"],
+        "y": np.arange(8, dtype=float),
+    })
+    st = si.analyze_unit_structure(df, "cond", "pid")
+    eq(st["structure"], "incomplete_repeated",
+       "a 2-of-3 design was misclassified as paired")
+
+
+@check("gate 1 fails a declared unit whose primary analysis stays on rows")
+def test_gate1_blocks_row_level_under_clustering():
+    import final_audit as fa
+    base_inf = {
+        "tests": [{"outcome": "y", "estimable": True, "n_total": 90}],
+        "unit_of_analysis": {"unit_key": "pid", "n_rows": 360, "n_units": 90,
+                             "rows_per_unit": 4.0},
+    }
+    ctx = {"inferential": {**base_inf, "primary_level": "row"},
+           "report_text": "", "descriptive": {}, "decisions": {},
+           "cleaning_run": {}, "build": {}, "caveats": []}
+    eq(fa.gate_1_n_unit(ctx)["status"], "FAIL",
+       "declaring the unit while analysing rows passed gate 1")
+    ctx["inferential"] = {**base_inf, "primary_level": "unit",
+                          "unit_of_analysis": {**base_inf["unit_of_analysis"],
+                                               "structure": "clustered"}}
+    g = fa.gate_1_n_unit(ctx)
+    eq(g["status"], "PASS", "a correct unit-level analysis failed gate 1: %s" % g["evidence"])
+
+
+# ------------------------------------------------------- sensitivity suite
+
+@check("the sensitivity suite runs leave-one-group-out and reports agreement")
+def test_sensitivity_logo_and_summary():
+    with tempfile.TemporaryDirectory() as td:
+        csv = Path(td) / "clustered.csv"
+        _clustered_frame().to_csv(csv, index=False)
+        inf = Path(td) / "inf.json"
+        sens = Path(td) / "sens.json"
+        eq(_run("stats_inferential.py", "--clean", csv, "--out", inf,
+                "--group", "arm", "--unit-key", "pid").returncode, 0, "inferential failed")
+        p = _run("sensitivity_analysis.py", "--clean", csv,
+                 "--inferential", inf, "--out", sens)
+        eq(p.returncode, 0, p.stderr)
+        d = json.loads(sens.read_text(encoding="utf-8"))
+        perts = d["outcomes"][0]["perturbations"]
+        logo = [x for x in perts if x["name"] == "leave_one_group_out"]
+        eq(len(logo), 3, "3 groups should give 3 leave-one-out refits")
+        assert all(x["status"] == "ran" for x in logo), \
+            "a LOGO refit did not run: %r" % [x for x in logo if x["status"] != "ran"]
+        ran = [x for x in perts if x.get("status") == "ran" and x.get("agrees") is not None]
+        assert len(ran) >= 10, \
+            "fewer than 10 perturbations produced a verdict for one outcome"
+        s = d["summary"]
+        eq(s["n_conflicting"], 0,
+           "a clean 3-arm signal should not conflict: %r" % s["conflicts"])
+
+
+@check("gate 6 fails without the sensitivity artifact and reads it when present")
+def test_gate6_requires_sensitivity_artifact():
+    import final_audit as fa
+    inf = {"tests": [{"outcome": "y", "estimable": True, "p_raw": 0.01,
+                      "robustness_cross_check": {"test": "Mann-Whitney U",
+                                                 "p_raw": 0.02,
+                                                 "agrees_with_primary": True}}]}
+    report_with_a1 = "## Appendix A1. Sensitivity and stability\n"
+    ctx = {"inferential": inf, "sensitivity": {}, "report_text": report_with_a1,
+           "descriptive": {}, "decisions": {}, "cleaning_run": {},
+           "build": {}, "caveats": []}
+    g = fa.gate_6_sensitivity(ctx)
+    eq(g["status"], "FAIL",
+       "a rank cross-check alone must not satisfy the sensitivity gate")
+    ctx["sensitivity"] = {
+        "alpha": 0.05,
+        "outcomes": [{"outcome": "y",
+                      "perturbations": [{"name": "leave_one_group_out",
+                                         "status": "ran", "agrees": True}]}],
+        "summary": {"n_outcomes": 1, "n_perturbations": 1,
+                    "n_agreeing": 1, "n_conflicting": 0, "conflicts": []},
+    }
+    g = fa.gate_6_sensitivity(ctx)
+    eq(g["status"], "PASS", "a real sensitivity artifact failed gate 6: %s" % g["evidence"])
+    ctx["sensitivity"]["summary"]["n_conflicting"] = 1
+    ctx["sensitivity"]["summary"]["conflicts"] = [
+        {"outcome": "y", "perturbation": "leave_one_group_out",
+         "primary_p": 0.01, "perturbed_p": 0.20}]
+    eq(fa.gate_6_sensitivity(ctx)["status"], "WARN",
+       "a conflict must downgrade the gate to WARN, not pass silently")
+
+
+# ----------------------------------------------------------- answers file
+
+@check("the answers file resolves holds with provenance and rejects bad ids")
+def test_answers_roundtrip():
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        prof = td / "profile.json"
+        eq(_run("profile_tabular.py", "--in", TRAPS_CSV, "--out", prof).returncode,
+           0, "profiling the traps file failed")
+        plan_path = td / "cleaning_plan.json"
+        eq(_run("cleaning_plan.py", "--profile", prof, "--out", plan_path).returncode,
+           0, "planning failed")
+        plan = json.loads(plan_path.read_text(encoding="utf-8"))
+        template = td / "answers.template.json"
+        assert template.exists(), \
+            "no answers.template.json was written for a plan with open decisions"
+        pending = json.loads(template.read_text(encoding="utf-8"))["decisions"]
+        assert pending, "the template lists no decisions"
+        assert all(d["allowed_actions"] for d in pending), \
+            "a pending decision lists no executable action"
+
+        # an unknown id must be rejected without applying anything
+        bad = td / "bad.json"
+        bad.write_text(json.dumps({"decisions": [
+            {"id": "coerce_numeric@nonexistent", "action": "coerce"}]}),
+            encoding="utf-8")
+        p = _run("cleaning_plan.py", "--profile", prof, "--out", plan_path,
+                 "--answers", bad)
+        eq(p.returncode, 2, "an unknown answers id was silently accepted")
+        plan2 = json.loads(plan_path.read_text(encoding="utf-8"))
+        eq(plan2.get("user_decisions"), None,
+           "the rejected answers run still wrote decisions into the plan")
+
+        # a real hold, answered
+        hold = next(f for f in plan["never_automatic_flags"]
+                    if f["op"] == "coerce_numeric")
+        good = td / "answers.json"
+        good.write_text(json.dumps({"decisions": [{
+            "id": hold["id"], "action": "coerce",
+            "rationale": "confirmed numeric in the codebook",
+            "decided_by": "test-suite"}]}), encoding="utf-8")
+        p = _run("cleaning_plan.py", "--profile", prof, "--out", plan_path,
+                 "--answers", good)
+        eq(p.returncode, 0, p.stderr)
+        plan3 = json.loads(plan_path.read_text(encoding="utf-8"))
+        flag = next(f for f in plan3["never_automatic_flags"] if f["id"] == hold["id"])
+        eq(flag["resolved"]["action"], "coerce", "the flag was not marked resolved")
+        eq(flag["resolved"]["decided_by"], "test-suite", "the decision lost its author")
+        dec = plan3["user_decisions"][0]
+        assert dec["rationale"], "the decision rationale was not recorded"
+        forced = [a for a in plan3["auto_actions"]
+                  if a["id"] == "t-coerce-numeric"
+                  and a.get("user_opt_in", {}).get("flag") == "--answers"]
+        assert forced, "the answered decision produced no executable op"
+
+
+@check("a changed answers file invalidates the cleaning stages, not the profile")
+def test_invalidate_stages_from():
+    state = ps.new_state({"kind": "file", "path": "x", "sha256": "0",
+                          "bytes": 0, "files": 1}, Path("."), {},
+                         stages=["input", "route", "profile", "cleaning_plan",
+                                 "cleaning_execute", "report"])
+    for s in ("input", "route", "profile", "cleaning_plan", "cleaning_execute"):
+        ps.record_stage(state, s, "completed", evidence=[])
+    stale = ps.invalidate_stages_from(state, "cleaning_plan", "answers file changed")
+    eq(sorted(stale), ["cleaning_execute", "cleaning_plan", "report"],
+       "invalidation touched the wrong stages (everything reading cleaned data is stale)")
+    eq(state["stages"]["profile"]["status"], "completed",
+       "a stage before the answers boundary was dropped")
+    assert "cleaning_plan" not in state["stages"], "the stale plan stage survived"
+
+
+# ------------------------------------------------------- code provenance
+
+@check("the run records the pipeline commit it was produced by")
+def test_pipeline_provenance_records_commit():
+    prov = ps.pipeline_provenance(ROOT)
+    commit = prov.get("git_commit")
+    if commit:
+        eq(len(commit), 40, "the commit hash is not a full sha1: %r" % commit)
+        assert prov["git_dirty"] in (True, False), "dirty flag missing"
+    else:
+        assert prov.get("note"), \
+            "no commit and no explanation is the worst of both worlds"
+
+
+@check("the lockfile pins exact versions beside the evidence")
+def test_lockfile_export():
+    with tempfile.TemporaryDirectory() as td:
+        path = rp.export_lockfile(Path(td))
+        text = path.read_text(encoding="utf-8")
+        assert "pandas==" in text, "pandas is not pinned to an exact version"
+        assert "# pipeline commit:" in text, "the lockfile omits the commit line"
+        for line in text.splitlines():
+            if line.endswith(".txt") or line.startswith("#"):
+                continue
+            assert "==" in line or line.startswith("#"), \
+                "an unpinned requirement leaked into the lockfile: %r" % line
+
+
+# ------------------------------------------------------------- scatter band
+
+@check("scatter panels draw the bootstrap band and the r interval")
+def test_scatter_band_renders():
+    import matplotlib
+    matplotlib.use("Agg")
+    import render_chart as rc
+    rng = np.random.default_rng(5)
+    n = 120
+    x = rng.uniform(0, 10, n)
+    df = pd.DataFrame({"a": x, "b": 0.8 * x + rng.normal(0, 1.0, n)})
+    d = {"title": "a and b move together (r = 0.9)",
+         "spec": {"panels": [{"x": "a", "y": "b", "n": n, "title": "b vs a (units)",
+                              "statistic": "r", "value": 0.9}]}}
+    out = Path(tempfile.mkdtemp()) / "scatter.png"
+    res = rc.render_scatter(df, d, out)
+    assert res["non_blank"], "the scatter figure rendered blank"
+    assert out.stat().st_size > 8000, "the banded figure is suspiciously small"
+
+
 def main() -> int:
     width = max(len(n) for n, _ in _RESULTS)
     failed = 0

@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
@@ -26,6 +27,7 @@ STAGE_ORDER = [
     "cleaning_validate",
     "descriptive",
     "inferential",
+    "sensitivity",
     "chart_decisions",
     "charts",
     "report",
@@ -251,3 +253,70 @@ def stage_summary(state: Dict[str, Any]) -> Dict[str, Any]:
             for name in order
         },
     }
+
+
+def pipeline_provenance(root: Path) -> Dict[str, Any]:
+    """Identify the code that produced this run, not just the data.
+
+    A report that says "re-run scripts/run_pipeline.py" is reproducible only
+    against the exact code that ran. The README asks users to cite the commit;
+    this records it so the citation does not depend on the user remembering.
+    """
+    root = Path(root)
+    try:
+        def _git(*args: str) -> str:
+            proc = subprocess.run(
+                ["git", "-C", str(root), *args],
+                capture_output=True, text=True, timeout=15,
+            )
+            if proc.returncode != 0:
+                raise RuntimeError(proc.stderr.strip() or "git exited %d" % proc.returncode)
+            return proc.stdout.strip()
+
+        commit = _git("rev-parse", "HEAD")
+        status = _git("status", "--porcelain")
+        branch = _git("rev-parse", "--abbrev-ref", "HEAD")
+        describe = ""
+        try:
+            describe = _git("describe", "--tags", "--always", "--dirty")
+        except Exception:
+            pass
+        return {
+            "git_commit": commit,
+            "git_branch": branch,
+            "git_dirty": bool(status),
+            "git_dirty_files": status.count("\n") + (1 if status else 0),
+            "git_describe": describe or None,
+            "note": ("working tree was dirty when this run started; the commit "
+                     "alone does not reproduce it" if status else
+                     "commit is sufficient to reproduce the pipeline code"),
+        }
+    except Exception as exc:
+        return {
+            "git_commit": None,
+            "git_dirty": None,
+            "note": "git unavailable or not a repository (%s); cite the code "
+                    "version manually" % type(exc).__name__,
+        }
+
+
+def invalidate_stages_from(state: Dict[str, Any], first_stage: str,
+                           reason: str) -> List[str]:
+    """Drop completed stage records from `first_stage` onward so they re-run.
+
+    Used when an input to a mid-pipeline stage changes without the pipeline
+    input itself changing -- today, a user answers file whose contents differ
+    from the one the recorded stages were built from. Stages before
+    `first_stage` keep their evidence; everything after it is stale because it
+    reads the cleaned data the changed plan produces.
+    """
+    order = state.get("stage_order") or STAGE_ORDER
+    if first_stage not in order:
+        return []
+    stale = [s for s in order[order.index(first_stage):]]
+    stages = state.setdefault("stages", {})
+    for name in stale:
+        stages.pop(name, None)
+    state.setdefault("warnings", []).append(
+        "%s invalidated (%s); they will re-run" % (", ".join(stale), reason))
+    return stale

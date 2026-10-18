@@ -10,6 +10,7 @@
 | Reproducible script | `clean_traps_dirty.py` |
 | Ops applied | 11 |
 | Decisions pending | 4 |
+| Decisions answered via answers file | 0 |
 
 > The raw file is never modified. Everything below is additive.
 
@@ -55,6 +56,7 @@ These were **not** applied. Each one changes the analysis and needs an explicit 
 - **Question**: Choose: strip_symbol / divide_by_100 / keep_as_text. This skill ships no automatic op here on purpose: the unit is a fact about the dataset that the file itself does not encode, so any automatic choice would be a guess presented as a result
 - **If you say nothing**: `keep_as_text`
 - **Rule**: references/never-automatic-list.md#conditional-never
+- **Answer with**: fill `answers.template.json` (id `coerce_numeric_currency@growth_pct`) and re-run with `--answers`
 
 ### `coerce_numeric` (P1)
 
@@ -63,6 +65,7 @@ These were **not** applied. Each one changes the analysis and needs an explicit 
 - **Question**: Choose: keep_as_text (default) / coerce and accept the loss --force-coerce-numeric mostly_text / map the listed tokens to missing by editing the source file
 - **If you say nothing**: `keep_as_text`
 - **Rule**: references/never-automatic-list.md#conditional-never
+- **Answer with**: fill `answers.template.json` (id `coerce_numeric@mostly_text`) and re-run with `--answers`
 
 ### `coerce_numeric` (P1)
 
@@ -71,6 +74,7 @@ These were **not** applied. Each one changes the analysis and needs an explicit 
 - **Question**: Choose: keep_as_text (default; correct for postcode / phone / product code), or coerce -- asserting the leading zeros are spurious, by re-running with --force-coerce-numeric postcode
 - **If you say nothing**: `keep_as_text`
 - **Rule**: references/never-automatic-list.md#conditional-never
+- **Answer with**: fill `answers.template.json` (id `coerce_numeric@postcode`) and re-run with `--answers`
 
 ### `coerce_numeric_currency` (P1)
 
@@ -79,6 +83,7 @@ These were **not** applied. Each one changes the analysis and needs an explicit 
 - **Question**: Choose: strip_symbol / divide_by_100 / keep_as_text. This skill ships no automatic op here on purpose: the unit is a fact about the dataset that the file itself does not encode, so any automatic choice would be a guess presented as a result
 - **If you say nothing**: `keep_as_text`
 - **Rule**: references/never-automatic-list.md#conditional-never
+- **Answer with**: fill `answers.template.json` (id `coerce_numeric_currency@revenue`) and re-run with `--answers`
 
 ## 4. Disclosures (already applied, reversible)
 

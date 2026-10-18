@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import platform
 import re
 import shutil
 import subprocess
@@ -28,10 +29,12 @@ from pipeline_state import (  # noqa: E402
     STAGE_ORDER,
     atomic_write_json,
     input_fingerprint,
+    invalidate_stages_from,
     load_state,
     mark_run,
     new_state,
     paths_fingerprint,
+    pipeline_provenance,
     record_stage,
     stage_completed,
 )
@@ -164,7 +167,58 @@ def parse_options(args) -> Dict[str, Any]:
         "profile_only": bool(args.profile_only),
         "pdf_backend": args.pdf_backend,
         "modality": args.modality,
+        "answers": str(Path(args.answers).resolve()) if args.answers else None,
+        "export_lockfile": bool(args.export_lockfile),
     }
+
+
+def answers_fingerprint(path: Optional[str]) -> Optional[Dict[str, Any]]:
+    """Hash the answers file so a resume can tell an unchanged answer set
+    (reuse the recorded stages) from a changed one (the cleaning and every
+    stage downstream of it are stale and must re-run)."""
+    if not path:
+        return None
+    p = Path(path)
+    if not p.exists():
+        raise SystemExit("answers file not found: %s" % p)
+    import hashlib
+    return {"path": str(p), "sha256": hashlib.sha256(p.read_bytes()).hexdigest()}
+
+
+def export_lockfile(outdir: Path) -> Path:
+    """Snapshot the exact environment next to the evidence it produced.
+
+    requirements.txt pins floors ('>='), which is right for installing but
+    wrong for reproducing: a year later the floors admit different versions
+    and nothing on disk can detect the difference. This file is the floor plus
+    the ceiling that actually ran.
+    """
+    import importlib.metadata as md
+    reqs = [
+        line.strip()
+        for line in (ROOT / "requirements.txt").read_text(encoding="utf-8").splitlines()
+        if line.strip() and not line.startswith("#")
+    ]
+    lines = [
+        "# data-master lockfile -- exact versions that produced this run's artifacts.",
+        "# Install with:  python -m pip install -r lockfile.txt",
+    ]
+    prov = pipeline_provenance(ROOT)
+    if prov.get("git_commit"):
+        lines.append("# pipeline commit: %s%s" % (
+            prov["git_commit"], " (dirty working tree)" if prov.get("git_dirty") else ""))
+    else:
+        lines.append("# pipeline commit: unknown (%s)" % prov.get("note"))
+    lines.append("# python: %s on %s" % (platform.python_version(), platform.platform()))
+    for req in reqs:
+        name = re.split(r"[><=~!;]", req, maxsplit=1)[0].strip()
+        try:
+            lines.append("%s==%s" % (name, md.version(name)))
+        except Exception:
+            lines.append("# %s: not installed in this environment" % name)
+    path = outdir / "lockfile.txt"
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return path
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -185,6 +239,10 @@ def build_parser() -> argparse.ArgumentParser:
                     choices=["auto", "nature", "nejm", "science", "lancet"])
     ap.add_argument("--design", default="auto", help="EQUATOR design id or auto")
     ap.add_argument("--modality", help="force a router modality")
+    ap.add_argument("--answers", help="decisions.json answering the plan's "
+                                      "never-automatic flags (see answers.template.json)")
+    ap.add_argument("--export-lockfile", action="store_true",
+                    help="write lockfile.txt with the exact versions that ran")
     ap.add_argument("--profile-only", action="store_true",
                     help="stop after profiling and build a profile-only report")
     ap.add_argument("--pdf-backend", default="auto",
@@ -492,6 +550,7 @@ def run_full_tabular(pipe: Pipeline, input_path: Path, outdir: Path,
     code = pipe.run("cleaning_plan", [
         sys.executable, str(HERE / "cleaning_plan.py"),
         "--profile", str(profile_path), "--out", str(plan_path),
+        *(["--answers", str(options["answers"])] if options.get("answers") else []),
     ], [plan_path])
     if code:
         return code
@@ -550,6 +609,20 @@ def run_full_tabular(pipe: Pipeline, input_path: Path, outdir: Path,
                          evidence=[str(inferential_path)], message=reason)
             pipe.save()
             log("inferential: skipped -- %s" % reason)
+
+    # ---- sensitivity: perturb the primary analysis (gate 6 reads this) ----
+    sensitivity_path = analysis / "sensitivity.json"
+    sens_cmd = [
+        sys.executable, str(HERE / "sensitivity_analysis.py"),
+        "--clean", str(clean_csv),
+        "--inferential", str(inferential_path),
+        "--out", str(sensitivity_path),
+    ]
+    if options.get("group"):
+        sens_cmd.extend(["--group", str(options["group"])])
+    code = pipe.run("sensitivity", sens_cmd, [sensitivity_path])
+    if code:
+        return code
 
     code = pipe.run("chart_decisions", [
         sys.executable, str(HERE / "chart_decision.py"),
@@ -657,6 +730,10 @@ def fresh_state(args, state_path: Path) -> Tuple[Dict[str, Any], Path]:
     options["out"] = str(outdir)
     options["title"] = args.title or display_title(input_path)
     state = new_state(meta, outdir, options)
+    # the code that produced this run is part of the evidence, not an
+    # environment detail: a resume on a different commit must be visible
+    state["pipeline"] = pipeline_provenance(ROOT)
+    state["answers"] = answers_fingerprint(options.get("answers"))
     input_evidence = meta.get("paths") or [meta["path"]]
     record_stage(state, "input", "completed", evidence=input_evidence,
                  message="input fingerprint %s" % meta["sha256"][:16])
@@ -693,8 +770,22 @@ def main(argv=None) -> int:
         state = load_state(state_path)
         outdir = verify_resume(state, state_path)
         options = state.get("options") or {}
+        if args.answers:
+            options["answers"] = str(Path(args.answers).resolve())
         if args.force:
             options["force"] = True
+        # an answers file whose contents changed makes the recorded cleaning
+        # and everything downstream of it stale, even though the input itself
+        # did not change; those stages are invalidated rather than trusted
+        current_answers = answers_fingerprint(options.get("answers"))
+        recorded_answers = state.get("answers")
+        if (current_answers or recorded_answers) and current_answers != recorded_answers:
+            stale = invalidate_stages_from(
+                state, "cleaning_plan",
+                "answers file %s" % ("changed" if recorded_answers else "supplied"))
+            state["answers"] = current_answers
+            if stale:
+                log("answers: %d stage(s) invalidated and will re-run" % len(stale))
         if state.get("status") == "completed" and not args.force:
             log("run already completed: %s" % state_path)
             print("audit: %s" % (state.get("audit_verdict") or "unknown"))
@@ -715,6 +806,20 @@ def main(argv=None) -> int:
                 log("found matching state; resuming %s" % state_path)
                 state = previous
                 options = state.get("options") or {}
+                if args.answers:
+                    options["answers"] = str(Path(args.answers).resolve())
+                current_answers = answers_fingerprint(options.get("answers"))
+                recorded_answers = state.get("answers")
+                if (current_answers or recorded_answers) \
+                        and current_answers != recorded_answers:
+                    stale = invalidate_stages_from(
+                        state, "cleaning_plan",
+                        "answers file %s"
+                        % ("changed" if recorded_answers else "supplied"))
+                    state["answers"] = current_answers
+                    if stale:
+                        log("answers: %d stage(s) invalidated and will re-run"
+                            % len(stale))
             except SystemExit:
                 state, outdir = fresh_state(args, state_path)
                 options = state.get("options") or {}
@@ -837,12 +942,23 @@ def main(argv=None) -> int:
         mark_run(pipe.state, "completed")
         pipe.save()
 
+        if options.get("export_lockfile"):
+            lock = export_lockfile(outdir)
+            record_stage(pipe.state, "lockfile", "completed", evidence=[str(lock)],
+                         message="exact dependency versions snapshotted")
+            pipe.save()
+            log("lockfile: %s" % lock)
+
         print()
         log("complete: %s" % outdir)
         print("  report:  %s" % (outdir / "report.pdf"))
         print("  markdown:%s" % (outdir / "report.md"))
         print("  audit:   %s" % pipe.state.get("audit_verdict", "n/a"))
         print("  state:   %s" % state_path)
+        template = outdir / "answers.template.json"
+        if template.exists():
+            print("  answers: %s holds the decisions the pipeline will not "
+                  "make; fill it and re-run with --answers" % template)
         if full_tabular and pipe.state.get("audit_verdict") != "SUBMISSION-READY":
             print("  note:    report is complete but not submission-ready; "
                   "see audit/final_audit.md")

@@ -238,10 +238,52 @@ def render_scatter(df, d: Dict[str, Any], out: Path) -> Dict[str, Any]:
             try:
                 order = np.argsort(x)
                 xs, ys = x[order], y[order]
-                w = max(int(len(xs) / 6), 3)
-                sm = _lowess(xs, ys, w)
-                ax.plot(xs, sm, color=PALETTE[1], linewidth=2.0, linestyle="-",
-                        label="LOWESS")
+                # a local window of ~n/6 points: _lowess expects a fraction,
+                # so the count is converted here. Passing the count itself made
+                # every fit global, which is why a smoother meant to show local
+                # structure used to render as one straight line.
+                wcount = max(int(len(xs) / 6), 3)
+                frac = wcount / len(xs)
+                # the band is drawn only where the data actually supports a
+                # local fit: beyond the support, a bootstrap smoother fans into
+                # a wedge that reads as an artifact, not as uncertainty
+                span = xs.max() - xs.min()
+                h = max(span * frac / 2.0, 1e-12)
+                grid = np.linspace(xs.min(), xs.max(), 50)
+                support = np.array([float((np.abs(xs - g) <= h).sum())
+                                    for g in grid])
+                keep = support >= max(8.0, wcount / 4.0)
+                # both the line and the band must break where the data has a
+                # gap: a smoother that bridges empty space arrives looking like
+                # a trend, and a band that bridges it arrives looking certain
+                gaps = np.diff(xs)
+                med_gap = float(np.median(gaps)) if len(gaps) else 0.0
+                gap_thr = max(3.0 * med_gap, h)
+                gap_idx = np.where(gaps > gap_thr)[0]
+                boundaries = [float((xs[i] + xs[i + 1]) / 2.0) for i in gap_idx]
+                band = _lowess_band(xs, ys, grid, frac)
+                if band is not None and keep.any():
+                    seg = [-np.inf] + boundaries + [np.inf]
+                    first = True
+                    for lo_b, hi_b in zip(seg[:-1], seg[1:]):
+                        m = keep & (grid > lo_b) & (grid < hi_b)
+                        if int(m.sum()) >= 2:
+                            ax.fill_between(grid[m], band[0][m], band[1][m],
+                                            color=PALETTE[1], alpha=0.14,
+                                            linewidth=0,
+                                            label="bootstrap 95% band"
+                                            if first else None)
+                            first = False
+                sm = _lowess(xs, ys, frac)
+                cut = gap_idx + 1
+                starts = np.split(np.arange(len(xs)), cut)
+                line_labeled = False
+                for seg_i in starts:
+                    if len(seg_i) >= 2:
+                        ax.plot(xs[seg_i], sm[seg_i], color=PALETTE[1],
+                                linewidth=2.0, linestyle="-",
+                                label="LOWESS" if not line_labeled else None)
+                        line_labeled = True
             except Exception:
                 pass
         ax.set_xlabel(p["x"])
@@ -249,14 +291,66 @@ def render_scatter(df, d: Dict[str, Any], out: Path) -> Dict[str, Any]:
         ax.set_title(p["title"].split(" (")[0], fontsize=9, loc="left")
         ax.text(0.99, 0.02, "n = %s" % f"{p['n']:,}", transform=ax.transAxes,
                 ha="right", va="bottom", fontsize=8, color="#444444")
-        ax.text(0.01, 0.96, "%s = %.3g" % (p["statistic"], p["value"]),
+        # the interval must belong to the coefficient it sits beside; pairing a
+        # spearman estimate with a pearson interval prints a number that cannot
+        # exist, which is worse than printing no interval at all
+        from effect_size import pearson_r as _pearson_r, spearman_rho as _spearman_rho
+        stat_name = str(p.get("statistic", "r"))
+        coef: Dict[str, Any] = {}
+        if "spearman" in stat_name.lower():
+            coef = _spearman_rho(x, y)
+            val = coef.get("spearman_rho", p.get("value"))
+        else:
+            coef = _pearson_r(x, y)
+            val = coef.get("pearson_r", p.get("value"))
+        ci = coef.get("ci95") if coef.get("estimable", False) else None
+        txt = "%s = %.3g" % (stat_name, val)
+        if ci and ci[0] is not None:
+            txt += " (95%% CI [%.3g, %.3g])" % (ci[0], ci[1])
+        ax.text(0.01, 0.96, txt,
                 transform=ax.transAxes, ha="left", va="top", fontsize=8.5,
                 color="#222222")
+        # legend below the axes: inside a narrow panel every corner is
+        # contested by the annotation, the n= label, the line or the points,
+        # and a legend that overprints any of them destroys information
         if ax.get_legend_handles_labels()[0]:
-            ax.legend(fontsize=7.5, frameon=False, loc="lower right")
+            n_handles = len(ax.get_legend_handles_labels()[0])
+            ax.legend(fontsize=7.5, frameon=False, loc="upper center",
+                      bbox_to_anchor=(0.5, -0.32), ncol=min(2, n_handles),
+                      columnspacing=1.2, handletextpad=0.5)
     return _finish(fig, axes, out, d,
-                   "Association only. A visible curve that a straight line would miss is why "
-                   "the smoother is drawn. Columns that restate the grouping variable are excluded.")
+                   "Association only. The smoother carries a bootstrap 95% band and "
+                   "the coefficient carries its interval, so the uncertainty of the "
+                   "curve is visible rather than implied. Columns that restate the "
+                   "grouping variable are excluded.")
+
+
+def _lowess_band(x: np.ndarray, y: np.ndarray, grid: np.ndarray, frac: float,
+                 n_boot: int = 200, seed: int = 42):
+    """Bootstrap percentile band around the LOWESS smoother.
+
+    The band is what separates "a smoother was drawn" from "an estimate with
+    uncertainty was drawn". Pairs are resampled whole, never per-coordinate:
+    resampling x and y separately would manufacture correlation from noise.
+    """
+    rng = np.random.default_rng(seed)
+    curves = []
+    for _ in range(n_boot):
+        idx = rng.integers(0, len(x), len(x))
+        xb, yb = x[idx], y[idx]
+        order = np.argsort(xb)
+        xb, yb = xb[order], yb[order]
+        if len(np.unique(xb)) < 4:
+            continue
+        try:
+            sm = _lowess(xb, yb, frac)
+            curves.append(np.interp(grid, xb, sm))
+        except Exception:
+            continue
+    if len(curves) < max(30, n_boot // 4):
+        return None
+    arr = np.asarray(curves)
+    return (np.percentile(arr, 2.5, axis=0), np.percentile(arr, 97.5, axis=0))
 
 
 def _lowess(x: np.ndarray, y: np.ndarray, frac: float, iters: int = 3) -> np.ndarray:

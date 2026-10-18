@@ -46,12 +46,12 @@
   },
   {
    "path": "D:\\数据处理 skill\\examples\\iris\\outputs\\charts\\fig03_scatter_panel.png",
-   "bytes": 147035,
-   "ink_ratio": 0.08847,
+   "bytes": 146228,
+   "ink_ratio": 0.12024,
    "non_blank": true,
    "pixels": [
-    1803,
-    611
+    1769,
+    498
    ],
    "id": "fig03_scatter_panel",
    "chart_type": "scatter_panel",
