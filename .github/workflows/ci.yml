@@ -79,7 +79,16 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install pandas numpy pillow reportlab
       - name: Route a mixed folder
-        run: python scripts/route_input.py --in examples --deep --out /tmp/route.json
+        run: |
+          # examples/ also holds generator and replay scripts (*.py), which the
+          # router correctly classifies as unknown and exits 1 on; the mixed
+          # folder is assembled from data files only, as a user would hand over
+          mkdir /tmp/mixed
+          cp examples/iris/iris_dirty.csv examples/timeseries/sensor_log.csv /tmp/mixed/
+          cp examples/text/corpus/run_a.txt /tmp/mixed/
+          cp examples/media/images/scene.png /tmp/mixed/
+          cp examples/geo/stations.geojson /tmp/mixed/
+          python scripts/route_input.py --in /tmp/mixed --deep --out /tmp/route.json
       - name: Time series
         run: python scripts/profile_timeseries.py --in examples/timeseries/sensor_log.csv --out /tmp/ts.json
       - name: Text corpus
