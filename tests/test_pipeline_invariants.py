@@ -985,11 +985,11 @@ def test_mixed_model_incomplete():
                "a fitted mixed model did not become the primary")
             assert t["effect_sizes"].get("conditional_r2") is not None, \
                 "the mixed model reports no conditional R^2"
-            assert t.get("robustness_cross_check", {}).get("test"), \
-                "the cell-means cross-check is missing"
+            eq(t.get("estimation"), "ML", "fixed-effects LR must use ML")
+            assert t.get("converged"), "the fit was not checked for convergence"
         else:
-            assert t.get("mixed_model_fallback_reason"), \
-                "the mixed model was skipped without a recorded reason"
+            assert not t.get("estimable") and t.get("reason"), \
+                "a failed fit must remain unresolved"
         assert d.get("secondary_row_level"), "no row-level secondary"
 
 
@@ -1043,8 +1043,8 @@ def test_gate3_accepts_new_effect_sizes():
                           "fixed_effect_differences_ci95": {"b": {"ci95": [0, 1]}}}}]},
         "report_text": "", "descriptive": {}, "decisions": {},
         "cleaning_run": {}, "build": {}, "caveats": []}
-    eq(fa.gate_3_effect_size(ctx)["status"], "PASS",
-       "a mixed model with R^2 and coefficient intervals failed gate 3")
+    eq(fa.gate_3_effect_size(ctx)["status"], "WARN",
+       "coefficient intervals must not masquerade as intervals for R^2")
 
 
 # ------------------------------------------------------- answers run block

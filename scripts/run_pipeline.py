@@ -28,6 +28,7 @@ from pipeline_state import (  # noqa: E402
     PROFILE_ONLY_STAGES,
     STAGE_ORDER,
     atomic_write_json,
+    execution_context,
     input_fingerprint,
     invalidate_stages_from,
     load_state,
@@ -37,6 +38,7 @@ from pipeline_state import (  # noqa: E402
     pipeline_provenance,
     record_stage,
     stage_completed,
+    stage_evidence_issues,
 )
 from route_input import expand  # noqa: E402
 
@@ -875,7 +877,8 @@ def run_full_tabular(pipe: Pipeline, input_path: Path, outdir: Path,
         "--raw", str(input_path), "--outdir", str(outdir),
         "--title", str(options["title"]), "--template", str(options["report"]),
         "--pdf-backend", str(options["pdf_backend"]),
-    ], [report_path, outdir / "report_build.json"])
+    ], [report_path, outdir / "report_build.json", outdir / "report.pdf",
+        outdir / "executive_summary.md"])
     if code:
         return code
 
@@ -927,7 +930,8 @@ def run_profile_only(pipe: Pipeline, outdir: Path, options: Dict[str, Any],
         "--profile", str(profile_path), "--route", str(route_path),
         "--outdir", str(outdir), "--title", str(options["title"]),
         "--pdf-backend", str(options["pdf_backend"]),
-    ], [outdir / "report.md", outdir / "report_build.json"])
+    ], [outdir / "report.md", outdir / "report_build.json", outdir / "report.pdf",
+        outdir / "executive_summary.md"])
     if code:
         return code
     evidence = write_profile_audit(
@@ -988,6 +992,48 @@ def verify_resume(state: Dict[str, Any], state_path: Path) -> Path:
     return outdir
 
 
+def prepare_resume(state: Dict[str, Any], options: Dict[str, Any]) -> None:
+    """Invalidate the first stale producer and every dependent stage."""
+    current = execution_context(ROOT, options)
+    previous = state.get("execution_context")
+    if previous != current:
+        invalidate_stages_from(state, "route", "code, environment, options or legacy state changed")
+        state["status"] = "running"
+    # Raw input was already verified against its original fingerprint. Seal it
+    # on migration; never bless old derived artifacts merely because they exist.
+    if not (state.get("stages", {}).get("input") or {}).get("artifacts"):
+        meta = state["input"]
+        record_stage(state, "input", "completed",
+                     evidence=meta.get("paths") or [meta["path"]])
+    for stage in state.get("stage_order") or STAGE_ORDER:
+        if stage == "input":
+            continue
+        entry = (state.get("stages") or {}).get(stage) or {}
+        if entry.get("status") in ("completed", "skipped", "not_applicable"):
+            issues = stage_evidence_issues(state, stage)
+            if issues:
+                invalidate_stages_from(state, stage, issues[0]["reason"])
+                state["status"] = "running"
+                log("%s: evidence changed; dependent stages will re-run" % stage)
+                break
+    state["execution_context"] = current
+    state["pipeline"] = pipeline_provenance(ROOT)
+
+
+def refresh_answers(state: Dict[str, Any], options: Dict[str, Any]) -> None:
+    current = answers_fingerprint(options.get("answers"))
+    if current == state.get("answers"):
+        return
+    # Remove only previous answers-derived values. Explicit saved CLI choices
+    # remain authoritative, but an old answer must not suppress a new answer.
+    for key, value in state.pop("options_from_answers", {}).items():
+        if options.get(key) == value:
+            options[key] = "auto" if key in ("journal", "design") else None
+    invalidate_stages_from(state, "cleaning_plan", "answers file changed")
+    state["answers"] = current
+    state["status"] = "running"
+
+
 def main(argv=None) -> int:
     args = build_parser().parse_args(argv)
     state_path: Path
@@ -1006,19 +1052,7 @@ def main(argv=None) -> int:
         # an answers file whose contents changed makes the recorded cleaning
         # and everything downstream of it stale, even though the input itself
         # did not change; those stages are invalidated rather than trusted
-        current_answers = answers_fingerprint(options.get("answers"))
-        recorded_answers = state.get("answers")
-        if (current_answers or recorded_answers) and current_answers != recorded_answers:
-            stale = invalidate_stages_from(
-                state, "cleaning_plan",
-                "answers file %s" % ("changed" if recorded_answers else "supplied"))
-            state["answers"] = current_answers
-            if stale:
-                log("answers: %d stage(s) invalidated and will re-run" % len(stale))
-        if state.get("status") == "completed" and not args.force:
-            log("run already completed: %s" % state_path)
-            print("audit: %s" % (state.get("audit_verdict") or "unknown"))
-            return 0
+        refresh_answers(state, options)
     else:
         if not args.inp:
             print("--in is required unless --resume is used", file=sys.stderr)
@@ -1031,24 +1065,16 @@ def main(argv=None) -> int:
         if state_path.exists() and not args.force:
             previous = load_state(state_path)
             try:
+                requested = fingerprint_for(args.inp, exclude=outdir)
+                if requested != previous.get("input"):
+                    raise SystemExit("different input requested; starting a fresh run")
                 verify_resume(previous, state_path)
                 log("found matching state; resuming %s" % state_path)
                 state = previous
                 options = state.get("options") or {}
                 if args.answers:
                     options["answers"] = str(Path(args.answers).resolve())
-                current_answers = answers_fingerprint(options.get("answers"))
-                recorded_answers = state.get("answers")
-                if (current_answers or recorded_answers) \
-                        and current_answers != recorded_answers:
-                    stale = invalidate_stages_from(
-                        state, "cleaning_plan",
-                        "answers file %s"
-                        % ("changed" if recorded_answers else "supplied"))
-                    state["answers"] = current_answers
-                    if stale:
-                        log("answers: %d stage(s) invalidated and will re-run"
-                            % len(stale))
+                refresh_answers(state, options)
             except SystemExit:
                 state, outdir = fresh_state(args, state_path)
                 options = state.get("options") or {}
@@ -1058,7 +1084,23 @@ def main(argv=None) -> int:
         if not options.get("title"):
             options["title"] = display_title(Path(str(options["input"])))
 
-    pipe = Pipeline(state, state_path, force=bool(args.force or options.get("force")))
+    # Only explicitly supplied options override saved settings on resume.
+    supplied = {s.split("=", 1)[0] for s in (argv if argv is not None else sys.argv[1:])
+                if s.startswith("--")}
+    parsed = parse_options(args)
+    for flag, key in (("--title", "title"), ("--group", "group"),
+                      ("--outcomes", "outcomes"), ("--unit", "unit"),
+                      ("--unit-key", "unit_key"), ("--covariates", "covariates"),
+                      ("--journal", "journal"), ("--design", "design"),
+                      ("--report", "report"), ("--modality", "modality"),
+                      ("--profile-only", "profile_only"), ("--max-input-mb", "max_input_mb"),
+                      ("--pdf-backend", "pdf_backend"),
+                      ("--export-lockfile", "export_lockfile")):
+        if flag in supplied:
+            options[key] = parsed[key]
+            state.get("options_from_answers", {}).pop(key, None)
+    prepare_resume(state, options)
+    pipe = Pipeline(state, state_path, force=bool(args.force))
     mark_run(pipe.state, "running")
     pipe.save()
 
@@ -1186,6 +1228,7 @@ def main(argv=None) -> int:
                 options["answers"], options, outdir / "analysis" / "profile.json")
             if applied_run:
                 pipe.state.setdefault("options_from_answers", {}).update(applied_run)
+                pipe.state["execution_context"] = execution_context(ROOT, options)
                 pipe.save()
                 log("answers run block applied: %s"
                     % ", ".join("%s=%s" % kv for kv in sorted(applied_run.items())))

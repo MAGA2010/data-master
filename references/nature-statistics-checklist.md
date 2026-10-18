@@ -22,17 +22,26 @@ The 8 Nature-grade gates that every audit must pass when `--report nature` (defa
 
 ## Gate 2 — Missing data mechanism declared
 
-**Requirement**: For every column with > 5% missing, the report includes:
+**Requirement**: For every column with missing values, the report includes:
 
-- Mechanism classification: MCAR / MAR / MNAR
-- If MAR / MNAR: which evidence supports the claim
+- Missing fraction, observed associations, and any collection-context assumptions
+- Mechanism remains undetermined unless justified by author-supplied context
 - If imputed: method, fraction imputed, sensitivity analysis
 - If dropped: rule, fraction dropped, sensitivity
 
-**How the skill enforces it**: `scripts/missing_data_analyzer.py` runs Little MCAR test when n >= 50; classifies using feature importance when n < 50; writes mechanism + flag to `analysis/missing_mechanisms.json`. If uncertain, marks `AUTHOR_INPUT_NEEDED`.
+**How the skill enforces it**: `scripts/stats_descriptive.py` writes an exploratory
+screen to `analysis/descriptive.json`. A low missing fraction does not establish
+MCAR; observed associations cannot distinguish MAR from MNAR. The mechanism is
+`undetermined`, with `AUTHOR_INPUT_NEEDED` and a Gate 2 warning. Categorical
+columns are included. No unimplemented Little test or automatic mechanism
+classification is claimed.
 
 **Reference text in report**:
-> "Age had 8.2% missing values. Little MCAR test (p = 0.04) suggests non-MCAR; we classified as MAR conditional on `department` (significant association, V Cramer = 0.31). Imputation: MICE with predictive mean matching. Sensitivity analysis in Appendix A1."
+> "Age had 8.2% missing values. The mechanism is undetermined.
+> AUTHOR_INPUT_NEEDED: how missing values arose. The observed association screen
+> is exploratory; it cannot establish MAR or rule out MNAR."
+
+Method basis: [National Academies missing-data guidance](https://www.ncbi.nlm.nih.gov/books/NBK209904/pdf/Bookshelf_NBK209904.pdf).
 
 ## Gate 3 — Effect size > p-value
 
@@ -44,6 +53,10 @@ The 8 Nature-grade gates that every audit must pass when `--report nature` (defa
 - n per group
 
 **How the skill enforces it**: `scripts/effect_size.py` computes Cohen d (parametric), Cliff delta (non-parametric), bootstrapped 95% CI. `scripts/stats_inferential.py` refuses to print a p-value without an effect size.
+
+Gate 3 checks finite estimates and finite, ordered interval endpoints linked to
+that estimate. A coefficient interval is not an interval for R² or omega-squared;
+models without intervals for those effect sizes retain a warning.
 
 **Forbidden phrasing**: "highly significant", "very significant", "trending toward significant". Use exact p (e.g. "p = 0.013") and effect magnitude language ("small / medium / large per Cohen 1988 thresholds").
 

@@ -311,6 +311,7 @@ def two_group_numeric(a_vals: np.ndarray, b_vals: np.ndarray,
         "dof": dof,
         "p_raw": float(p),
         "n_a": na, "n_b": nb,
+        "n_total": na + nb,
         "means_a_b": [round(float(np.mean(a_vals)), 6), round(float(np.mean(b_vals)), 6)],
         "medians_a_b": [round(float(np.median(a_vals)), 6), round(float(np.median(b_vals)), 6)],
         "sds_a_b": [round(float(np.std(a_vals, ddof=1)), 6), round(float(np.std(b_vals, ddof=1)), 6)],
@@ -766,15 +767,14 @@ def mixed_unit_model(df: pd.DataFrame, group: str, oc: str, unit_key: str,
     omnibus group effect is a likelihood-ratio test against the intercept-only
     model with the same random effect, and effect sizes are Nakagama/Schielzeth
     marginal and conditional R^2 computed from the fitted variance components.
-    Convergence failure is a recorded fallback, never a crash: the cell-means
-    analysis remains the defensible primary in that case.
+    Compare fixed effects using ML, not REML. A failed fit is unresolved;
+    cell means from the same unit are still dependent and are not a fallback.
     """
     try:
         import statsmodels.formula.api as smf
     except Exception as exc:
         return {"estimable": False,
-                "reason": f"statsmodels unavailable ({exc}); the cell-means "
-                          "analysis is the primary"}
+                "reason": f"statsmodels unavailable ({exc}); AUTHOR_INPUT_NEEDED"}
     sub = df[[unit_key, group, oc]].dropna().copy()
     sub, ren = _safe_names(sub, group, oc, [])
     sub["u"] = df.loc[sub.index, unit_key]
@@ -784,24 +784,43 @@ def mixed_unit_model(df: pd.DataFrame, group: str, oc: str, unit_key: str,
         return {"estimable": False, "n_obs": n_obs, "n_units": n_units,
                 "reason": "too few units or observations for a random-intercept fit"}
     import warnings
-    with warnings.catch_warnings():
-        # a zero unit-level ICC makes the random-effect covariance singular,
-        # which statsmodels announces per iteration before failing; the
-        # fallback below is the answer to that, not the warning text
-        warnings.simplefilter("ignore")
-        try:
-            null = smf.mixedlm("y ~ 1", sub, groups=sub["u"]).fit(reml=True, method="lbfgs")
-            full = smf.mixedlm("y ~ C(g)", sub, groups=sub["u"]).fit(reml=True, method="lbfgs")
-        except Exception:
-            try:
-                null = smf.mixedlm("y ~ 1", sub, groups=sub["u"]).fit(reml=True)
-                full = smf.mixedlm("y ~ C(g)", sub, groups=sub["u"]).fit(reml=True)
-            except Exception as exc:
-                return {"estimable": False, "n_obs": n_obs, "n_units": n_units,
-                        "reason": "mixed model did not converge (%s); the "
-                                  "cell-means analysis is the primary"
-                                  % type(exc).__name__}
+    attempts = []
+    def fit_model(formula):
+        for method in ("lbfgs", "bfgs", "powell"):
+            with warnings.catch_warnings(record=True) as caught:
+                warnings.simplefilter("always")
+                try:
+                    fit = smf.mixedlm(formula, sub, groups=sub["u"]).fit(
+                        reml=False, method=method)
+                    valid = (bool(fit.converged) and np.isfinite(fit.llf)
+                             and np.isfinite(fit.fe_params).all()
+                             and np.isfinite(fit.bse_fe).all()
+                             and np.all(np.asarray(fit.bse_fe) >= 0)
+                             and np.isfinite(fit.scale) and fit.scale > 0
+                             and np.isfinite(np.asarray(fit.cov_re)).all()
+                             and np.all(np.diag(np.asarray(fit.cov_re)) >= 0))
+                    attempts.append({"formula": formula, "optimizer": method,
+                                     "converged": bool(fit.converged),
+                                     "valid": bool(valid),
+                                     "warnings": [str(w.message) for w in caught]})
+                    if valid:
+                        return fit
+                except Exception as exc:
+                    attempts.append({"formula": formula, "optimizer": method,
+                                     "valid": False, "reason": str(exc)})
+        return None
+    null = fit_model("y ~ 1")
+    full = fit_model("y ~ C(g)")
+    if null is None or full is None:
+        return {"estimable": False, "n_obs": n_obs, "n_units": n_units,
+                "fit_attempts": attempts,
+                "reason": "no converged finite ML fit; repeated cell means cannot "
+                          "be treated as independent. AUTHOR_INPUT_NEEDED"}
     lr = float(2.0 * (full.llf - null.llf))
+    if lr < -1e-6:
+        return {"estimable": False, "fit_attempts": attempts,
+                "reason": "full ML likelihood is below the nested null; "
+                          "optimization requires review. AUTHOR_INPUT_NEEDED"}
     lr = max(lr, 0.0)
     p = float(stats.chi2.sf(lr, k - 1))
 
@@ -831,6 +850,9 @@ def mixed_unit_model(df: pd.DataFrame, group: str, oc: str, unit_key: str,
         "statistic": round(lr, 6),
         "dof": k - 1,
         "p_raw": p,
+        "estimation": "ML",
+        "fit_attempts": attempts,
+        "converged": True,
         "n_obs": n_obs,
         "n_total": n_units,
         "n_units": n_units,
@@ -845,15 +867,15 @@ def mixed_unit_model(df: pd.DataFrame, group: str, oc: str, unit_key: str,
         "assumptions": {
             "note": "random intercept per unit; residual normality not tested "
                     "at these n -- coefficients carry intervals, and the "
-                    "cell-means cross-check below is distribution-free",
+                    "cell means remain dependent and are descriptive only",
         },
         "rejected_alternatives": [
             {"test": "one-way ANOVA on rows",
              "reason": "rows repeat within units; that analysis reports an "
                        "inflated n"},
             {"test": "unit-by-group cell means",
-             "reason": "kept as the cross-check: it removes replication but "
-                       "cannot model a unit seen under two conditions"}],
+             "reason": "not an independent-samples cross-check: cells from "
+                       "the same unit remain dependent"}],
         "analysis_level": "unit (mixed model)",
         "rule_source": "scripts/stats_inferential.py#mixed_unit_model",
     }
@@ -866,8 +888,8 @@ def ancova_numeric(frame: pd.DataFrame, group: str, oc: str,
 
     Homogeneity of slopes is checked first because it decides whether the
     adjusted comparison is even defined: if the group-covariate interaction is
-    detectable, one adjusted difference does not exist and the interaction
-    model is reported instead of being averaged away.
+    detectable, the common adjusted difference is withheld and the interaction
+    diagnostic is reported for review.
     """
     try:
         import statsmodels.formula.api as smf
@@ -910,10 +932,16 @@ def ancova_numeric(frame: pd.DataFrame, group: str, oc: str,
             "dof": [int(_tcol(slopes_table, "df_diff").iloc[-1]),
                     int(_tcol(slopes_table, "df_resid").iloc[-1])],
             "p_raw": slopes_p,
-            "verdict": ("HOLDS" if slopes_p is None or slopes_p > alpha
-                        else "VIOLATED -- a single adjusted difference does not exist; "
-                             "the interaction model is reported"),
+            "verdict": ("UNDETERMINED" if slopes_p is None else "HOLDS" if slopes_p > alpha
+                        else "VIOLATED -- the common adjusted difference is withheld; "
+                             "review the interaction diagnostic"),
         }
+        if slopes_p is None or slopes_p <= alpha:
+            return {"estimable": False, "p_raw": None,
+                    "n_complete_cases": int(len(sub)),
+                    "assumptions": {"homogeneity_of_slopes": slopes},
+                    "reason": "a common adjusted difference is unsupported; "
+                              "review group-by-covariate interactions. AUTHOR_INPUT_NEEDED"}
 
     aov = anova_lm(m_add, typ=2)
 
@@ -936,6 +964,7 @@ def ancova_numeric(frame: pd.DataFrame, group: str, oc: str,
     p = None if pd.isna(p_raw) else float(p_raw)
 
     coefs = {}
+    coefficient_intervals = m_add.conf_int(alpha=alpha)
     for name, b in m_add.params.items():
         if name.startswith("C(g)[T."):
             level = name.replace("C(g)[T.", "").rstrip("]")
@@ -943,7 +972,7 @@ def ancova_numeric(frame: pd.DataFrame, group: str, oc: str,
             coefs[level] = {
                 "adjusted_difference_vs_reference": round(float(b), 6),
                 "se": round(float(se), 6),
-                "ci95": [round(float(b - 1.96 * se), 6), round(float(b + 1.96 * se), 6)],
+                "ci95": [round(float(v), 6) for v in coefficient_intervals.loc[name]],
             }
     out: Dict[str, Any] = {
         "estimable": True,
@@ -966,10 +995,6 @@ def ancova_numeric(frame: pd.DataFrame, group: str, oc: str,
         "rejected_alternatives": rejected,
         "rule_source": "scripts/stats_inferential.py#ancova_numeric",
     }
-    if slopes and slopes.get("verdict", "").startswith("VIOLATED"):
-        out["note"] = ("the slopes assumption is violated, so the adjusted "
-                       "group difference is reported with that limit attached; "
-                       "the interaction itself is the finding")
     return out
 
 
@@ -1179,9 +1204,7 @@ def _outcome_tests(frame: pd.DataFrame, group: str, levels: List[Any],
                     }
                 rec.update({"design": "covariate-adjusted numeric", **adj})
             else:
-                rec.update({"design": "numeric (adjustment unavailable)",
-                            "adjustment_fallback_reason": adj.get("reason"),
-                            **_unadjusted_numeric(sub, group, oc, levels, alpha, n_boot)})
+                rec.update({"design": "covariate-adjusted numeric (unresolved)", **adj})
         elif len(levels) == 2:
             a = sub.loc[sub[group] == levels[0], oc].astype(float).values
             b = sub.loc[sub[group] == levels[1], oc].astype(float).values
@@ -1274,13 +1297,11 @@ def _incomplete_repeated_tests(df: pd.DataFrame, cell: pd.DataFrame,
                                alpha: float,
                                covariates: Optional[List[str]] = None
                                ) -> List[Dict[str, Any]]:
-    """Incomplete repeated measures: mixed model primary, cell means cross-check.
+    """Incomplete repeated measures: mixed model or an explicit unresolved result.
 
-    Per outcome: if the random-intercept model fits, it is the primary and the
-    cell-means dispatch becomes its robustness cross-check; if it does not
-    converge (recorded reason), the cell-means analysis is the primary for that
-    outcome. Nominal outcomes have no automatic mixed model and are marked
-    AUTHOR_INPUT_NEEDED rather than quietly tested at the wrong level.
+    Per outcome, a converged ML mixed model is primary. If no valid fit is
+    available the outcome stays unresolved; ordinary tests on repeated cell
+    means cannot remove within-unit dependence.
     """
     tests: List[Dict[str, Any]] = []
     for oc in outcome_cols:
@@ -1294,28 +1315,9 @@ def _incomplete_repeated_tests(df: pd.DataFrame, cell: pd.DataFrame,
                                     "AUTHOR_INPUT_NEEDED"})
             continue
         mm = mixed_unit_model(df, group, oc, unit_key, alpha)
-        if mm.get("estimable"):
-            rec: Dict[str, Any] = {"outcome": oc, "estimable": True,
-                                   "design": "incomplete repeated measures (mixed model)",
-                                   **mm}
-            cr = _outcome_tests(cell, group, levels, [oc], alpha,
-                                "unit x group cell (cross-check)")
-            if cr and cr[0].get("estimable") and cr[0].get("p_raw") is not None:
-                rec["robustness_cross_check"] = {
-                    "test": cr[0].get("method"),
-                    "statistic": cr[0].get("statistic"),
-                    "p_raw": cr[0].get("p_raw"),
-                    "agrees_with_primary": bool(
-                        (cr[0]["p_raw"] < alpha) == (mm.get("p_raw", 1.0) < alpha)),
-                    "note": "unit-by-group cell means; distribution-free",
-                }
-            tests.append(rec)
-            continue
-        fb = _outcome_tests(cell, group, levels, [oc], alpha,
-                            "unit x group cell", covariates=covariates)
-        if fb:
-            fb[0]["mixed_model_fallback_reason"] = mm.get("reason")
-            tests.append(fb[0])
+        tests.append({"outcome": oc,
+                      "design": "incomplete repeated measures (mixed model)",
+                      "analysis_level": "unit (mixed model)", "p_raw": None, **mm})
     return tests
 
 
@@ -1421,12 +1423,11 @@ def main() -> int:
         analysis_df = cell
         primary_level = "unit x group cell"
         unit_info["primary_analysis"] = (
-            "linear mixed model with a unit random intercept; cell means are the "
-            "cross-check and the fallback when the model does not converge")
+            "ML linear mixed model with a unit random intercept; failed fits "
+            "remain unresolved rather than treating repeated cells as independent")
         warnings.append(
             "units appear in several but not all groups; the primary analysis is "
-            "a unit random-intercept mixed model, with unit-by-group cell means "
-            "as the distribution-free cross-check")
+            "a unit random-intercept mixed model; a failed fit requires review")
     elif structure == "undeclared":
         unit_info["note"] = structure_info.get("note")
 

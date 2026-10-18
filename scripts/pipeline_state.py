@@ -11,11 +11,14 @@ import hashlib
 import json
 import os
 import subprocess
+import platform
+import importlib.metadata
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 
-STATE_SCHEMA = "1.0"
+STATE_SCHEMA = "1.1"
 
 STAGE_ORDER = [
     "input",
@@ -178,6 +181,7 @@ def record_stage(
     duration_ms: Optional[int] = None,
 ) -> Dict[str, Any]:
     now = utc_now()
+    evidence = list(evidence or [])
     previous = (state.get("stages") or {}).get(stage) or {}
     entry = dict(previous)
     entry.update({
@@ -185,6 +189,33 @@ def record_stage(
         "updated_at": now,
         "evidence": list(evidence or []),
     })
+    if status in ("completed", "skipped", "not_applicable"):
+        paths = set(str(Path(p).resolve()) for p in (evidence or []))
+        outdir = Path(state.get("outdir") or ".")
+        # Include secondary deliverables: losing a PDF or figure must invalidate
+        # its producing stage, even if its JSON manifest survived.
+        patterns = {
+            "cleaning_execute": ["cleaned/cleaned.csv", "cleaned/clean_*.py",
+                                 "cleaned/cleaning_run.json", "cleaned/cleaning_report.md"],
+            "charts": ["charts/*.png"],
+            "timeseries": ["charts/fig_ts_overview.png"],
+            "report": ["report.pdf", "executive_summary.md"],
+        }
+        for pattern in patterns.get(stage, []):
+            paths.update(str(p.resolve()) for p in outdir.glob(pattern) if p.is_file())
+        if stage == "audit":
+            paths.update(str(Path(p).with_suffix(".md").resolve()) for p in evidence
+                         if Path(p).suffix == ".json" and Path(p).with_suffix(".md").is_file())
+        entry["evidence"] = sorted(paths)
+        entry["artifacts"] = [artifact_record(Path(p), outdir) for p in sorted(paths)]
+        entry["producer_context"] = state.get("execution_context")
+        order = state.get("stage_order") or STAGE_ORDER
+        before = order[:order.index(stage)] if stage in order else order
+        entry["upstream"] = {
+            name: hashlib.sha256(json.dumps(
+                (state.get("stages", {}).get(name) or {}).get("artifacts", []),
+                sort_keys=True).encode("utf-8")).hexdigest()
+            for name in before if name in state.get("stages", {})}
     if command is not None:
         entry["command"] = list(command)
     if message is not None:
@@ -220,10 +251,74 @@ def stage_completed(state: Dict[str, Any], stage: str, evidence: Iterable[str]) 
     entry = (state.get("stages") or {}).get(stage) or {}
     if entry.get("status") != "completed":
         return False
-    for raw in evidence:
-        if not Path(raw).exists():
-            return False
-    return True
+    return (set(str(Path(p).resolve()) for p in evidence)
+            <= set(entry.get("evidence") or [])
+            and not stage_evidence_issues(state, stage))
+
+
+def artifact_record(path: Path, outdir: Path) -> Dict[str, Any]:
+    """Content fingerprint; directories exclude generated output trees."""
+    return input_fingerprint(path, exclude=outdir)
+
+
+def stage_evidence_issues(state: Dict[str, Any], stage: str) -> List[Dict[str, Any]]:
+    entry = (state.get("stages") or {}).get(stage) or {}
+    records = entry.get("artifacts")
+    if records is None:
+        return [{"stage": stage, "reason": "legacy evidence has no content hashes"}]
+    issues = []
+    outdir = Path(state.get("outdir") or ".")
+    for recorded in records:
+        path = Path(recorded["path"])
+        try:
+            current = artifact_record(path, outdir)
+            if current.get("sha256") != recorded.get("sha256"):
+                issues.append({"stage": stage, "path": str(path), "reason": "content changed"})
+        except (OSError, ValueError) as exc:
+            issues.append({"stage": stage, "path": str(path),
+                           "reason": "missing or unreadable: %s" % exc})
+    recorded_paths = {r["path"] for r in records}
+    for path in entry.get("evidence") or []:
+        if path not in recorded_paths:
+            issues.append({"stage": stage, "path": path, "reason": "unsealed evidence"})
+    for upstream, expected in (entry.get("upstream") or {}).items():
+        artifacts = (state.get("stages", {}).get(upstream) or {}).get("artifacts", [])
+        actual = hashlib.sha256(json.dumps(artifacts, sort_keys=True).encode("utf-8")).hexdigest()
+        if actual != expected:
+            issues.append({"stage": stage, "reason": "upstream evidence changed: %s" % upstream})
+    return issues
+
+
+def execution_context(root: Path, options: Dict[str, Any]) -> Dict[str, Any]:
+    """Hash executable sources and method references, including dirty changes."""
+    files = [root / "requirements.txt"]
+    for folder in ("scripts", "references", "templates"):
+        files.extend(p for p in (root / folder).rglob("*")
+                     if p.is_file() and "__pycache__" not in p.parts
+                     and p.suffix in (".py", ".md", ".json", ".html", ".txt"))
+    h = hashlib.sha256()
+    for p in sorted(files):
+        h.update(p.relative_to(root).as_posix().encode("utf-8"))
+        h.update(_sha256_file(p).encode("ascii"))
+    versions = {"python": platform.python_version()}
+    for req in (root / "requirements.txt").read_text(encoding="utf-8").splitlines():
+        name = re.split(r"[<>=~!;]", req.strip(), maxsplit=1)[0]
+        if name and not name.startswith("#"):
+            try:
+                versions[name] = importlib.metadata.version(name)
+            except importlib.metadata.PackageNotFoundError:
+                versions[name] = None
+    return {"source_sha256": h.hexdigest(), "environment": versions,
+            "options": {k: v for k, v in options.items()
+                        if k not in ("answers", "force", "export_lockfile", "max_input_mb")}}
+
+
+def validate_run(state: Dict[str, Any]) -> List[Dict[str, Any]]:
+    issues = []
+    for stage, entry in (state.get("stages") or {}).items():
+        if entry.get("status") in ("completed", "skipped", "not_applicable"):
+            issues.extend(stage_evidence_issues(state, stage))
+    return issues
 
 
 def first_incomplete(state: Dict[str, Any]) -> Optional[str]:
@@ -315,6 +410,8 @@ def invalidate_stages_from(state: Dict[str, Any], first_stage: str,
         return []
     stale = [s for s in order[order.index(first_stage):]]
     stages = state.setdefault("stages", {})
+    # Environment exports are attached after the ordinary stage order.
+    stages.pop("lockfile", None)
     for name in stale:
         stages.pop(name, None)
     state.setdefault("warnings", []).append(

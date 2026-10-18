@@ -48,6 +48,16 @@ python scripts/stats_inferential.py --clean outputs/cleaned/cleaned.csv --group 
 
 ## Failure modes seen in real runs
 
+- Compare nested mixed models with different fixed effects using ML
+  (`reml=False`), with convergence and finite-result checks. Preserve optimizer
+  diagnostics. If the model cannot be fitted, report `AUTHOR_INPUT_NEEDED`;
+  ordinary tests on repeated cell means are not an independent-samples fallback.
+- A failed or violated ANCOVA slopes check leaves the adjusted question
+  unresolved. Do not silently substitute an unadjusted question. OLS coefficient
+  intervals use the residual t distribution.
+
+Method basis: [lme4 model-comparison guidance](https://lme4.github.io/lme4/articles/lmer.pdf).
+
 - **`df = 0.0` beside a p of 1e-70.** The Welch ANOVA denominator df was computed
   with a formula that collapsed to zero; the Satterthwaite form must be used and checked
   against `statsmodels.stats.oneway`.

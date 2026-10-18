@@ -31,6 +31,13 @@ jobs:
       - name: Unit and invariant tests
         run: python tests/test_pipeline_invariants.py
 
+      - name: Numerical references and artifact integrity
+        run: python tests/test_reliability.py
+
+      - name: Completed-run tampering and PDF recovery
+        if: matrix.os == 'ubuntu-latest' && matrix.python == '3.13'
+        run: python tests/test_pipeline_integrity.py
+
       - name: One-command iris pipeline
         run: |
           python scripts/run_pipeline.py --in examples/iris/iris_dirty.csv --out examples/iris/outputs --title "Iris morphometrics" --journal nature
@@ -50,8 +57,9 @@ jobs:
           fails = [g["gate"] for g in d["gates"] if g["status"] == "FAIL"]
           assert fails == [1], "expected only gate 1 to fail, got %r" % fails
           assert all(c["status"] == "PASS" for c in d["structural"]), d["structural"]
-          assert d["n_warn"] == 0, d["gates"]
-          print("audit OK: gates pass except the declared unit, structural clean")
+          warns = [g["gate"] for g in d["gates"] if g["status"] == "WARN"]
+          assert warns == [2], "missingness mechanism must remain unresolved: %r" % warns
+          print("audit OK: unit undeclared, missingness unresolved, structural clean")
           PY
           test "$code" = "1"
 

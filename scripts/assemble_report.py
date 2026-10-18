@@ -120,6 +120,23 @@ def fmt_ci(ci: Any, d: int = 2) -> str:
     return f"{fmt(lo, d)} to {fmt(hi, d)}"
 
 
+def summarize_effect(es: Dict[str, Any]) -> Tuple[str, Any, str]:
+    """Handle both scalar and nested effect estimates without losing intervals."""
+    for key, label in (("omega_squared", "omega squared"), ("eta_squared", "eta squared"),
+                       ("cohens_d", "Cohen's d"), ("cohens_dz", "paired Cohen's dz"),
+                       ("cramers_v", "Cramer's V"), ("cliffs_delta", "Cliff's delta"),
+                       ("odds_ratio", "odds ratio"), ("kendalls_w", "Kendall's W"),
+                       ("marginal_r2", "marginal R squared")):
+        value = es.get(key)
+        nested = value if isinstance(value, dict) else {}
+        estimate = nested.get(key) if nested else value
+        if estimate is not None and nested.get("estimable", True):
+            interval = (nested.get("ci95") or es.get(key + "_ci95")
+                        or (es.get("ci95") if es.get("ci95_for") == key else None))
+            return label, estimate, fmt_ci(interval)
+    return "effect size", None, ""
+
+
 def md_table(headers: List[str], rows: List[List[Any]]) -> str:
     if not rows:
         return "_No rows._\n"
@@ -485,24 +502,14 @@ class ReportBuilder:
 
         def strength(t: Dict[str, Any]) -> float:
             es = t.get("effect_sizes") or {}
-            return float(es.get("omega_squared") or es.get("eta_squared") or 0.0)
+            return abs(float(summarize_effect(es)[1] or 0.0))
 
         top = max(tests, key=strength)
         es = top.get("effect_sizes") or {}
-        if "omega_squared" in es:
-            eff_name, eff = "omega squared", es.get("omega_squared")
-            ci = fmt_ci(es.get("omega_squared_ci95"))
-        elif "eta_squared" in es:
-            eff_name, eff = "eta squared", es.get("eta_squared")
-            ci = fmt_ci(es.get("eta_squared_ci95"))
-        elif "cramers_v" in es:
-            eff_name, eff = "Cramer's V", es.get("cramers_v")
-            ci = fmt_ci(es.get("cramers_v_ci95"))
-        else:
-            eff_name, eff, ci = "effect size", None, ""
+        eff_name, eff, ci = summarize_effect(es)
         fam = ((inf.get("multiple_comparisons") or {}).get("primary_family") or {})
-        tail = (", 95%% CI %s" % ci) if ci else ""
-        return ("`%s` separates %s by %s = %s out of a possible 1%s, BH-adjusted p %s "
+        tail = (", 95%% CI %s" % ci) if ci else ", effect-size CI unavailable"
+        return ("`%s` is compared across %s: %s = %s%s, BH-adjusted p %s "
                 "across a family of %s outcomes"
                 % (top.get("outcome"), inf.get("group"), eff_name, fmt(eff), tail,
                    fmt_p(top.get("p_adjusted")), fam.get("family_size", "--")),
@@ -834,15 +841,8 @@ class ReportBuilder:
         rows = []
         for t in (inf.get("tests") or []):
             es = t.get("effect_sizes") or {}
-            eff_name, eff_val, eff_ci = "--", "--", ""
-            for k, label in (("omega_squared", "omega squared"),
-                             ("eta_squared", "eta squared"),
-                             ("cramers_v", "Cramer's V"),
-                             ("cliffs_delta", "Cliff's delta")):
-                if k in es:
-                    eff_name, eff_val = label, fmt(es.get(k), 3)
-                    eff_ci = fmt_ci(es.get("%s_ci95" % k)) or fmt_ci(es.get("ci95"))
-                    break
+            eff_name, eff_val, eff_ci = summarize_effect(es)
+            eff_val = fmt(eff_val, 3)
             rows.append([
                 "`%s`" % t.get("outcome"), t.get("method") or "not estimable",
                 ("%s = %s" % (t.get("statistic_name"), fmt(t.get("statistic"), 2))

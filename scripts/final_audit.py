@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import re
 import sys
 from datetime import datetime
@@ -179,7 +180,7 @@ def gate_2_missing(ctx: Dict[str, Any]) -> Dict[str, Any]:
             continue
         pct = m.get("missing_pct")
         mech = m.get("mechanism")
-        if not mech or str(mech).upper() in ("UNKNOWN", "N/A", "NONE"):
+        if not mech or str(mech).upper() in ("UNKNOWN", "UNDETERMINED", "N/A", "NONE"):
             undeclared.append(m.get("column"))
         if (pct or 0) > 5.0:
             over5.append(m)
@@ -191,12 +192,13 @@ def gate_2_missing(ctx: Dict[str, Any]) -> Dict[str, Any]:
                     "no variable carries missing values (n=%s analysed)." % n)
 
     if undeclared:
-        return gate(2, "missing data mechanism declared", "FAIL",
+        return gate(2, "missing data mechanism declared", "WARN",
                     "%d variable(s) carry missing values and %d have no declared "
                     "mechanism." % (len(screen), len(undeclared)),
-                    ["no mechanism for: %s" % ", ".join(str(c) for c in undeclared)],
-                    "run the missing-data screen with a mechanism classification, "
-                    "or record AUTHOR_INPUT_NEEDED per column.")
+                    ["AUTHOR_INPUT_NEEDED: missingness mechanism for: %s"
+                     % ", ".join(str(c) for c in undeclared)],
+                    "record collection context and a justified assumption; a small "
+                    "missing fraction or an association screen cannot establish it.")
 
     imputed = [m for m in screen if str(m.get("imputation_default", "")).lower()
                not in ("", "none", "listwise", "listwise deletion")]
@@ -216,6 +218,26 @@ def gate_2_missing(ctx: Dict[str, Any]) -> Dict[str, Any]:
                 "is on complete cases." % (evidence, len(over5)))
 
 
+def valid_interval(value: Any) -> bool:
+    """Require two finite, ordered numeric endpoints, not just a CI-shaped key."""
+    if isinstance(value, dict):
+        value = [value.get("low", value.get("ci_low")),
+                 value.get("high", value.get("ci_high"))]
+    return (isinstance(value, (list, tuple)) and len(value) == 2
+            and all(isinstance(x, (int, float)) and not isinstance(x, bool)
+                    and math.isfinite(x) for x in value)
+            and value[0] <= value[1])
+
+
+def finite_effect(value: Any, key: str) -> bool:
+    if isinstance(value, dict):
+        if value.get("estimable") is False:
+            return False
+        value = value.get(key)
+    return (isinstance(value, (int, float)) and not isinstance(value, bool)
+            and math.isfinite(value))
+
+
 def gate_3_effect_size(ctx: Dict[str, Any]) -> Dict[str, Any]:
     """Every p value is accompanied by an effect size and its interval."""
     inf = ctx["inferential"] or {}
@@ -230,14 +252,16 @@ def gate_3_effect_size(ctx: Dict[str, Any]) -> Dict[str, Any]:
                             "cliffs_delta", "cohens_d", "cohens_dz",
                             "odds_ratio", "kendalls_w", "epsilon_squared_rank",
                             "marginal_r2", "conditional_r2")
-                if k in es]
+                if finite_effect(es.get(k), k)]
         if not keys:
             no_effect.append(t.get("outcome"))
             continue
-        # any effect-size key that carries an interval counts, including the
-        # nested per-level coefficient intervals mixed models and ANCOVA emit
-        has_ci = any(("%s_ci95" % k) in es or "ci95" in es
-                     or any("ci95" in str(k2) for k2 in es)
+        # Coefficient intervals are not intervals for R2 or omega-squared.
+        # A generic ci95 is accepted only with an explicit estimate identity.
+        has_ci = any(valid_interval(es.get("%s_ci95" % k))
+                     or (isinstance(es.get(k), dict)
+                         and valid_interval(es[k].get("ci95")))
+                     or (es.get("ci95_for") == k and valid_interval(es.get("ci95")))
                      for k in keys)
         if not has_ci:
             no_ci.append(t.get("outcome"))

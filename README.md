@@ -131,7 +131,7 @@ sensitivity written: .../analysis/sensitivity.json
 final_audit: NOT SUBMISSION-READY
   Gate 1 n explicit and unit-defined            FAIL
   Gate 6 sensitivity tested                     PASS
-  ... (gates 2-5, 7, 8 pass; structural 6/6)
+  ... (gate 2 warns: missingness mechanism undetermined; other gates pass; structural 6/6)
 
 complete: outputs/iris-demo
   report:  outputs/iris-demo/report.pdf     <- start here
@@ -273,7 +273,7 @@ whether a stage can be reused.
 | Modality | Formats and examples | Current depth |
 |---|---|---|
 | Tabular | CSV, TSV, Excel, JSON, JSONL, Parquet | Full analysis pipeline |
-| Time series | Timestamped tabular data | Structural profiling |
+| Time series | Timestamped tabular data | Profiling plus audited descriptive statistics |
 | Text corpus | TXT and mixed-encoding document sets | Corpus profiling |
 | Image set | PNG, JPEG, WebP, TIFF | Decode, metadata, brightness, near-duplicate profiling |
 | Audio set | WAV, MP3, FLAC and related formats | Duration, rate, channel, clipping, and silence profiling |
@@ -364,8 +364,22 @@ Resume an interrupted run:
 python scripts/run_pipeline.py --resume outputs/state.json
 ```
 
-Completed stages are reused only when their evidence still exists and the input
-fingerprint is unchanged. Use `--force` when the intent is to rebuild artifacts.
+Completed stages are reused only when their saved SHA-256 hashes match and the
+execution context (source files, method references, dependency versions and run
+options) is unchanged. Changed evidence invalidates its producing stage and all
+downstream stages, including for already completed runs. Raw input changes still
+require a fresh run. Legacy states without hashes are rebuilt conservatively.
+Use `--force` when the intent is to rebuild all artifacts.
+
+Verify a delivered run without changing it:
+
+```bash
+python scripts/verify_artifacts.py --outdir outputs --json
+```
+
+Verification checks content integrity against `state.json`, including PDFs,
+figures and cleaning replay scripts. It does not establish scientific validity
+or authenticity if both the artifacts and ledger have been rewritten.
 
 ## Answering held decisions
 
@@ -399,7 +413,7 @@ not from the report's own claims.
 | Gate | Requirement |
 |---|---|
 | 1 | Sample size and independent unit are explicit, and the primary analysis lives at the level the unit structure supports |
-| 2 | Missingness mechanism is declared |
+| 2 | Missingness assumptions are explicit; an undetermined mechanism produces a warning |
 | 3 | Effect size accompanies p-values |
 | 4 | Uncertainty is visible |
 | 5 | Multiple comparisons are corrected |
@@ -427,6 +441,7 @@ to be resolved.
 
 | Example | Demonstrates |
 |---|---|
+| [`examples/independent_groups`](examples/independent_groups/) | Synthetic two-group comparison with declared units, effect intervals and read-only verification |
 | [`examples/iris`](examples/iris/) | Full tabular analysis, automatic grouping, effect sizes, figures, and PDF |
 | [`examples/column_traps`](examples/column_traps/) | Leading zeros, currency, percentages, mixed values, and date ambiguity |
 | [`examples/timeseries`](examples/timeseries/) | Time-series mode: gaps, duplicate stamps, regime change, plus the descriptive statistics stage |
@@ -449,6 +464,8 @@ Run the invariant and regression suite:
 
 ```bash
 python tests/test_pipeline_invariants.py
+python tests/test_reliability.py
+python tests/test_pipeline_integrity.py
 ```
 
 Check syntax:
@@ -488,11 +505,27 @@ GitHub Actions runs the project on Windows and Linux with Python 3.11, 3.12, and
 `-- LICENSE                   MIT
 ```
 
+The numerical-reference suite independently calculates the mixed-model profile
+likelihood using block GLS, paired-test statistics from differences, and ANCOVA
+partial F statistics and coefficient intervals using matrix least squares. It
+also exercises nonconvergence, invalid intervals, low missingness, changed
+artifacts, changed options, legacy state, and read-only verification. The separate
+integration test corrupts saved inference and removes the PDF, then checks that
+resume rebuilds the affected stages while reusing valid upstream evidence. See
+[`tests/test_reliability.py`](tests/test_reliability.py).
+
 ## Scope and limitations
 
 Current limitations are explicit:
 
 - Full inferential analysis currently applies to a single tabular file.
+- Incomplete repeated measures require a converged ML random-intercept model;
+  failed fits remain unresolved. Repeated cell means are not an independent-
+  samples fallback.
+- Missingness mechanisms cannot be established from a missing fraction or the
+  exploratory association screen. They remain author questions.
+- Coefficient intervals do not certify uncertainty in model R² or omega-squared;
+  the audit warns where those effect-size intervals are unavailable.
 - Time-series inputs receive audited **descriptive** statistics (trend, slope
   with CI, autocorrelation, decomposition strengths, changepoint screen);
   forecasting and ARIMA-style model fitting are not implemented.

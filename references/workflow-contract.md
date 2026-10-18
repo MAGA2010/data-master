@@ -291,10 +291,16 @@ the first stage whose evidence is missing or incomplete.
 
 A re-run must:
 
-- Not re-process the same file if its hash matches the previous run.
-- Re-execute only stages whose state is incomplete or whose evidence is missing.
+- Reuse a stage only when its SHA-256 evidence and execution context match.
+- Re-execute a changed or missing artifact's producing stage and all downstream stages.
+- Invalidate derived stages after code, dependency versions, or run options change.
+- Rebuild legacy state without artifact hashes rather than silently trusting it.
 - Refuse to resume when the input fingerprint changed.
 - Re-run the audit when the user passes `--force` or when audit evidence is absent.
+
+Read-only verification: `python scripts/verify_artifacts.py --outdir outputs --json`.
+The state ledger is the trust anchor; these hashes detect changed files, not
+malicious rewriting of both files and ledger, and do not certify scientific validity.
 
 ## Determinism
 

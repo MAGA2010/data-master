@@ -12,7 +12,7 @@ from typing import Optional
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
-from pipeline_state import load_state, stage_completed, stage_summary  # noqa: E402
+from pipeline_state import load_state, stage_summary, validate_run  # noqa: E402
 
 
 def find_state(explicit: Optional[str]) -> Path:
@@ -32,14 +32,7 @@ def find_state(explicit: Optional[str]) -> Path:
 
 
 def validate_evidence(state: dict) -> list:
-    missing = []
-    for stage, entry in (state.get("stages") or {}).items():
-        if entry.get("status") != "completed":
-            continue
-        for evidence in entry.get("evidence") or []:
-            if not Path(evidence).exists():
-                missing.append({"stage": stage, "missing": evidence})
-    return missing
+    return validate_run(state)
 
 
 def main(argv=None) -> int:
@@ -48,7 +41,7 @@ def main(argv=None) -> int:
     action = ap.add_mutually_exclusive_group()
     action.add_argument("--show", action="store_true", help="print the stage summary")
     action.add_argument("--validate", action="store_true",
-                        help="verify that every completed stage still has its evidence")
+                        help="verify saved SHA-256 hashes for every completed stage")
     action.add_argument("--resume", action="store_true",
                         help="resume from the first incomplete stage")
     ap.add_argument("--json", action="store_true", help="machine-readable output")
@@ -69,15 +62,16 @@ def main(argv=None) -> int:
             "state": str(state_path),
             "valid": not missing,
             "missing": missing,
+            "issues": missing,
             "summary": stage_summary(state),
         }
         if args.json:
             print(json.dumps(payload, indent=2, ensure_ascii=False))
         else:
             print("state: %s" % state_path)
-            print("evidence: %s" % ("OK" if not missing else "MISSING"))
+            print("evidence: %s" % ("OK" if not missing else "INVALID"))
             for item in missing:
-                print("  - %s: %s" % (item["stage"], item["missing"]))
+                print("  - %s: %s (%s)" % (item["stage"], item.get("path", ""), item["reason"]))
         return 0 if not missing else 1
 
     summary = stage_summary(state)

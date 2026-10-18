@@ -152,7 +152,7 @@ The agent executing this skill should follow this loop. Each step has full instr
 6. **Execute cleaning** (`scripts/execute_cleaning.py`). Run only the safe subset automatically. Write `clean_<slug>.py` so the user can re-run. Write `cleaning_report.md`.
 7. **Validate** (`scripts/validate_clean.py`). Gate: row loss < 30% (else fail), no NaN inflation, target/label cardinality preserved, no column dropped without a plan entry, and every dtype matches the recorded manifest. Note what `dtype_stable` compares: the cleaned types against **what the run decided and recorded**, not against what pandas guessed about the raw file. Comparing against the guess condemns the run for refusing to repeat the guess.
 8. **Re-derive, do not re-read.** Every analysis stage opens the cleaned data through `dm_types.load_cleaned`, which applies the manifest. Never call `read_csv` on a cleaned file directly — that is the same type-guessing mistake one stage earlier.
-9. **Stats** (`scripts/stats_descriptive.py` + `scripts/stats_inferential.py` + `scripts/effect_size.py`). Always run descriptive; run inferential only when the data has a comparison structure. When `--unit-key` shows rows repeating within units, the inferential stage classifies the structure (clustered / paired / complete blocks / incomplete repeated) and runs the primary analysis at the level the structure supports — per-unit means, paired tests, Friedman, or a unit random-intercept mixed model with Nakagawa R² and the cell-means cross-check. Declared `--covariates` make the ANCOVA comparison primary with the slopes assumption tested. Cite every p-value with test name, n, df, CI, effect size.
+9. **Stats** (`scripts/stats_descriptive.py` + `scripts/stats_inferential.py` + `scripts/effect_size.py`). Always run descriptive; run inferential only when the data has a comparison structure. When `--unit-key` shows rows repeating within units, the inferential stage classifies the structure (clustered / paired / complete blocks / incomplete repeated) and runs the primary analysis at the level the structure supports — per-unit means, paired tests, Friedman, or a unit random-intercept mixed model fitted by maximum likelihood with convergence checks; failed fits remain unresolved. Declared `--covariates` make the ANCOVA comparison primary with the slopes assumption tested. Cite every p-value with test name, n, df, CI, effect size.
 9b. **Time-series inputs** take their own mode: after profiling, `scripts/timeseries_analysis.py` computes Mann-Kendall + Theil-Sen slope with CI, ACF/PACF with white-noise bounds, STL strengths, and a seeded CUSUM changepoint screen into `analysis/timeseries.json`, rendered into the report with an overview figure and a phrase-scanned audit. Descriptive scope only.
 10. **Sensitivity** (`scripts/sensitivity_analysis.py`). Perturb the primary analysis — leave-one-group-out, block jackknife, pre-specified extreme-value fence, strict complete cases, imputation sensitivity — and write `analysis/sensitivity.json`. Gate 6 reads this artifact; the rank cross-check alone no longer satisfies it.
 11. **Charts** (`scripts/chart_decision.py` + `scripts/render_chart.py`). 1 chart per argument task. 2D preferred; 3D only when it changes the ranking. Title = conclusion, caption = definition, body = fact → interpretation → implication. Scatter panels carry a bootstrap band on the smoother and a CI on r.
@@ -171,7 +171,7 @@ The agent executing this skill should follow this loop. Each step has full instr
     python scripts/final_audit.py --outdir outputs --journal nejm --design randomized_trial
     ```
 14. **State** (`scripts/state_keeper.py`). Inspect or validate `state.json`; resume
-    with either `state_keeper.py --resume` or `run_pipeline.py --resume <state>`.
+    with either `state_keeper.py --resume` or `run_pipeline.py --resume <state>`. Saved artifacts are checked by SHA-256; altered evidence, code, dependencies, or options invalidate dependent stages. Verify without rebuilding using `python scripts/verify_artifacts.py --outdir outputs --json`. Legacy state without hashes is rebuilt.
     `--export-lockfile` writes `lockfile.txt` pinning the exact versions that ran.
 
 Agent meta-rules:
@@ -184,7 +184,7 @@ Agent meta-rules:
 Drawn from `nature-statistics` and applied as a gate, not decoration:
 
 1. **n is explicit and unit-defined.** Independent experimental unit ≠ technical replicate ≠ repeated measure. Always distinguished — and when rows repeat within the declared unit, the primary analysis runs at the level the structure supports (unit means / paired / blocks), with the row-level results demoted to a labelled secondary.
-2. **Missing data mechanism is declared.** MCAR / MAR / MNAR. Any imputation labelled.
+2. **Missingness assumptions are explicit.** The mechanism stays undetermined without collection context; missing fractions never establish MCAR. Any imputation is labelled.
 3. **Effect size > p-value.** Cohen d / Cliff delta / odds ratio + 95% CI always reported.
 4. **Uncertainty is visible.** Every number has a CI / SE / IQR; every chart has error bars, a band, or a stated smoother interval.
 5. **Multiple comparisons corrected.** Bonferroni / BH / Holm as appropriate.

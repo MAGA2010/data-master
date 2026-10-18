@@ -152,12 +152,12 @@ def _independent_unit(df: pd.DataFrame, hint: str, key: Optional[str]) -> Dict[s
 
 
 def _missing_mechanism_screen(df: pd.DataFrame, alpha: float = 0.05) -> List[Dict[str, Any]]:
-    """Classify missing mechanism per column. Never overclaims: returns a hypothesis + evidence."""
+    """Screen observed missingness; its mechanism requires collection context."""
     out: List[Dict[str, Any]] = []
     numeric = df.select_dtypes(include=[np.number])
     complete_cols = [c for c in numeric.columns if numeric[c].notna().all()]
-    for c in numeric.columns:
-        n_missing = int(numeric[c].isna().sum())
+    for c in df.columns:
+        n_missing = int(df[c].isna().sum())
         if n_missing == 0:
             continue
         pct = round(n_missing / max(len(df), 1) * 100, 2)
@@ -166,42 +166,31 @@ def _missing_mechanism_screen(df: pd.DataFrame, alpha: float = 0.05) -> List[Dic
             "n_missing": n_missing,
             "missing_pct": pct,
             "mechanism": "undetermined",
-            "evidence": [],
+            "assumption_status": "AUTHOR_INPUT_NEEDED",
+            "imputation_default": "none",
+            "evidence": ["missing fraction does not identify MCAR, MAR or MNAR; "
+                         "collection context is required"],
             "rule_source": "references/nature-statistics-checklist.md#gate-2",
         }
-        if pct < 5:
-            entry["mechanism"] = "MCAR-likely"
-            entry["evidence"] = [f"missing rate {pct}% below the 5% threshold commonly treated as ignorable"]
-            entry["imputation_default"] = "listwise deletion is usually acceptable; report n before/after"
-        else:
-            # try to find association between missingness and other complete columns
-            if len(complete_cols) >= 2:
-                miss = numeric[c].isna()
-                for oc in complete_cols:
-                    if oc == c:
-                        continue
-                    try:
-                        a = numeric.loc[~miss, oc].dropna()
-                        b = numeric.loc[miss, oc].dropna()
-                        if len(a) > 5 and len(b) > 2:
-                            u, p = stats.mannwhitneyu(a, b, alternative="two-sided")
-                            if p < alpha:
-                                entry["evidence"].append(
-                                    f"missingness in `{c}` is associated with `{oc}` (Mann-Whitney p={p:.4f})"
-                                )
-                    except Exception:
-                        continue
-            if entry["evidence"]:
-                entry["mechanism"] = "MAR-suspected"
-                entry["evidence"].append(
-                    "missingness correlates with observed variables -> depends on observed data, "
-                    "but this is a hypothesis, not proof"
-                )
-            else:
-                entry["mechanism"] = "MNAR-not-excluded"
-                entry["evidence"].append(
-                    "no association found with observed variables; unobserved MNAR cannot be ruled out"
-                )
+        # try to find association between missingness and other complete columns
+        if len(complete_cols) >= 2:
+            miss = df[c].isna()
+            for oc in complete_cols:
+                if oc == c:
+                    continue
+                try:
+                    a = numeric.loc[~miss, oc].dropna()
+                    b = numeric.loc[miss, oc].dropna()
+                    if len(a) > 5 and len(b) > 2:
+                        u, p = stats.mannwhitneyu(a, b, alternative="two-sided")
+                        if p < alpha:
+                            entry["evidence"].append(
+                                f"missingness in `{c}` is associated with `{oc}` (Mann-Whitney p={p:.4f})"
+                            )
+                except Exception:
+                    continue
+        entry["evidence"].append(
+            "exploratory association screens cannot distinguish MAR from MNAR")
         out.append(entry)
     return out
 
