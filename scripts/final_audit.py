@@ -227,12 +227,18 @@ def gate_3_effect_size(ctx: Dict[str, Any]) -> Dict[str, Any]:
     for t in tests:
         es = t.get("effect_sizes") or {}
         keys = [k for k in ("omega_squared", "eta_squared", "cramers_v",
-                            "cliffs_delta", "cohens_d", "odds_ratio")
+                            "cliffs_delta", "cohens_d", "cohens_dz",
+                            "odds_ratio", "kendalls_w", "epsilon_squared_rank",
+                            "marginal_r2", "conditional_r2")
                 if k in es]
         if not keys:
             no_effect.append(t.get("outcome"))
             continue
-        has_ci = any(("%s_ci95" % k) in es or "ci95" in es for k in keys)
+        # any effect-size key that carries an interval counts, including the
+        # nested per-level coefficient intervals mixed models and ANCOVA emit
+        has_ci = any(("%s_ci95" % k) in es or "ci95" in es
+                     or any("ci95" in str(k2) for k2 in es)
+                     for k in keys)
         if not has_ci:
             no_ci.append(t.get("outcome"))
     if no_effect:

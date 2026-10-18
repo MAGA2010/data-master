@@ -1,6 +1,6 @@
 # Iris morphometrics -- Statistical Report
 
-> **Template**: nature | **Generated**: 2026-10-18 12:21 中国标准时间 | **Pipeline**: data-master
+> **Template**: nature | **Generated**: 2026-10-18 17:35 中国标准时间 | **Pipeline**: data-master
 > **Raw input**: `iris_dirty.csv` (sha256 `d5e5668ecd92e4d3...`) | **Analysed file**: `cleaned.csv`
 > **Rows**: 158 raw -> 158 analysed | **Columns**: 7 | **Modality**: tabular
 > **Independent unit**: no --unit-key given; the row is assumed to be the independent unit, and every test below inherits that assumption
@@ -195,9 +195,9 @@ Every number above is traceable to a script. Nothing in this report was typed by
 | Clean | scripts/execute_cleaning.py | cleaned/cleaned.csv | 7c1b8a3004c28c85 |
 | Validate | scripts/validate_clean.py | cleaned/validation.json | 070ee266feb052fd |
 | Describe | scripts/stats_descriptive.py | analysis/descriptive.json | 3f23de383020cb3c |
-| Infer | scripts/stats_inferential.py | analysis/inferential.json | 10e814cea9b118d1 |
+| Infer | scripts/stats_inferential.py | analysis/inferential.json | f2556c0c1455bda5 |
 | Decide figures | scripts/chart_decision.py | analysis/chart_decisions.json | e0548e975a90e8d1 |
-| Render figures | scripts/render_chart.py | charts/*.png | 9af1b767b65bb0c5 |
+| Render figures | scripts/render_chart.py | charts/*.png | c428ed8bc516c143 |
 | Assemble | scripts/assemble_report.py | report.md / report.pdf | self-referential -- see report_build.json |
 
 
@@ -205,7 +205,7 @@ A document cannot contain its own hash, so the hash of `report.md` and `report.p
 
 - **Interpreter**: Python 3.13.15 on Windows-11-10.0.26200-SP0
 - **Libraries**: numpy 2.4.6, pandas 3.0.3, scipy 1.18.1
-- **Pipeline code**: data-master commit `08534bd586c6` (working tree was dirty; the commit alone does not reproduce it) -- this report names the exact code that produced every number in it.
+- **Pipeline code**: data-master commit `08920c90d402` (working tree was dirty; the commit alone does not reproduce it) -- this report names the exact code that produced every number in it.
 - **Exact versions**: `lockfile.txt` beside this report pins every dependency to the version that ran.
 - **Random seeds**: 42 -- every resampling interval is seeded, so it reproduces exactly.
 - **Columns any operation was permitted to touch**: `petal_length_cm`, `petal_width_cm`, `sepal_length_cm`, `sepal_width_cm`, `species`, `species_code`
@@ -240,7 +240,7 @@ Each figure carries one argument and its title states that argument as a finding
 - **What follows**: Carry the effect sizes forward, not the p values: a difference that is real can still be too small to matter.
 - **Uncertainty shown**: 95% confidence intervals on every group mean
 - **Chart alternatives rejected**: pie chart -- group means are not parts of a whole; 3D bar chart -- the third dimension encodes nothing; radar chart -- angle and area are hard to compare and imply the axes are commensurate
-- **Source**: `scripts/chart_decision.py` -> `charts/fig02_small_multiples_ci.png` rendered by `scripts/render_chart.py`, 162,095 bytes, ink ratio 0.2297
+- **Source**: `scripts/chart_decision.py` -> `charts/fig02_small_multiples_ci.png` rendered by `scripts/render_chart.py`, 140,132 bytes, ink ratio 0.2065
 
 ### Figure 3 -- petal_length_cm and petal_width_cm are the strongest pair (spearman = 0.94)
 
@@ -463,4 +463,4 @@ Of these, 3 are already reflected as caveats in section 5.
 
 ---
 
-*End of report. Generated 2026-10-18 12:21 中国标准时间 by data-master. The raw input was never modified: every value above was read from the cleaned file or from a recorded artifact. Each number is registered in `report_build.json`; the gate verdict, including anything that failed, is in `audit/final_audit.md`.*
+*End of report. Generated 2026-10-18 17:35 中国标准时间 by data-master. The raw input was never modified: every value above was read from the cleaned file or from a recorded artifact. Each number is registered in `report_build.json`; the gate verdict, including anything that failed, is in `audit/final_audit.md`.*

@@ -67,6 +67,54 @@ jobs:
           print("PDF OK: %d bytes" % p.stat().st_size)
           PY
 
+      - name: Answers round-trip through the one-command runner
+        shell: bash
+        run: |
+          set +e
+          python scripts/run_pipeline.py --in examples/column_traps/traps_dirty.csv --out outputs/traps-answers --title "Traps answers" ; code=$?
+          set -e
+          test "$code" = "1"
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          out = Path("outputs/traps-answers")
+          tpl = json.loads((out / "answers.template.json").read_text(encoding="utf-8"))
+          hold = next(d for d in tpl["decisions"]
+                      if d["id"].startswith("coerce_numeric@"))
+          assert tpl.get("run", {}).get("unit_key", {}).get("required"), \
+              "the template does not carry the run-level questions"
+          doc = {
+              "run": {"journal": "nejm"},
+              "decisions": [{"id": hold["id"], "action": "coerce",
+                             "rationale": "ci: numeric per codebook",
+                             "decided_by": "ci"}],
+          }
+          (out / "answers.json").write_text(json.dumps(doc), encoding="utf-8")
+          state = json.loads((out / "state.json").read_text(encoding="utf-8"))
+          for s in ("cleaning_plan", "report", "audit"):
+              state["stages"].pop(s, None)
+          (out / "state.json").write_text(json.dumps(state), encoding="utf-8")
+          print("answers prepared")
+          PY
+          set +e
+          python scripts/run_pipeline.py --resume outputs/traps-answers/state.json --answers outputs/traps-answers/answers.json ; code=$?
+          set -e
+          test "$code" = "0" -o "$code" = "1"
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          out = Path("outputs/traps-answers")
+          plan = json.loads((out / "cleaning_plan.json").read_text(encoding="utf-8"))
+          flag = next(f for f in plan["never_automatic_flags"]
+                      if f["id"].startswith("coerce_numeric@")
+                      and f.get("resolved"))
+          assert flag["resolved"]["decided_by"] == "ci", flag
+          aud = json.loads((out / "audit" / "final_audit.json").read_text(encoding="utf-8"))
+          label = aud.get("journal", {}).get("label", "")
+          assert "NEJM" in label, "run block journal did not reach the audit: %r" % label
+          print("answers round-trip OK: decision resolved with provenance, journal applied")
+          PY
+
   modality-profilers:
     name: modality profilers
     runs-on: ubuntu-latest
@@ -77,7 +125,7 @@ jobs:
           python-version: "3.13"
       - run: |
           python -m pip install --upgrade pip
-          python -m pip install pandas numpy pillow reportlab
+          python -m pip install pandas numpy scipy matplotlib statsmodels pillow reportlab
       - name: Route a mixed folder
         run: |
           # examples/ also holds generator and replay scripts (*.py), which the
@@ -90,7 +138,18 @@ jobs:
           cp examples/geo/stations.geojson /tmp/mixed/
           python scripts/route_input.py --in /tmp/mixed --deep --out /tmp/route.json
       - name: Time series
-        run: python scripts/profile_timeseries.py --in examples/timeseries/sensor_log.csv --out /tmp/ts.json
+        run: |
+          python scripts/profile_timeseries.py --in examples/timeseries/sensor_log.csv --out /tmp/ts.json
+          python scripts/timeseries_analysis.py --in examples/timeseries/sensor_log.csv --profile /tmp/ts.json --out /tmp/ts-stats.json
+          python - <<'PY'
+          import json
+          d = json.load(open("/tmp/ts-stats.json", encoding="utf-8"))
+          assert d["estimable"], d
+          for key in ("mann_kendall", "sen_slope", "changepoint"):
+              assert d["stats"][key].get("estimable"), (key, d["stats"][key])
+          assert d["stats"]["sen_slope"]["ci95"], d["stats"]["sen_slope"]
+          print("time-series statistics OK: n=%s period=%s" % (d["n_obs"], d["stats"]["stl"].get("period")))
+          PY
       - name: Text corpus
         run: python scripts/profile_text.py --in examples/text/corpus --out /tmp/text.json
       - name: Image set

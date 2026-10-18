@@ -1,6 +1,6 @@
 # data-master lockfile -- exact versions that produced this run's artifacts.
 # Install with:  python -m pip install -r lockfile.txt
-# pipeline commit: 08534bd586c65cb55c5eabfb7fdf2af4540fcb6a (dirty working tree)
+# pipeline commit: 08920c90d402996cc04733db4dcd5b6011f46170 (dirty working tree)
 # python: 3.13.15 on Windows-11-10.0.26200-SP0
 numpy==2.4.6
 pandas==3.0.3

@@ -46,8 +46,10 @@ import stats_inferential as si  # noqa: E402
 
 JACKKNIFE_BLOCKS = 10
 SEED = 42
+SENSITIVITY_N_BOOT = 400   # lighter than the primary's 2000: 16+ refits per outcome
 EFFECT_KEYS = ("cohens_d", "omega_squared", "kendalls_w", "cohens_dz",
-               "cliffs_delta", "cramers_v", "odds_ratio")
+               "cliffs_delta", "cramers_v", "odds_ratio",
+               "marginal_r2", "conditional_r2")
 
 
 def _effect(rec: Dict[str, Any]) -> Tuple[Optional[str], Optional[float]]:
@@ -60,14 +62,28 @@ def _effect(rec: Dict[str, Any]) -> Tuple[Optional[str], Optional[float]]:
 
 def run_primary(frame: pd.DataFrame, group: str, oc: str, levels: List[Any],
                 alpha: float, structure: str, unit_key: Optional[str],
-                level: str) -> Dict[str, Any]:
+                level: str, covariates: Optional[List[str]] = None
+                ) -> Dict[str, Any]:
     """Re-run the primary dispatch for one outcome on (possibly filtered) data."""
     if structure == "paired":
         return si.paired_two_group(frame, group, oc, str(levels[0]),
                                    str(levels[1]), unit_key, alpha)
     if structure == "complete_blocks":
         return si.friedman_complete_blocks(frame, group, oc, unit_key, alpha)
-    return si._outcome_tests(frame, group, levels, [oc], alpha, level)[0]
+    if structure == "incomplete_repeated" and unit_key:
+        numeric = [c for c in frame.columns
+                   if c not in (group, unit_key)
+                   and pd.api.types.is_numeric_dtype(frame[c])]
+        cell = (frame[[unit_key, group] + [c for c in numeric if c in frame.columns]]
+                .groupby([unit_key, group], as_index=False)
+                .agg({c: "mean" for c in numeric if c in frame.columns}))
+        recs = si._incomplete_repeated_tests(frame, cell, group, levels, [oc],
+                                             unit_key, alpha, covariates or [])
+        return recs[0] if recs else {"estimable": False,
+                                     "reason": "no record for this outcome"}
+    return si._outcome_tests(frame, group, levels, [oc], alpha, level,
+                             covariates=covariates,
+                             n_boot=SENSITIVITY_N_BOOT)[0]
 
 
 def frame_at_level(df: pd.DataFrame, group: str, numeric_cols: List[str],
@@ -123,7 +139,8 @@ def perturbations_for(df: pd.DataFrame, group: str, oc: str, levels: List[Any],
                       level: str, primary: Dict[str, Any],
                       numeric_cols: List[str],
                       cleaning_run: Dict[str, Any],
-                      secondary: Optional[Dict[str, Any]]
+                      secondary: Optional[Dict[str, Any]],
+                      covariates: Optional[List[str]] = None
                       ) -> List[Dict[str, Any]]:
     out: List[Dict[str, Any]] = []
     p0 = primary.get("p_raw")
@@ -137,7 +154,7 @@ def perturbations_for(df: pd.DataFrame, group: str, oc: str, levels: List[Any],
             kept = [x for x in levels if x != lv]
             frame = frame_at_level(part, group, numeric_cols, structure, unit_key)
             rec = run_primary(frame, group, oc, kept, alpha, structure,
-                              unit_key, level)
+                              unit_key, level, covariates)
             out.append(_record(
                 "leave_one_group_out", "drop one group and refit on the rest",
                 rec, p0, alpha, parameter=str(lv)))
@@ -167,7 +184,7 @@ def perturbations_for(df: pd.DataFrame, group: str, oc: str, levels: List[Any],
                 part = df.drop(index=df.index[block])
             frame = frame_at_level(part, group, numeric_cols, structure, unit_key)
             rec = run_primary(frame, group, oc, levels, alpha, structure,
-                              unit_key, level)
+                              unit_key, level, covariates)
             out.append(_record(
                 "block_jackknife",
                 f"drop 1/{JACKKNIFE_BLOCKS} of the analysis units and refit",
@@ -197,7 +214,7 @@ def perturbations_for(df: pd.DataFrame, group: str, oc: str, levels: List[Any],
             if len(keep) >= 8 and n_excluded > 0:
                 part = df[df[unit_key].astype(str).isin(set(map(str, keep)))]
                 rec = run_primary(part, group, oc, levels, alpha, structure,
-                                  unit_key, level)
+                                  unit_key, level, covariates)
                 out.append(_record(
                     "exclude_extremes",
                     "exclude units whose paired difference lies outside the "
@@ -264,7 +281,7 @@ def perturbations_for(df: pd.DataFrame, group: str, oc: str, levels: List[Any],
         part = df.dropna(subset=[group] + [c for c in numeric_cols if c in df.columns])
         frame = frame_at_level(part, group, numeric_cols, structure, unit_key)
         rec = run_primary(frame, group, oc, levels, alpha, structure,
-                          unit_key, level)
+                          unit_key, level, covariates)
         out.append(_record(
             "strict_complete_case",
             "restrict to rows complete across every numeric outcome "
@@ -288,7 +305,7 @@ def perturbations_for(df: pd.DataFrame, group: str, oc: str, levels: List[Any],
         if len(part) >= 8:
             frame = frame_at_level(part, group, numeric_cols, structure, unit_key)
             rec = run_primary(frame, group, oc, levels, alpha, structure,
-                              unit_key, level)
+                              unit_key, level, covariates)
             out.append(_record(
                 "imputation_sensitivity",
                 "complete-case refit on the columns the cleaning plan imputed",
@@ -369,6 +386,7 @@ def main() -> int:
     level = inf.get("primary_level") or "row"
     structure = (inf.get("unit_of_analysis") or {}).get("structure", "undeclared")
     unit_key = (inf.get("unit_of_analysis") or {}).get("unit_key")
+    covariates = inf.get("covariates") or []
     secondary = inf.get("secondary_row_level")
 
     if inf.get("skipped"):

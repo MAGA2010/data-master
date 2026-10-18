@@ -236,7 +236,7 @@ def rank_effects(groups: List[np.ndarray], n_boot: int = BOOTSTRAP) -> Dict[str,
     eps2 = (h - k + 1) / n_eff if n_eff > 0 else float("nan")
     pairs = {}
     for a, b in itertools.combinations(range(k), 2):
-        d = cliffs_delta(groups[a], groups[b])
+        d = cliffs_delta(groups[a], groups[b], n_boot=n_boot)
         pairs[f"g{a + 1}_vs_g{b + 1}"] = d
     return {"epsilon_squared_rank": round(float(eps2), 6),
             "n_effective": round(float(n_eff), 3),
@@ -350,7 +350,8 @@ def _degeneracy(vals: List[np.ndarray]) -> Optional[str]:
     return None
 
 
-def k_group_numeric(groups: Dict[str, np.ndarray], alpha: float = ALPHA) -> Dict[str, Any]:
+def k_group_numeric(groups: Dict[str, np.ndarray], alpha: float = ALPHA,
+                    n_boot: int = BOOTSTRAP) -> Dict[str, Any]:
     names = list(groups.keys())
     vals = [groups[n] for n in names]
     degenerate = _degeneracy(vals)
@@ -384,7 +385,7 @@ def k_group_numeric(groups: Dict[str, np.ndarray], alpha: float = ALPHA) -> Dict
         stat_name, dof, dof_denom = "H", k - 1, None
         rejected.append({"test": "one-way ANOVA",
                          "reason": f"min n={n_min} < {NORMALITY_GATE} and normality rejected"})
-        effects = rank_effects(vals)
+        effects = rank_effects(vals, n_boot=n_boot)
         cross = None
     elif equal_var is True:
         f, p = stats.f_oneway(*vals)
@@ -394,7 +395,7 @@ def k_group_numeric(groups: Dict[str, np.ndarray], alpha: float = ALPHA) -> Dict
                          "reason": "equal variance holds (Levene p > alpha); the pooled test is more powerful"})
         rejected.append({"test": "Kruskal-Wallis H",
                          "reason": f"min n={n_min} >= {NORMALITY_GATE}; the mean statistic is robust by CLT"})
-        effects = variance_effects(vals)
+        effects = variance_effects(vals, n_boot=n_boot)
         h_, p_ = stats.kruskal(*vals)
         cross = {"test": "Kruskal-Wallis H", "statistic": round(float(h_), 5),
                  "p_raw": round(float(p_), 8), "agrees_with_primary": bool((p_ < alpha) == (p < alpha)),
@@ -409,7 +410,7 @@ def k_group_numeric(groups: Dict[str, np.ndarray], alpha: float = ALPHA) -> Dict
                          "reason": "Levene indicates unequal variance (p <= alpha)"})
         rejected.append({"test": "Kruskal-Wallis H",
                          "reason": f"Welch is already robust to unequal variance and n={n_min} >= {NORMALITY_GATE}"})
-        effects = variance_effects(vals)
+        effects = variance_effects(vals, n_boot=n_boot)
         h_, p_ = stats.kruskal(*vals)
         cross = {"test": "Kruskal-Wallis H", "statistic": round(float(h_), 5),
                  "p_raw": round(float(p_), 8), "agrees_with_primary": bool((p_ < alpha) == (p < alpha)),
@@ -431,7 +432,7 @@ def k_group_numeric(groups: Dict[str, np.ndarray], alpha: float = ALPHA) -> Dict
             "mean_difference_ci95": mean_difference_ci(vals[i], vals[j], alpha),
             "welch_t_p_raw": float(pt),
             "mannwhitney_p_raw": float(pu),
-            "cliffs_delta": cliffs_delta(vals[i], vals[j]),
+            "cliffs_delta": cliffs_delta(vals[i], vals[j], n_boot=n_boot),
         })
     post_family = correct_pvalues([h_["welch_t_p_raw"] for h_ in post_hoc], "BH", alpha)
     mw_family = correct_pvalues([h_["mannwhitney_p_raw"] for h_ in post_hoc], "BH", alpha)
@@ -636,12 +637,13 @@ def aggregate_to_units(df: pd.DataFrame, group: str, unit_key: str,
     asked for. The row-level analysis is preserved as a secondary so nothing
     is hidden by the aggregation.
     """
-    cols = [unit_key, group] + [c for c in numeric_cols
-                                if c in df.columns and c != unit_key and c != group]
+    agg_cols = [c for c in numeric_cols
+                if c in df.columns and c != unit_key and c != group]
+    cols = [unit_key, group] + agg_cols
+    # the group column is aggregated via 'first' and must appear exactly once,
+    # even when a caller passes overlapping roles
     agg = (df[cols].groupby(unit_key, as_index=False)
-           .agg({group: "first",
-                 **{c: "mean" for c in numeric_cols
-                    if c in df.columns and c != unit_key and c != group}}))
+           .agg({group: "first", **{c: "mean" for c in agg_cols}}))
     return agg
 
 
@@ -739,6 +741,236 @@ def paired_two_group(df: pd.DataFrame, group: str, oc: str,
         "analysis_level": "paired",
         "rule_source": "scripts/stats_inferential.py#paired_two_group",
     }
+
+
+def _safe_names(frame: pd.DataFrame, group: str, oc: str,
+                covariates: List[str]) -> Tuple[pd.DataFrame, Dict[str, str]]:
+    """Rename columns to formula-safe tokens and remember the mapping.
+
+    Patsy's Q() quoting chokes on some real-world column names (brackets,
+    non-ASCII); a rename to g/y/c0.. is immune and reversible, and the mapping
+    is returned so every reported name stays the user's name.
+    """
+    ren = {group: "g", oc: "y"}
+    for i, c in enumerate(covariates):
+        ren[c] = "c%d" % i
+    return frame.rename(columns=ren), ren
+
+
+def mixed_unit_model(df: pd.DataFrame, group: str, oc: str, unit_key: str,
+                     alpha: float = ALPHA) -> Dict[str, Any]:
+    """Unit random-intercept mixed model for incomplete repeated measures.
+
+    Cell means remove within-cell replication but cannot model a unit that
+    appears under two of three conditions; the random intercept can. The
+    omnibus group effect is a likelihood-ratio test against the intercept-only
+    model with the same random effect, and effect sizes are Nakagama/Schielzeth
+    marginal and conditional R^2 computed from the fitted variance components.
+    Convergence failure is a recorded fallback, never a crash: the cell-means
+    analysis remains the defensible primary in that case.
+    """
+    try:
+        import statsmodels.formula.api as smf
+    except Exception as exc:
+        return {"estimable": False,
+                "reason": f"statsmodels unavailable ({exc}); the cell-means "
+                          "analysis is the primary"}
+    sub = df[[unit_key, group, oc]].dropna().copy()
+    sub, ren = _safe_names(sub, group, oc, [])
+    sub["u"] = df.loc[sub.index, unit_key]
+    n_obs, n_units = int(len(sub)), int(sub["u"].nunique())
+    k = int(sub["g"].nunique())
+    if n_units < 8 or k < 2 or n_obs <= n_units:
+        return {"estimable": False, "n_obs": n_obs, "n_units": n_units,
+                "reason": "too few units or observations for a random-intercept fit"}
+    import warnings
+    with warnings.catch_warnings():
+        # a zero unit-level ICC makes the random-effect covariance singular,
+        # which statsmodels announces per iteration before failing; the
+        # fallback below is the answer to that, not the warning text
+        warnings.simplefilter("ignore")
+        try:
+            null = smf.mixedlm("y ~ 1", sub, groups=sub["u"]).fit(reml=True, method="lbfgs")
+            full = smf.mixedlm("y ~ C(g)", sub, groups=sub["u"]).fit(reml=True, method="lbfgs")
+        except Exception:
+            try:
+                null = smf.mixedlm("y ~ 1", sub, groups=sub["u"]).fit(reml=True)
+                full = smf.mixedlm("y ~ C(g)", sub, groups=sub["u"]).fit(reml=True)
+            except Exception as exc:
+                return {"estimable": False, "n_obs": n_obs, "n_units": n_units,
+                        "reason": "mixed model did not converge (%s); the "
+                                  "cell-means analysis is the primary"
+                                  % type(exc).__name__}
+    lr = float(2.0 * (full.llf - null.llf))
+    lr = max(lr, 0.0)
+    p = float(stats.chi2.sf(lr, k - 1))
+
+    var_re = float(np.asarray(full.cov_re).ravel()[0])
+    var_e = float(full.scale)
+    # marginal R^2: variance of the fixed-effects prediction
+    fe = full.model.exog @ np.asarray(full.fe_params)
+    var_fe = float(np.var(fe, ddof=1))
+    total = var_fe + var_re + var_e
+    marginal = var_fe / total if total > 0 else None
+    conditional = (var_fe + var_re) / total if total > 0 else None
+
+    coefs = {}
+    for name, b in full.fe_params.items():
+        if name.startswith("C(g)"):
+            level = name.replace("C(g)[T.", "").rstrip("]")
+            se = full.bse[name]
+            coefs[level] = {
+                "difference_vs_reference": round(float(b), 6),
+                "se": round(float(se), 6),
+                "ci95": [round(float(b - 1.96 * se), 6), round(float(b + 1.96 * se), 6)],
+            }
+    return {
+        "estimable": True,
+        "method": "Linear mixed model (unit random intercept) with LR omnibus test",
+        "statistic_name": "LR chi2",
+        "statistic": round(lr, 6),
+        "dof": k - 1,
+        "p_raw": p,
+        "n_obs": n_obs,
+        "n_total": n_units,
+        "n_units": n_units,
+        "group_levels": k,
+        "effect_sizes": {
+            "marginal_r2": round(marginal, 6) if marginal is not None else None,
+            "conditional_r2": round(conditional, 6) if conditional is not None else None,
+            "r2_note": "Nakagawa & Schielzeth (2013): marginal = fixed effects "
+                       "only; conditional = fixed + unit random intercept",
+            "fixed_effect_differences_ci95": coefs,
+        },
+        "assumptions": {
+            "note": "random intercept per unit; residual normality not tested "
+                    "at these n -- coefficients carry intervals, and the "
+                    "cell-means cross-check below is distribution-free",
+        },
+        "rejected_alternatives": [
+            {"test": "one-way ANOVA on rows",
+             "reason": "rows repeat within units; that analysis reports an "
+                       "inflated n"},
+            {"test": "unit-by-group cell means",
+             "reason": "kept as the cross-check: it removes replication but "
+                       "cannot model a unit seen under two conditions"}],
+        "analysis_level": "unit (mixed model)",
+        "rule_source": "scripts/stats_inferential.py#mixed_unit_model",
+    }
+
+
+def ancova_numeric(frame: pd.DataFrame, group: str, oc: str,
+                   covariates: List[str], levels: List[Any],
+                   alpha: float = ALPHA) -> Dict[str, Any]:
+    """Covariate-adjusted group comparison (ANCOVA) with its key assumption tested.
+
+    Homogeneity of slopes is checked first because it decides whether the
+    adjusted comparison is even defined: if the group-covariate interaction is
+    detectable, one adjusted difference does not exist and the interaction
+    model is reported instead of being averaged away.
+    """
+    try:
+        import statsmodels.formula.api as smf
+        from statsmodels.stats.anova import anova_lm
+    except Exception as exc:
+        return {"estimable": False,
+                "reason": f"statsmodels unavailable ({exc})"}
+    keep = [group, oc] + [c for c in covariates if c in frame.columns]
+    sub = frame[keep].dropna().copy()
+    covs = [c for c in covariates if c in sub.columns]
+    sub, ren = _safe_names(sub, group, oc, covs)
+    k = int(sub["g"].nunique())
+    cov_terms = " + ".join("c%d" % i for i in range(len(covs)))
+    if len(sub) < 8 or k < 2:
+        return {"estimable": False, "n_complete_cases": int(len(sub)),
+                "reason": "too few complete cases for an adjusted comparison"}
+
+    rejected: List[Dict[str, str]] = []
+    # homogeneity of slopes
+    slopes = None
+    m_add = smf.ols("y ~ C(g) + %s" % cov_terms if covs else "y ~ C(g)", sub).fit()
+    if covs:
+        m_int = smf.ols("y ~ C(g) * (%s)" % cov_terms, sub).fit()
+        slopes_table = anova_lm(m_add, m_int)
+
+        def _tcol(t, *names):
+            for nm in names:
+                if nm in t.columns:
+                    return t[nm]
+            raise KeyError(names)
+
+        slopes_stat = _tcol(slopes_table, "F")
+        slopes_p_raw = _tcol(slopes_table, "PR(>F)", "Pr(>F)").iloc[-1]
+        slopes_p = None if pd.isna(slopes_p_raw) else float(slopes_p_raw)
+        slopes = {
+            "test": "group x covariate interaction (homogeneity of slopes)",
+            "statistic_name": "F",
+            "statistic": round(float(slopes_stat.iloc[-1]), 5)
+                if not pd.isna(slopes_stat.iloc[-1]) else None,
+            "dof": [int(_tcol(slopes_table, "df_diff").iloc[-1]),
+                    int(_tcol(slopes_table, "df_resid").iloc[-1])],
+            "p_raw": slopes_p,
+            "verdict": ("HOLDS" if slopes_p is None or slopes_p > alpha
+                        else "VIOLATED -- a single adjusted difference does not exist; "
+                             "the interaction model is reported"),
+        }
+
+    aov = anova_lm(m_add, typ=2)
+
+    def _a(row, *names):
+        for nm in names:
+            if nm in aov.columns:
+                return aov.loc[row, nm]
+        raise KeyError((row, names))
+
+    res_ss, res_df = float(_a("Residual", "sum_sq")), float(_a("Residual", "df"))
+    res_ms = res_ss / res_df if res_df else float("nan")
+    group_ss = float(_a("C(g)", "sum_sq"))
+    group_df = float(_a("C(g)", "df"))
+    total_ss = float(aov["sum_sq"].sum())
+    omega2 = (group_ss - group_df * res_ms) / (total_ss + res_ms) \
+        if (total_ss + res_ms) > 0 else None
+    f_stat_raw = _a("C(g)", "F")
+    p_raw = _a("C(g)", "PR(>F)", "Pr(>F)")
+    f_stat = None if pd.isna(f_stat_raw) else float(f_stat_raw)
+    p = None if pd.isna(p_raw) else float(p_raw)
+
+    coefs = {}
+    for name, b in m_add.params.items():
+        if name.startswith("C(g)[T."):
+            level = name.replace("C(g)[T.", "").rstrip("]")
+            se = m_add.bse[name]
+            coefs[level] = {
+                "adjusted_difference_vs_reference": round(float(b), 6),
+                "se": round(float(se), 6),
+                "ci95": [round(float(b - 1.96 * se), 6), round(float(b + 1.96 * se), 6)],
+            }
+    out: Dict[str, Any] = {
+        "estimable": True,
+        "method": "ANCOVA (OLS with type-II sums of squares), adjusted for %s"
+                  % (", ".join(covs) if covs else "no covariate"),
+        "statistic_name": "F",
+        "statistic": round(f_stat, 5) if f_stat is not None else None,
+        "dof": int(group_df),
+        "dof_denom": int(res_df),
+        "p_raw": p,
+        "n_complete_cases": int(len(sub)),
+        "n_total": int(len(sub)),
+        "covariates": covs,
+        "assumptions": {"homogeneity_of_slopes": slopes},
+        "effect_sizes": {
+            "omega_squared": round(omega2, 6) if omega2 is not None else None,
+            "omega_squared_formula": "(SS_group - df_group*MS_resid) / (SS_total + MS_resid)",
+            "adjusted_differences_ci95": coefs,
+        },
+        "rejected_alternatives": rejected,
+        "rule_source": "scripts/stats_inferential.py#ancova_numeric",
+    }
+    if slopes and slopes.get("verdict", "").startswith("VIOLATED"):
+        out["note"] = ("the slopes assumption is violated, so the adjusted "
+                       "group difference is reported with that limit attached; "
+                       "the interaction itself is the finding")
+    return out
 
 
 def friedman_complete_blocks(df: pd.DataFrame, group: str, oc: str,
@@ -865,12 +1097,19 @@ def correct_pvalues(pvals: List[float], method: str = "BH",
 
 def _outcome_tests(frame: pd.DataFrame, group: str, levels: List[Any],
                    outcome_cols: List[str], alpha: float,
-                   analysis_level: str) -> List[Dict[str, Any]]:
+                   analysis_level: str,
+                   covariates: Optional[List[str]] = None,
+                   n_boot: int = BOOTSTRAP) -> List[Dict[str, Any]]:
     """Run the row-level dispatch for every outcome column on `frame`.
 
     Shared by the primary analysis (whatever level the unit structure makes
     defensible) and the secondary row-level analysis, so both are produced by
     the same code and differ only in the frame and the label.
+
+    When covariates are declared, numeric non-binary outcomes are compared
+    adjusted for them (ANCOVA) and the unadjusted comparison is kept as the
+    cross-check -- the adjusted question is the one the user asked, the
+    unadjusted one is the robustness view.
     """
     tests: List[Dict[str, Any]] = []
     for oc in outcome_cols:
@@ -909,11 +1148,40 @@ def _outcome_tests(frame: pd.DataFrame, group: str, levels: List[Any],
         rec: Dict[str, Any] = {"outcome": oc, "estimable": True,
                                "rows_dropped_for_missingness": dropped,
                                "n_complete_cases": int(len(sub))}
+        covs_here = [c for c in (covariates or [])
+                     if c in frame.columns and c != oc and c != group
+                     and pd.api.types.is_numeric_dtype(frame[c])]
         if is_binary:
             rec.update({"design": "binary outcome", **binary_outcome(frame[group], s)})
         elif not is_numeric:
             rec.update({"design": "categorical outcome",
                         **categorical_2x_k(frame[group], s, alpha)})
+        elif covs_here:
+            adj = ancova_numeric(frame, group, oc, covs_here, levels, alpha)
+            if adj.get("estimable"):
+                un = (two_group_numeric(
+                          sub.loc[sub[group] == levels[0], oc].astype(float).values,
+                          sub.loc[sub[group] == levels[1], oc].astype(float).values,
+                          str(levels[0]), str(levels[1]), alpha)
+                      if len(levels) == 2 else
+                      k_group_numeric(
+                          {str(lv): sub.loc[sub[group] == lv, oc].astype(float).values
+                           for lv in levels}, alpha, n_boot=n_boot))
+                if un.get("p_raw") is not None:
+                    adj["robustness_cross_check"] = {
+                        "test": un.get("method"),
+                        "statistic": un.get("statistic"),
+                        "p_raw": un.get("p_raw"),
+                        "agrees_with_primary": bool(
+                            (un["p_raw"] < alpha) == (adj.get("p_raw", 1.0) < alpha)),
+                        "note": "unadjusted comparison; the primary is adjusted for "
+                                "the declared covariates",
+                    }
+                rec.update({"design": "covariate-adjusted numeric", **adj})
+            else:
+                rec.update({"design": "numeric (adjustment unavailable)",
+                            "adjustment_fallback_reason": adj.get("reason"),
+                            **_unadjusted_numeric(sub, group, oc, levels, alpha, n_boot)})
         elif len(levels) == 2:
             a = sub.loc[sub[group] == levels[0], oc].astype(float).values
             b = sub.loc[sub[group] == levels[1], oc].astype(float).values
@@ -922,10 +1190,23 @@ def _outcome_tests(frame: pd.DataFrame, group: str, levels: List[Any],
         else:
             g = {str(lv): sub.loc[sub[group] == lv, oc].astype(float).values for lv in levels}
             rec.update({"design": f"{len(levels)}-group numeric",
-                        **k_group_numeric(g, alpha)})
+                        **k_group_numeric(g, alpha, n_boot=n_boot)})
         rec["analysis_level"] = analysis_level
         tests.append(rec)
     return tests
+
+
+def _unadjusted_numeric(sub: pd.DataFrame, group: str, oc: str,
+                        levels: List[Any], alpha: float,
+                        n_boot: int) -> Dict[str, Any]:
+    if len(levels) == 2:
+        return two_group_numeric(
+            sub.loc[sub[group] == levels[0], oc].astype(float).values,
+            sub.loc[sub[group] == levels[1], oc].astype(float).values,
+            str(levels[0]), str(levels[1]), alpha)
+    return k_group_numeric(
+        {str(lv): sub.loc[sub[group] == lv, oc].astype(float).values
+         for lv in levels}, alpha, n_boot=n_boot)
 
 
 def _paired_outcome_tests(df: pd.DataFrame, group: str, levels: List[Any],
@@ -987,6 +1268,57 @@ def _paired_outcome_tests(df: pd.DataFrame, group: str, levels: List[Any],
     return tests
 
 
+def _incomplete_repeated_tests(df: pd.DataFrame, cell: pd.DataFrame,
+                               group: str, levels: List[Any],
+                               outcome_cols: List[str], unit_key: str,
+                               alpha: float,
+                               covariates: Optional[List[str]] = None
+                               ) -> List[Dict[str, Any]]:
+    """Incomplete repeated measures: mixed model primary, cell means cross-check.
+
+    Per outcome: if the random-intercept model fits, it is the primary and the
+    cell-means dispatch becomes its robustness cross-check; if it does not
+    converge (recorded reason), the cell-means analysis is the primary for that
+    outcome. Nominal outcomes have no automatic mixed model and are marked
+    AUTHOR_INPUT_NEEDED rather than quietly tested at the wrong level.
+    """
+    tests: List[Dict[str, Any]] = []
+    for oc in outcome_cols:
+        if oc not in df.columns:
+            continue
+        if not pd.api.types.is_numeric_dtype(df[oc]):
+            tests.append({"outcome": oc, "estimable": False, "p_raw": None,
+                          "analysis_level": "incomplete repeated",
+                          "reason": "nominal outcome under incomplete repeated "
+                                    "measures: no defensible automatic test; "
+                                    "AUTHOR_INPUT_NEEDED"})
+            continue
+        mm = mixed_unit_model(df, group, oc, unit_key, alpha)
+        if mm.get("estimable"):
+            rec: Dict[str, Any] = {"outcome": oc, "estimable": True,
+                                   "design": "incomplete repeated measures (mixed model)",
+                                   **mm}
+            cr = _outcome_tests(cell, group, levels, [oc], alpha,
+                                "unit x group cell (cross-check)")
+            if cr and cr[0].get("estimable") and cr[0].get("p_raw") is not None:
+                rec["robustness_cross_check"] = {
+                    "test": cr[0].get("method"),
+                    "statistic": cr[0].get("statistic"),
+                    "p_raw": cr[0].get("p_raw"),
+                    "agrees_with_primary": bool(
+                        (cr[0]["p_raw"] < alpha) == (mm.get("p_raw", 1.0) < alpha)),
+                    "note": "unit-by-group cell means; distribution-free",
+                }
+            tests.append(rec)
+            continue
+        fb = _outcome_tests(cell, group, levels, [oc], alpha,
+                            "unit x group cell", covariates=covariates)
+        if fb:
+            fb[0]["mixed_model_fallback_reason"] = mm.get("reason")
+            tests.append(fb[0])
+    return tests
+
+
 def _blocks_outcome_tests(df: pd.DataFrame, group: str, levels: List[Any],
                           outcome_cols: List[str], unit_key: str,
                           alpha: float) -> List[Dict[str, Any]]:
@@ -1020,17 +1352,35 @@ def main() -> int:
                         "within units, the primary analysis moves to the level the "
                         "structure supports and row-level results are kept as a "
                         "labelled secondary")
+    p.add_argument("--covariates", default=None,
+                   help="comma-list of numeric covariates to adjust for (ANCOVA); "
+                        "declaring them makes the adjusted comparison the primary "
+                        "and keeps the unadjusted one as the cross-check")
     args = p.parse_args()
 
     df = _read(Path(args.clean))
     if args.group not in df.columns:
         print(f"ERROR: group column {args.group!r} not found; available={list(df.columns)}")
         return 1
+    if args.unit_key and args.unit_key == args.group:
+        # every unit would be its own group: the comparison is of units with
+        # themselves and no test is defined, so say so instead of aggregating
+        # a column onto itself
+        print(f"ERROR: --unit-key and --group are both {args.unit_key!r}; the "
+              f"unit identifier cannot also be the grouping variable")
+        return 1
 
     outcome_cols = ([c.strip() for c in args.outcomes.split(",") if c.strip()]
                     if args.outcomes else
                     [c for c in df.select_dtypes(include=[np.number]).columns
                      if c != args.group and c != args.unit_key])
+    covariates = ([c.strip() for c in args.covariates.split(",") if c.strip()]
+                  if args.covariates else [])
+    bad_cov = [c for c in covariates if c not in df.columns]
+    if bad_cov:
+        print(f"ERROR: covariate column(s) not found: {bad_cov}; "
+              f"available={list(df.columns)}")
+        return 1
 
     levels = sorted(pd.unique(df[args.group].dropna()), key=str)
     if len(levels) < 2:
@@ -1068,17 +1418,15 @@ def main() -> int:
         cell = (df[[args.unit_key, args.group] + numeric_outcomes]
                 .groupby([args.unit_key, args.group], as_index=False)
                 .agg({c: "mean" for c in numeric_outcomes}))
-        # one row per unit so row-level dispatch treats cells as the unit of record
         analysis_df = cell
         primary_level = "unit x group cell"
         unit_info["primary_analysis"] = (
-            "unit-by-group cell means; within-unit correlation across groups is "
-            "disclosed, not modelled -- a mixed-effects model is the correct next "
-            "step and is marked AUTHOR_INPUT_NEEDED")
+            "linear mixed model with a unit random intercept; cell means are the "
+            "cross-check and the fallback when the model does not converge")
         warnings.append(
-            "units appear in several but not all groups; cell means remove "
-            "within-cell replication but residual within-unit correlation across "
-            "groups remains unmodelled (AUTHOR_INPUT_NEEDED: mixed-effects fit)")
+            "units appear in several but not all groups; the primary analysis is "
+            "a unit random-intercept mixed model, with unit-by-group cell means "
+            "as the distribution-free cross-check")
     elif structure == "undeclared":
         unit_info["note"] = structure_info.get("note")
 
@@ -1089,9 +1437,16 @@ def main() -> int:
     elif structure == "complete_blocks":
         tests = _blocks_outcome_tests(df, args.group, levels, outcome_cols,
                                       args.unit_key, args.alpha)
+    elif structure == "incomplete_repeated":
+        tests = _incomplete_repeated_tests(df, cell, args.group, levels,
+                                           outcome_cols, args.unit_key,
+                                           args.alpha, covariates)
+        if any("mixed model" in str(t.get("method", "")) for t in tests
+               if t.get("estimable")):
+            primary_level = "unit (mixed model)"
     else:
         tests = _outcome_tests(analysis_df, args.group, levels, outcome_cols,
-                               args.alpha, primary_level)
+                               args.alpha, primary_level, covariates=covariates)
 
     # ---- secondary row-level analysis, when the primary is not row-level ----
     secondary: Optional[Dict[str, Any]] = None
@@ -1157,6 +1512,7 @@ def main() -> int:
         "alpha": args.alpha,
         "n_rows": int(len(df)),
         "primary_level": primary_level,
+        "covariates": covariates,
         "unit_of_analysis": unit_info,
         "tests": tests,
         "secondary_row_level": secondary,

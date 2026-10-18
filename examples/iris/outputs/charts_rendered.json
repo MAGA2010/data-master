@@ -32,12 +32,12 @@
   },
   {
    "path": "D:\\数据处理 skill\\examples\\iris\\outputs\\charts\\fig02_small_multiples_ci.png",
-   "bytes": 162095,
-   "ink_ratio": 0.22969,
+   "bytes": 140132,
+   "ink_ratio": 0.20648,
    "non_blank": true,
    "pixels": [
     1974,
-    1215
+    1189
    ],
    "id": "fig02_small_multiples_ci",
    "chart_type": "small_multiples_ci",

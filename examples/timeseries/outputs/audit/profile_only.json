@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.1",
+  "mode": "profile-only",
+  "verdict": "PROFILE COMPLETE -- DESCRIPTIVE TIME-SERIES STATISTICS",
+  "scope": "routing, profiling and descriptive time-series statistics (trend, slope with CI, autocorrelation, STL strengths, changepoint screen); no forecast, no imputation, no deduplication, no causal claim",
+  "profile": "D:\\数据处理 skill\\examples\\timeseries\\outputs\\analysis\\profile.json",
+  "timeseries": "D:\\数据处理 skill\\examples\\timeseries\\outputs\\analysis\\timeseries.json",
+  "phrase_scan": {
+    "status": "PASS",
+    "hits": []
+  },
+  "pdf_written": true,
+  "open_questions": [
+    "AUTHOR_INPUT_NEEDED: what one independent unit represents",
+    "AUTHOR_INPUT_NEEDED: which anomalies are genuine defects",
+    "AUTHOR_INPUT_NEEDED: which comparison or prediction question is intended"
+  ]
+}

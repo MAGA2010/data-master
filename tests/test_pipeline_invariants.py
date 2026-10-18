@@ -954,6 +954,217 @@ def test_scatter_band_renders():
     assert out.stat().st_size > 8000, "the banded figure is suspiciously small"
 
 
+# ----------------------------------------------- mixed models and covariates
+
+def _incomplete_frame(seed=11):
+    """30 units each observed under exactly 2 of 3 conditions, 2 reps per cell."""
+    rng = np.random.default_rng(seed)
+    unit_eff = rng.normal(0, 1.0, 30)
+    rows = []
+    for u in range(30):
+        for c in rng.choice(["x", "y", "z"], size=2, replace=False):
+            for _ in range(2):
+                rows.append((u, c, {"x": 0.0, "y": 0.5, "z": 1.2}[c]
+                             + unit_eff[u] + rng.normal(0, 0.4)))
+    return pd.DataFrame(rows, columns=["pid", "cond", "y"])
+
+
+@check("incomplete repeated measures get a unit random-intercept mixed model")
+def test_mixed_model_incomplete():
+    with tempfile.TemporaryDirectory() as td:
+        csv = Path(td) / "inc.csv"
+        _incomplete_frame().to_csv(csv, index=False)
+        out = Path(td) / "inf.json"
+        p = _run("stats_inferential.py", "--clean", csv, "--out", out,
+                 "--group", "cond", "--unit-key", "pid")
+        eq(p.returncode, 0, p.stderr)
+        d = json.loads(out.read_text(encoding="utf-8"))
+        t = d["tests"][0]
+        if t.get("estimable") and "mixed model" in str(t.get("method", "")):
+            eq(d["primary_level"], "unit (mixed model)",
+               "a fitted mixed model did not become the primary")
+            assert t["effect_sizes"].get("conditional_r2") is not None, \
+                "the mixed model reports no conditional R^2"
+            assert t.get("robustness_cross_check", {}).get("test"), \
+                "the cell-means cross-check is missing"
+        else:
+            assert t.get("mixed_model_fallback_reason"), \
+                "the mixed model was skipped without a recorded reason"
+        assert d.get("secondary_row_level"), "no row-level secondary"
+
+
+@check("a group column that is also the unit key is refused, not aggregated")
+def test_group_equals_unit_key_refused():
+    with tempfile.TemporaryDirectory() as td:
+        csv = Path(td) / "g.csv"
+        pd.DataFrame({"g": ["a", "b"] * 10, "y": np.arange(20, dtype=float)}
+                     ).to_csv(csv, index=False)
+        p = _run("stats_inferential.py", "--clean", csv, "--out",
+                 Path(td) / "o.json", "--group", "g", "--unit-key", "g")
+        eq(p.returncode, 1, "group==unit_key must exit 1")
+        assert "cannot also be the grouping variable" in p.stdout + p.stderr, \
+            "the refusal does not explain itself"
+
+
+@check("declared covariates make the adjusted comparison the primary")
+def test_ancova_covariates():
+    rng = np.random.default_rng(12)
+    n = 90
+    cov = rng.normal(50, 10, n)
+    df = pd.DataFrame({
+        "arm": np.repeat(["a", "b", "c"], 30),
+        "y": np.repeat([0.0, 0.4, 1.0], 30) + 0.3 * (cov - 50)
+             + rng.normal(0, 0.5, n),
+        "baseline": cov,
+    })
+    with tempfile.TemporaryDirectory() as td:
+        csv = Path(td) / "anc.csv"
+        df.to_csv(csv, index=False)
+        out = Path(td) / "inf.json"
+        p = _run("stats_inferential.py", "--clean", csv, "--out", out,
+                 "--group", "arm", "--covariates", "baseline")
+        eq(p.returncode, 0, p.stderr)
+        d = json.loads(out.read_text(encoding="utf-8"))
+        eq(d.get("covariates"), ["baseline"], "the covariates were not recorded")
+        t = next(t for t in d["tests"] if t["outcome"] == "y")
+        eq(t["design"], "covariate-adjusted numeric", "ANCOVA did not run")
+        slopes = t["assumptions"].get("homogeneity_of_slopes") or {}
+        assert slopes.get("verdict") in ("HOLDS", "VIOLATED"), slopes
+        assert t.get("robustness_cross_check", {}).get("p_raw") is not None, \
+            "the unadjusted comparison was not kept as the cross-check"
+
+
+@check("gate 3 recognises mixed-model and ANCOVA effect sizes")
+def test_gate3_accepts_new_effect_sizes():
+    import final_audit as fa
+    ctx = {"inferential": {"tests": [
+        {"outcome": "y", "estimable": True, "n_total": 30,
+         "effect_sizes": {"marginal_r2": 0.14, "conditional_r2": 0.89,
+                          "fixed_effect_differences_ci95": {"b": {"ci95": [0, 1]}}}}]},
+        "report_text": "", "descriptive": {}, "decisions": {},
+        "cleaning_run": {}, "build": {}, "caveats": []}
+    eq(fa.gate_3_effect_size(ctx)["status"], "PASS",
+       "a mixed model with R^2 and coefficient intervals failed gate 3")
+
+
+# ------------------------------------------------------- answers run block
+
+@check("the answers run block fills blanks, validates values, and never overrides")
+def test_answers_run_block():
+    import io, contextlib
+    iris_profile = ROOT / "examples" / "iris" / "outputs" / "analysis" / "profile.json"
+
+    # invalid: unknown key and a design id that does not exist
+    with tempfile.TemporaryDirectory() as td:
+        ans = Path(td) / "a.json"
+        ans.write_text(json.dumps(
+            {"run": {"journal": "nejm", "unit_key": "species",
+                     "design": "randomized_trial", "bogus": 1}}), encoding="utf-8")
+        options = {"journal": "auto", "design": "auto"}
+        stderr = io.StringIO()
+        try:
+            with contextlib.redirect_stderr(stderr):
+                rp.apply_answers_run_block(str(ans), options, iris_profile)
+        except SystemExit as exc:
+            eq(exc.code, 2, "an invalid run block must exit 2")
+            out = stderr.getvalue()
+            assert "bogus" in out and "design" in out, \
+                "the rejection does not name the bad keys: %r" % out
+        else:
+            raise AssertionError("the invalid run block was accepted")
+
+    # valid: fills blanks only
+    with tempfile.TemporaryDirectory() as td:
+        ans = Path(td) / "b.json"
+        ans.write_text(json.dumps(
+            {"run": {"journal": "nejm", "unit_key": "species"}}), encoding="utf-8")
+        options2 = {"journal": "auto", "design": "auto"}
+        applied = rp.apply_answers_run_block(str(ans), options2, iris_profile)
+        eq(applied, {"journal": "nejm", "unit_key": "species"},
+           "the run block applied the wrong keys")
+        eq(options2["journal"], "nejm", "the option was not filled")
+        # an explicit value is never overridden; a blank one still is
+        options3 = {"journal": "nature", "unit_key": None}
+        applied3 = rp.apply_answers_run_block(str(ans), options3, iris_profile)
+        eq(applied3, {"unit_key": "species"},
+           "the run block must still fill blanks beside explicit values")
+        eq(options3["journal"], "nature", "an explicit journal was clobbered")
+
+
+@check("a decision can answer one column of a multi-column flag")
+def test_answers_per_column():
+    import cleaning_plan as cp
+    profile = json.loads(
+        (TRAPS_OUT / "analysis" / "profile.json").read_text(encoding="utf-8"))
+    plan = cp.build_plan(profile, {})
+    multi = next((f for f in plan["never_automatic_flags"]
+                  if f["op"] == "impute_numeric" and len(f["columns"]) > 1), None)
+    if multi is None:
+        return  # this fixture has no multi-column imputation flag; nothing to pin
+    col_a = multi["columns"][0]
+    applied, errors = cp.apply_answers(plan, [
+        {"id": multi["id"], "action": "median", "column": col_a,
+         "rationale": "median per codebook", "decided_by": "test"},
+    ], Path("answers.json"), profile)
+    eq(errors, [], "a per-column decision was rejected: %r" % errors)
+    flag = next(f for f in plan["never_automatic_flags"] if f["id"] == multi["id"])
+    assert col_a in (flag.get("resolved_columns") or {}), "no per-column record"
+    assert not flag.get("resolved"), "a partially answered flag counts as resolved"
+    forced = [a for a in plan["auto_actions"]
+              if a["id"] == "t-impute-median" and a["columns"] == [col_a]]
+    assert forced, "the per-column decision produced no scoped op"
+    _, errors2 = cp.apply_answers(plan, [
+        {"id": multi["id"], "action": "mean"}], Path("answers.json"), profile)
+    assert errors2, "a whole-flag answer on a partially resolved flag was accepted"
+
+
+# --------------------------------------------------------- time-series stage
+
+@check("time-series statistics carry intervals, names and n")
+def test_timeseries_stats():
+    with tempfile.TemporaryDirectory() as td:
+        out = Path(td) / "ts.json"
+        fig = Path(td) / "ts.png"
+        prof = ROOT / "examples" / "timeseries" / "outputs" / "analysis" / "profile.json"
+        args = ["--in", ROOT / "examples" / "timeseries" / "sensor_log.csv",
+                "--out", out, "--fig", fig]
+        if prof.exists():
+            args += ["--profile", prof]
+        p = _run("timeseries_analysis.py", *args)
+        eq(p.returncode, 0, p.stderr)
+        d = json.loads(out.read_text(encoding="utf-8"))
+        assert d["estimable"], d
+        st = d["stats"]
+        for key in ("mann_kendall", "sen_slope", "changepoint"):
+            assert st[key].get("estimable"), (key, st[key])
+            assert st[key].get("method"), "%s records no method name" % key
+        ci = st["sen_slope"]["ci95"]
+        assert ci and ci[0] <= st["sen_slope"]["slope_per_step"] <= ci[1], \
+            "the Sen slope sits outside its own interval: %r" % ci
+        fig_rec = d.get("figure") or {}
+        assert fig_rec.get("non_blank"), "the overview figure rendered blank"
+
+
+# ------------------------------------------------------------ size gate
+
+@check("oversized inputs are blocked with a decision, not a MemoryError")
+def test_input_size_gate():
+    route = {"files": [{"path": str(TRAPS_CSV)}]}
+    eq(rp.input_size_gate(route, {}), None,
+       "a small file must pass the gate")
+    verdict = rp.input_size_gate(route, {"max_input_mb": 0.00001})
+    assert verdict and verdict.startswith("WARNING"), \
+        "an explicit override must warn, not block: %r" % verdict
+    original = rp.DEFAULT_MAX_INPUT_MB
+    try:
+        rp.DEFAULT_MAX_INPUT_MB = 0.00001
+        blocked = rp.input_size_gate(route, {})
+    finally:
+        rp.DEFAULT_MAX_INPUT_MB = original
+    assert blocked and blocked.startswith("BLOCKED") and "--max-input-mb" in blocked, \
+        "the default-limit block does not offer the override: %r" % blocked
+
+
 def main() -> int:
     width = max(len(n) for n, _ in _RESULTS)
     failed = 0

@@ -264,7 +264,8 @@ def modality_findings(profile: Dict[str, Any]) -> List[str]:
 
 
 def build_markdown(profile: Dict[str, Any], route: Dict[str, Any],
-                   title: str) -> str:
+                   title: str, timeseries: Optional[Dict[str, Any]] = None,
+                   outdir: Optional[Path] = None) -> str:
     generated = datetime.now().astimezone().strftime("%Y-%m-%d %H:%M %Z")
     branch_list = branches(profile)
     total_anomalies = sum(len(anomalies(b.get("profile") or {})) for b in branch_list)
@@ -272,23 +273,46 @@ def build_markdown(profile: Dict[str, Any], route: Dict[str, Any],
         1 for b in branch_list for flag in anomalies(b.get("profile") or {})
         if flag.get("severity") in ("P0", "P1")
     )
+    has_ts = bool(timeseries and timeseries.get("estimable"))
+    header_note = (
+        "_Profile report with descriptive time-series statistics, generated %s "
+        "by `scripts/assemble_profile_report.py` from the artifacts listed in "
+        "`report_build.json`. The statistics below are descriptive and "
+        "screening only -- no forecast, no causal claim._" % generated
+        if has_ts else
+        "_Profile-only report generated %s by `scripts/assemble_profile_report.py` "
+        "from the artifacts listed in `report_build.json`. No statistical test is "
+        "reported here._" % generated
+    )
     lines: List[str] = [
         "# %s" % title,
         "",
-        "_Profile-only report generated %s by `scripts/assemble_profile_report.py` "
-        "from the artifacts listed in `report_build.json`. No statistical test is "
-        "reported here._" % generated,
+        header_note,
         "",
         "## Executive summary",
         "",
         "The input was routed to %d branch%s and profiled without changing the raw "
         "files. The profile found **%d anomaly flag(s)**, including **%d at P0/P1**. "
-        "This report describes those findings and stops before inference because "
-        "the selected branch does not implement a defensible statistical model for "
-        "this modality." % (
+        % (
             len(branch_list), "" if len(branch_list) == 1 else "es",
             total_anomalies, p1,
         ),
+    ]
+    if has_ts:
+        mk = ((timeseries.get("stats") or {}).get("mann_kendall") or {})
+        sen = ((timeseries.get("stats") or {}).get("sen_slope") or {})
+        lines.append(
+            "Descriptive time-series statistics were run on `%s` (n=%s): %s; "
+            "Sen slope %s per step (95%% CI [%s, %s])."
+            % (timeseries.get("value_column"), timeseries.get("n_obs"),
+               mk.get("verdict", "--"),
+               sen.get("slope_per_step", "--"), *(sen.get("ci95") or ["--", "--"])))
+    lines.extend([
+        "This report describes those findings and stops before %s because "
+        "the selected branch does not implement a defensible statistical model for "
+        "this modality%s." % (
+            "forecasting or causal inference" if has_ts else "inference",
+            "; the statistics above are descriptive, not predictive" if has_ts else ""),
         "",
         "## 1. Scope and routing",
         "",
@@ -302,11 +326,14 @@ def build_markdown(profile: Dict[str, Any], route: Dict[str, Any],
              for plan in (route.get("plan") or [])],
         ),
         "Profile-only mode inspects and reports. It does not clean, impute, "
-        "deduplicate, transform, test or draw inferential conclusions.",
+        "deduplicate, transform, test or draw inferential conclusions."
+        + (" The time-series statistics in section 2 are an explicitly "
+           "descriptive exception: trend, autocorrelation, decomposition "
+           "strength and a changepoint screen." if has_ts else ""),
         "",
         "## 2. Profile findings",
         "",
-    ]
+    ])
     for index, branch in enumerate(branch_list, 1):
         branch_profile = branch.get("profile") or {}
         lines.extend([
@@ -317,6 +344,67 @@ def build_markdown(profile: Dict[str, Any], route: Dict[str, Any],
             *modality_findings(branch_profile),
             "",
         ])
+
+    if has_ts:
+        st = timeseries.get("stats") or {}
+        lines.append("### 2.%d Descriptive time-series statistics"
+                     % (len(branch_list) + 1))
+        lines.append("")
+        rows = []
+        for key in ("mann_kendall", "sen_slope", "stl", "changepoint"):
+            block = st.get(key) or {}
+            if not block.get("estimable"):
+                rows.append([f"`{key}`", "--",
+                             block.get("reason") or "not estimable"])
+                continue
+            if key == "sen_slope":
+                rows.append([
+                    "`sen_slope`", "Theil-Sen slope, 95% CI",
+                    "%s per step (CI [%s, %s])%s"
+                    % (block.get("slope_per_step"), *block.get("ci95"),
+                       "; %s per day" % block["slope_per_day"]
+                       if block.get("slope_per_day") is not None else "")])
+            elif key == "stl":
+                rows.append(["`stl`", block.get("method"),
+                             "trend strength %s, seasonal strength %s"
+                             % (block.get("trend_strength"),
+                                block.get("seasonal_strength"))])
+            else:
+                rows.append([
+                    f"`{key}`", block.get("method"),
+                    "%s = %s, p = %s -- %s"
+                    % (block.get("statistic_name"), block.get("statistic"),
+                       block.get("p_raw"), block.get("verdict", ""))])
+        lines.extend([
+            md_table(["Statistic", "Method", "Result"], rows),
+            "",
+            "Every p-value above is two-sided at alpha=%s with its test name and "
+            "n recorded in `analysis/timeseries.json`. None of them licenses a "
+            "forecast or a causal statement." % (timeseries.get("alpha", 0.05)),
+            "",
+        ])
+        acf_b = st.get("acf_pacf") or {}
+        if acf_b.get("estimable"):
+            lines.extend([
+                "Autocorrelation: lags exceeding the white-noise bounds are "
+                "**%s** (ACF) and **%s** (PACF), out of %d examined."
+                % (acf_b.get("acf_significant_lags") or "none",
+                   acf_b.get("pacf_significant_lags") or "none",
+                   acf_b.get("nlags")),
+                "",
+            ])
+        fig_path = (timeseries.get("figure") or {}).get("path")
+        if fig_path and outdir is not None:
+            rel = Path(str(fig_path))
+            try:
+                rel = rel.relative_to(Path(outdir))
+            except ValueError:
+                rel = Path("charts") / rel.name
+            lines.extend([
+                "![Time-series overview: observed values, STL trend, Sen slope "
+                "with 95%% CI band, and the autocorrelation panel](%s)" % rel.as_posix(),
+                "",
+            ])
 
     lines.extend([
         "## 3. Anomalies",
@@ -339,11 +427,17 @@ def build_markdown(profile: Dict[str, Any], route: Dict[str, Any],
         "## 4. What was and was not done",
         "",
         "**Completed.** Format routing, bounded decoding, structural profiling, "
-        "missingness counts, duplicate checks and modality-specific integrity flags.",
+        "missingness counts, duplicate checks and modality-specific integrity flags."
+        + (" Descriptive time-series statistics (trend, slope with CI, "
+           "autocorrelation with white-noise bounds, STL strengths, a seeded "
+           "changepoint screen) with every p-value carrying its test name and n."
+           if has_ts else ""),
         "",
-        "**Not performed.** Statistical inference, causal interpretation, "
+        "**Not performed.** %s Statistical inference, causal interpretation, "
         "automatic row deletion, imputation, deduplication, feature engineering "
-        "and model fitting. Their absence is a scope boundary, not a passing result.",
+        "and model fitting. Their absence is a scope boundary, not a passing result."
+        % ("Forecasting and ARIMA-style model fitting on the time series."
+           if has_ts else ""),
         "",
         "## 5. Reproducibility",
         "",
@@ -417,22 +511,35 @@ def main(argv=None) -> int:
         print("profile not found or empty: %s" % profile_path, file=sys.stderr)
         return 2
 
+    ts_path = outdir / "analysis" / "timeseries.json"
+    timeseries: Optional[Dict[str, Any]] = None
+    if ts_path.exists():
+        try:
+            timeseries = json.loads(ts_path.read_text(encoding="utf-8"))
+        except Exception:
+            timeseries = None
+
     md_path = outdir / "report.md"
     pdf_path = outdir / "report.pdf"
-    md = build_markdown(profile, route, args.title)
+    md = build_markdown(profile, route, args.title, timeseries=timeseries,
+                        outdir=outdir)
     md_path.write_text(md, encoding="utf-8")
 
     summary = branches(profile)
+    has_ts = bool(timeseries and timeseries.get("estimable"))
     executive = [
         "# %s -- Executive summary" % args.title,
         "",
-        "_Profile-only scope. No inferential test was run._",
+        "_Profile scope%s._"
+        % (" with descriptive time-series statistics; no inferential test was run"
+           if has_ts else ". No inferential test was run"),
         "",
         "- Branches inspected: **%d**." % len(summary),
         "- Total anomaly flags: **%d**." % sum(
             len(anomalies(branch.get("profile") or {})) for branch in summary
         ),
-        "- Primary evidence: `analysis/profile.json` and `route.json`.",
+        "- Primary evidence: `analysis/profile.json`, `route.json`%s."
+        % (", `analysis/timeseries.json`" if has_ts else ""),
         "- Limits: one row or file is not established as an independent unit; "
         "anomalies are descriptions, not automatic deletion decisions.",
         "",
@@ -448,7 +555,9 @@ def main(argv=None) -> int:
     payload = {
         "schema_version": SCHEMA_VERSION,
         "title": args.title,
-        "mode": "profile-only",
+        "mode": "profile-only with descriptive time-series statistics"
+                if timeseries and timeseries.get("estimable") else "profile-only",
+        "timeseries": str(ts_path) if timeseries else None,
         "generated": datetime.now().astimezone().isoformat(),
         "report_md": str(md_path),
         "report_md_sha256": sha256_of(md_path),

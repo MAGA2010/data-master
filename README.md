@@ -7,17 +7,35 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-2EA44F)](LICENSE)
 [![Codex Skill](https://img.shields.io/badge/Codex-skill-111827)](SKILL.md)
 
-`data-master` is a Codex skill and standalone Python pipeline for transforming
-raw data into a reproducible report with a complete evidence trail. It identifies
-the input modality, profiles the data without modifying it, plans and executes
-safe cleaning, runs statistics where the data supports them, creates figures,
-and delivers Markdown and PDF reports.
+`data-master` is a Codex skill and standalone Python pipeline for turning
+raw data into a reproducible report with a complete evidence trail. One
+command identifies the input modality, profiles the data without modifying
+it, plans and executes safe cleaning, runs statistics where the data supports
+them, perturbs them to see if they survive, creates figures, and delivers
+Markdown and PDF reports with a machine-checkable audit.
 
 It is built for workflows where an answer must survive inspection: research
 analysis, data quality review, exploratory reporting, and AI-assisted work that
 still needs transparent decisions.
 
-![Generated data-master report](docs/assets/iris-report.png)
+**Built for:** one-file datasets (tabular gets the full analysis; time-series,
+text, image, audio, and geospatial get honestly-labelled profiles), evidence
+trails that outlive the run, and readers who will challenge the numbers.
+
+**Not a replacement for:** statistical judgment, peer review, or a BI dashboard.
+The audit enforces reporting discipline; it does not validate scientific truth,
+and its limitations are printed in every report it produces.
+
+![A figure page from a generated data-master report: group means with 95% confidence intervals, BH-adjusted p values, and a conclusion-style caption](docs/assets/iris-report.png)
+
+## Contents
+
+- [Why data-master](#why-data-master) · [Installation](#installation) · [Quick start](#quick-start)
+- [Execution modes](#execution-modes) · [Command-line reference](#command-line-reference) · [Pipeline architecture](#pipeline-architecture)
+- [Supported inputs](#supported-inputs) · [Output contract](#output-contract)
+- [Reproducibility and data safety](#reproducibility-and-data-safety) · [Resume and inspection](#resume-and-inspection) · [Answering held decisions](#answering-held-decisions)
+- [Report audit](#report-audit) · [Examples](#examples) · [Development](#development)
+- [Scope and limitations](#scope-and-limitations) · [中文简介](#中文简介)
 
 ## Why data-master
 
@@ -82,18 +100,51 @@ the ten stage-specific skills under [`skills/`](skills/).
 
 ## Quick start
 
-Run the included Iris example:
+Run the included Iris example into a fresh output directory (takes a minute or
+two; write your own outputs anywhere you like, the examples' committed
+artifacts stay untouched):
 
 ```bash
 python scripts/run_pipeline.py \
   --in examples/iris/iris_dirty.csv \
-  --out examples/iris/outputs \
+  --out outputs/iris-demo \
   --title "Iris morphometrics" \
   --journal nature
 ```
 
-The command produces a complete report, figures, cleaning artifacts, statistics,
-an audit, and a resumable state ledger.
+This is what the run actually prints (abridged; every line here is a real
+stage artifact you can open):
+
+```text
+route_input: 1 file(s) -> tabular=1
+cleaned : 158 -> 158 rows, 8 -> 7 cols
+verify  : PASS byte-for-byte reproducible (7c1b8a3004c28c85...)
+audit   : PASS 1 untouched columns kept their raw values exactly
+
+stats_inferential written: .../analysis/inferential.json
+  unit structure : undeclared  primary level: row
+  tests: 4/5 estimable  family_size=4  correction=BH
+
+sensitivity written: .../analysis/sensitivity.json
+  outcomes: 4  perturbations: 64  agreeing: 64  conflicting: 0
+
+final_audit: NOT SUBMISSION-READY
+  Gate 1 n explicit and unit-defined            FAIL
+  Gate 6 sensitivity tested                     PASS
+  ... (gates 2-5, 7, 8 pass; structural 6/6)
+
+complete: outputs/iris-demo
+  report:  outputs/iris-demo/report.pdf     <- start here
+  audit:   NOT SUBMISSION-READY             <- and here, to see why
+  answers: outputs/iris-demo/answers.template.json
+```
+
+Two things to notice in that output. The report **exists** while the audit
+says **NOT SUBMISSION-READY** — gate 1 fails because this demo never declared
+what one independent unit is (`--unit-key`). That is the designed outcome, not
+an error: the audit names exactly what a human must decide. And the
+`answers.template.json` line points at the decisions the pipeline refuses to
+make on your behalf — fill it in and re-run with `--answers` ([see below](#answering-held-decisions)).
 
 For a smaller and more explicit analysis:
 
@@ -110,7 +161,10 @@ python scripts/run_pipeline.py \
 
 `--unit-key` is not decorative. Without a valid declaration of what one
 independent unit represents, the report is deliberately marked
-`NOT SUBMISSION-READY`.
+`NOT SUBMISSION-READY` — and when rows repeat within a unit, the primary
+analysis automatically moves to the level the structure supports (per-unit
+means, paired tests, or Friedman blocks), with the row-level results kept as
+a labelled secondary.
 
 ## Execution modes
 
@@ -118,14 +172,18 @@ The runner selects a mode from the route result and records that decision.
 
 | Input shape | What runs |
 |---|---|
-| One tabular file | Route, profile, clean, validate, describe, infer, chart, report, audit |
-| One text, image, audio, geospatial, or time-series input | Route, profile, profile-only PDF, integrity audit |
+| One tabular file | Route, profile, clean, validate, describe, infer (unit-aware, optional ANCOVA), sensitivity suite, charts, report, audit |
+| One time-series file | Route, profile, audited descriptive statistics (Mann-Kendall + Sen slope with CI, ACF/PACF with white-noise bounds, STL strengths, seeded changepoint screen), report with overview figure, phrase-scanned audit |
+| One text, image, audio, or geospatial input | Route, profile, profile-only PDF, integrity audit |
 | Mixed folder or multiple files | One profile branch per modality or file, followed by a merged profile-only report |
+| Input above 300 MB | Blocked with the options spelled out, unless `--max-input-mb` overrides |
 | Unknown format | Stops with a route record and points to the research protocol |
 
 Profile-only is an explicit scope boundary. It reports structure, integrity
 issues, missingness, duplicates, and modality-specific findings without claiming
-that a statistical model or causal analysis was performed.
+that a statistical model or causal analysis was performed. The time-series mode
+is the one non-tabular exception: it carries real descriptive statistics, each
+with its test name, n, and interval — and still no forecast and no causal claim.
 
 ## Command-line reference
 
@@ -141,7 +199,9 @@ that a statistical model or causal analysis was performed.
 | `--journal auto\|nature\|nejm\|science\|lancet` | Journal checklist family |
 | `--design ID` | EQUATOR study-design identifier |
 | `--modality NAME` | Force a routing modality |
-| `--answers FILE` | Answer the plan's never-automatic decisions by id (`answers.template.json` is written for you) |
+| `--answers FILE` | Answer the plan's never-automatic decisions by id (`answers.template.json` is written for you); a `run` block may also declare `unit_key` / `group` / `outcomes` / `design` / `journal` / `covariates` |
+| `--covariates A,B` | Declare numeric covariates; the ANCOVA comparison becomes primary and the slopes assumption is tested |
+| `--max-input-mb N` | Override the 300 MB in-memory input gate |
 | `--export-lockfile` | Write `lockfile.txt` with the exact dependency versions that ran |
 | `--profile-only` | Stop after profiling and report generation |
 | `--pdf-backend auto\|reportlab\|fpdf2\|headless-browser` | Select the PDF backend |
@@ -201,8 +261,9 @@ whether a stage can be reused.
 | [`scripts/profile_*.py`](scripts/) | Modality-specific structural profiling |
 | [`scripts/cleaning_plan.py`](scripts/cleaning_plan.py) | Explicit, reviewable cleaning plan plus the answers-file loop |
 | [`scripts/execute_cleaning.py`](scripts/execute_cleaning.py) | Additive cleaning with a replayable script |
-| [`scripts/stats_*.py`](scripts/) | Descriptive and unit-aware inferential statistics |
+| [`scripts/stats_*.py`](scripts/) | Descriptive and unit-aware inferential statistics (mixed models, ANCOVA) |
 | [`scripts/sensitivity_analysis.py`](scripts/sensitivity_analysis.py) | Leave-one-group-out, block jackknife, extreme-value fence, complete-case refits |
+| [`scripts/timeseries_analysis.py`](scripts/timeseries_analysis.py) | Audited descriptive time-series statistics: Mann-Kendall, Theil-Sen, ACF/PACF, STL, changepoint screen |
 | [`scripts/final_audit.py`](scripts/final_audit.py) | Machine-derived report and journal audit |
 | [`scripts/pipeline_state.py`](scripts/pipeline_state.py) | Input fingerprints, stage ledger, and pipeline provenance |
 | [`scripts/state_keeper.py`](scripts/state_keeper.py) | State inspection, evidence validation, and resume entry point |
@@ -323,6 +384,13 @@ file invalidates the cleaning and downstream stages rather than silently
 reusing their old evidence. Actions with no automatic implementation
 (`drop_rows`, `listwise_delete`) are rejected instead of skipped.
 
+The same file can settle the run-level questions the audit would otherwise
+flag: a `run` block may declare `unit_key`, `group`, `outcomes`, `design`,
+`journal`, or `covariates` (validated against the profile; explicit CLI values
+always win). And a decision may name a single `column` of a multi-column flag —
+impute `age` with the median and leave `bmi` alone, answering each column at
+a time, with the flag staying open until every column has an answer.
+
 ## Report audit
 
 The default audit is journal-oriented and derives results from saved artifacts,
@@ -361,7 +429,7 @@ to be resolved.
 |---|---|
 | [`examples/iris`](examples/iris/) | Full tabular analysis, automatic grouping, effect sizes, figures, and PDF |
 | [`examples/column_traps`](examples/column_traps/) | Leading zeros, currency, percentages, mixed values, and date ambiguity |
-| [`examples/timeseries`](examples/timeseries/) | Sampling gaps, duplicate timestamps, and regime change |
+| [`examples/timeseries`](examples/timeseries/) | Time-series mode: gaps, duplicate stamps, regime change, plus the descriptive statistics stage |
 | [`examples/text`](examples/text/) | Duplicate and empty documents, plus legacy encoding fallback |
 | [`examples/media`](examples/media/) | Corrupt images, re-encoded near-duplicates, and blank frames |
 | [`examples/geo`](examples/geo/) | Invalid coordinates, null island, and missing geometry |
@@ -394,9 +462,11 @@ auditing, dtype replay, byte-reproducible cleaning, multiplicity safeguards,
 Welch denominator degrees of freedom, causal-language consistency, routing,
 profile-only scope, state transitions, unit-structure classification
 (clustered / paired / incomplete repeated), the gate-1 clustering block, the
-sensitivity suite and its gate-6 wiring, the answers-file round trip and
-resume invalidation, pipeline-commit provenance, lockfile export, and
-end-to-end report generation.
+random-intercept mixed model and its fallback, the group-equals-unit refusal,
+ANCOVA with the slopes assumption, gate-3 recognition of the new effect sizes,
+the answers-file round trip (per-column and run block) and resume invalidation,
+the time-series statistics and their intervals, the input-size gate, pipeline
+commit provenance, lockfile export, and end-to-end report generation.
 
 GitHub Actions runs the project on Windows and Linux with Python 3.11, 3.12, and
 3.13, including the one-command tabular and profile-only paths.
@@ -423,10 +493,13 @@ GitHub Actions runs the project on Windows and Linux with Python 3.11, 3.12, and
 Current limitations are explicit:
 
 - Full inferential analysis currently applies to a single tabular file.
-- Non-tabular and mixed inputs produce profile-only reports.
-- Mixed-effects model selection is not automated; incomplete repeated-measures
-  designs are analysed at the unit-by-group cell level with the residual
-  clustering disclosed and flagged `AUTHOR_INPUT_NEEDED`.
+- Time-series inputs receive audited **descriptive** statistics (trend, slope
+  with CI, autocorrelation, decomposition strengths, changepoint screen);
+  forecasting and ARIMA-style model fitting are not implemented.
+- Text, image, audio, geospatial, and mixed inputs produce profile-only reports.
+- Covariate adjustment requires user-declared `--covariates`; the pipeline
+  never selects covariates itself, because adjusting for a data-chosen
+  variable is a researcher-degrees-of-freedom problem.
 - Answers-file actions cover the operations the executor implements; row
   deletion choices beyond exact deduplication still require editing the plan.
 - PDF, DOCX, HTML, and video conversion are outside the v1 scope.
@@ -446,11 +519,21 @@ For security and data-disclosure concerns, follow [`SECURITY.md`](SECURITY.md).
 ## Citation
 
 If you use `data-master` in research or technical work, cite the repository and
-the exact commit used for the analysis:
+the exact commit used for the analysis — the commit is recorded in every run's
+`state.json` and `report_build.json`, so it can be copied from the evidence
+rather than remembered:
 
 ```text
 Wang, S. data-master: Auditable data analysis from one command.
 https://github.com/MAGA2010/data-master
+```
+
+```bibtex
+@software{wang_data_master,
+  author = {Wang, S.},
+  title  = {data-master: Auditable data analysis from one command},
+  url    = {https://github.com/MAGA2010/data-master}
+}
 ```
 
 ## License
@@ -474,7 +557,11 @@ python scripts/run_pipeline.py \
 
 - 永不修改原始文件；
 - 类型转换显式、可逆、全量可解析才执行；
-- 统计方法和清理操作均记录证据；
-- 无法确定的单位或设计问题标记为 `AUTHOR_INPUT_NEEDED`；
-- 非表格与混合输入只交付明确标注的 profile-only 报告；
-- 报告存在不等于可提交，必须通过机器可核验的审计门禁。
+- 重复行不会虚增样本量：声明 `--unit-key` 后，主分析自动移到结构支持的层级（单位均值 / 配对 / 区组 / 单位随机截距混合模型）；
+- 协变量由用户用 `--covariates` 显式声明后才做 ANCOVA 调整，斜率同质性假设随结果一并报告；
+- 统计方法和清理操作均记录证据；敏感性扰动（留一组、分块 jackknife、极端值围栏、完整个例）写入 `analysis/sensitivity.json`；
+- 时间序列输入交付可审计的描述统计（Mann-Kendall 趋势、Sen 斜率+CI、ACF/PACF、STL 强度、变点筛查），不做预测与因果声明；
+- 无法确定的单位或设计问题标记为 `AUTHOR_INPUT_NEEDED`，并生成 `answers.template.json` 供用户按 id（或按列）作答、用 `run` 块声明单位/分组/设计/期刊后，用 `--answers` 重跑；
+- 非表格与混合输入只交付明确标注的 profile-only 报告；超过 300 MB 的输入会被显式拦下而不是崩溃；
+- 报告存在不等于可提交，必须通过机器可核验的审计门禁；
+- 每次运行记录生成报告的代码 commit，`--export-lockfile` 固化精确依赖版本。

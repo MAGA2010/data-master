@@ -198,25 +198,24 @@ def render_small_multiples(df, d: Dict[str, Any], out: Path) -> Dict[str, Any]:
                 mec="#222222", mew=1.2, zorder=3)
         ax.set_xticks(xs)
         ax.set_xticklabels([str(lv)[:14] for lv in levels], fontsize=8.5, rotation=0)
-        ax.set_title(f"{col}\n{d['title'].split('differs')[0].strip() if 'differs' in d['title'] else col}",
-                     fontsize=9, loc="left")
-        ax.set_ylabel("mean")
+        ax.set_title(col, fontsize=9, loc="left")
+        ax.set_ylabel("mean ± 95% CI")
         base = 0
         lo = float(np.min(means - errs))
         hi = float(np.max(means + errs))
         span = (hi - lo) or (abs(hi) or 1.0)
-        # a truncated y-axis must say so, or the intervals exaggerate
+        # a truncated y-axis must say so -- the note goes BELOW the axes,
+        # because every corner inside the axes is already occupied by a bar
         if lo < 0 and base == 0:
             ax.set_ylim(max(lo - 0.15 * span, 0), hi + 0.2 * span)
         else:
             ax.set_ylim(lo - 0.25 * span, hi + 0.25 * span)
-            ax.text(0.99, 0.02, "y-axis does not start at zero", transform=ax.transAxes,
-                    ha="right", va="bottom", fontsize=7, color="#8a4b00")
+            ax.text(0.99, -0.24, "y-axis does not start at zero",
+                    transform=ax.transAxes, ha="right", va="top",
+                    fontsize=7, color="#8a4b00")
         sig = "BH-adjusted p = %.3g" % p["p_adjusted"]
         ax.text(0.99, 0.96, sig, transform=ax.transAxes, ha="right", va="top",
                 fontsize=8, color="#444444")
-        ax.text(0.01, 0.02, "95% CI", transform=ax.transAxes, ha="left", va="bottom",
-                fontsize=7.5, color="#444444")
     for ax in axes[len(panels):]:
         ax.set_visible(False)
     return _finish(fig, axes.tolist(), out, d,
@@ -354,37 +353,52 @@ def _lowess_band(x: np.ndarray, y: np.ndarray, grid: np.ndarray, frac: float,
 
 
 def _lowess(x: np.ndarray, y: np.ndarray, frac: float, iters: int = 3) -> np.ndarray:
-    """Local linear regression, so the figure does not need statsmodels."""
+    """Local linear regression, so the figure does not need statsmodels.
+
+    A window whose y-values are (near-)constant makes the local line fit rank
+    deficient; polyfit flags it as a RankWarning and the fallback below
+    already answers it with the window median. The warning is silenced here
+    because a per-point conditioning notice printed hundreds of times per
+    figure tells the user a chart is broken when it is not.
+    """
+    import warnings
+    try:
+        from numpy.exceptions import RankWarning  # numpy >= 2.0
+    except ImportError:                            # pragma: no cover
+        RankWarning = getattr(np, "RankWarning", None)
     n = len(x)
     window = max(int(n * frac), 3)
     out = np.empty(n)
-    for i in range(n):
-        lo = max(0, min(i - window // 2, n - window))
-        hi = min(n, lo + window)
-        lo = max(0, hi - window)
-        xw, yw = x[lo:hi], y[lo:hi]
-        w = _tricube(np.abs(x[i] - xw) / max(np.max(np.abs(x[i] - xw)), 1e-12))
-        try:
-            deg = np.polyfit(xw, yw, 1, w=np.sqrt(w))
-            out[i] = np.polyval(deg, x[i])
-        except Exception:
-            out[i] = np.median(yw)
-    for _ in range(iters):
-        resid = y - out
-        s = np.median(np.abs(resid)) * 1.4826 or 1.0
-        resid = resid / s
+    with warnings.catch_warnings():
+        if RankWarning is not None:
+            warnings.simplefilter("ignore", RankWarning)
         for i in range(n):
             lo = max(0, min(i - window // 2, n - window))
             hi = min(n, lo + window)
             lo = max(0, hi - window)
-            xw = x[lo:hi]
+            xw, yw = x[lo:hi], y[lo:hi]
             w = _tricube(np.abs(x[i] - xw) / max(np.max(np.abs(x[i] - xw)), 1e-12))
-            w = w * _tricube(np.abs(resid[lo:hi]))
             try:
-                deg = np.polyfit(xw, y[lo:hi], 1, w=np.sqrt(w))
+                deg = np.polyfit(xw, yw, 1, w=np.sqrt(w))
                 out[i] = np.polyval(deg, x[i])
             except Exception:
-                pass
+                out[i] = np.median(yw)
+        for _ in range(iters):
+            resid = y - out
+            s = np.median(np.abs(resid)) * 1.4826 or 1.0
+            resid = resid / s
+            for i in range(n):
+                lo = max(0, min(i - window // 2, n - window))
+                hi = min(n, lo + window)
+                lo = max(0, hi - window)
+                xw = x[lo:hi]
+                w = _tricube(np.abs(x[i] - xw) / max(np.max(np.abs(x[i] - xw)), 1e-12))
+                w = w * _tricube(np.abs(resid[lo:hi]))
+                try:
+                    deg = np.polyfit(xw, y[lo:hi], 1, w=np.sqrt(w))
+                    out[i] = np.polyval(deg, x[i])
+                except Exception:
+                    pass
     return out
 
 

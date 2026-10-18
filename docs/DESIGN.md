@@ -173,7 +173,8 @@ data-master/
 │   ├── _md2pdf_reportlab.py    [✓] PDF 一级后端（CJK / 目录 / 页码）
 │   ├── _md2pdf_fpdf.py         [✓] 二级后端，已实测
 │   ├── _md2pdf_browser.py      [✓] 三级后端（Edge headless）
-│   ├── sensitivity_analysis.py   [✓] LOGO / 分块 jackknife / IQR 围栏 / 完整个例 / 插补敏感性
+│   ├── sensitivity_analysis.py   [✓] LOGO / 分块 jackknife / IQR 围栏 / 完整个例 / 插补敏感性（扰动用轻量 bootstrap）
+│   ├── timeseries_analysis.py  [✓] Mann-Kendall + Sen 斜率 CI / ACF-PACF / STL 强度 / CUSUM 变点（描述性范围）
 │   ├── state_keeper.py         [✓] 状态检查 / 冷恢复入口
 │   ├── run_pipeline.py         [✓] 单命令执行器
 │   └── pipeline_state.py       [✓] 状态与输入指纹
@@ -181,7 +182,7 @@ data-master/
 ├── references/
 │   ├── journal-reporting-standards.json [✓] 机器可读路由表（9 design + generic）
 │   └── journal-reporting-standards.md   [✓] NEJM / Science / Lancet / Nature
-├── tests/test_pipeline_invariants.py [✓] 47 项，零依赖，含负向对照
+├── tests/test_pipeline_invariants.py [✓] 55 项，零依赖，含负向对照
 ├── examples/
 │   ├── iris/            [✓] 158×8，两条 ANOVA 分支 + 完整 PDF 报告
 │   ├── column_traps/     [✓] 240×10，每列一类转换陷阱
@@ -193,8 +194,9 @@ data-master/
 ```
 
 > Stage 1（路由 + 6 类模态画像）、Stage 2（统计 + Welch 分母自由度 + 单位结构感知：
-> 聚合 / 配对 / 完全区组）、Stage 2.5（敏感性扰动套件：LOGO、分块 jackknife、
-> IQR 围栏、严格完整个例、插补敏感性）、Stage 3（图表 + PDF 报告 + 8 gate 审计）
+> 聚合 / 配对 / 完全区组 / 混合模型 + 声明式 ANCOVA）、Stage 2.5（敏感性扰动套件：
+> LOGO、分块 jackknife、IQR 围栏、严格完整个例、插补敏感性）、时间序列模式
+>（描述统计阶段 + 专用报告 + 短语扫描审计）、Stage 3（图表 + PDF 报告 + 8 gate 审计）
 > 已经贯通。`run_pipeline.py` 提供单命令入口、可验证的冷恢复、
 > answers 文件闭环（`answers.template.json` → `--answers`，带决策溯源），
 > 以及 `--export-lockfile` 与 pipeline commit 记录。未完成的是非表格模态的
@@ -245,7 +247,11 @@ data-master/
 11. **不可估计就不报 p 值**：退化组、常数分组的 outcome、分组变量的同义重复——返回 `None` + 原因，而不是 NaN
 12. **检测到伪重复就必须处理，而不是警告后照跑**：`--unit-key` 显示 rows-per-unit > 1 时，主分析移到结构支持的层级（单位均值 / 配对 / Friedman 区组），行级结果降级为标注的 secondary；gate 1 对“声明了单位却在行级做主分析”直接 FAIL
 13. **gate 6 读工件，不读代理**：秩交叉核对是假设稳健性，不是敏感性分析；`analysis/sensitivity.json`（LOGO / jackknife / 围栏 / 完整个例）才是 gate 6 的证据
-14. **答案文件闭环**：never-automatic 项生成稳定 id 与 `answers.template.json`；`--answers` 校验后应用，记录 who/when/why；answers 变更使清洗及下游阶段失效重跑
+14. **答案文件闭环**：never-automatic 项生成稳定 id 与 `answers.template.json`；`--answers` 校验后应用，记录 who/when/why；answers 变更使清洗及下游阶段失效重跑；`run` 块可声明 unit_key/group/outcomes/design/journal/covariates（显式 CLI 优先）；多列 flag 可按列作答
+15. **混合模型只用于它适用之处**：incomplete_repeated 的主分析是单位随机截距 MixedLM（LR 检验 + Nakagawa R²），cell means 是交叉核对；不收敛即回退并记录原因
+16. **协变量必须由用户声明**：`--covariates` 触发 ANCOVA（II 型平方和 + 斜率同质性检验 + 调整后差异 CI）；流水线绝不自选协变量
+17. **时间序列只交付描述统计**：趋势/斜率 CI/自相关/STL 强度/变点筛查可审计，但预测与因果声明超出范围；profile 报告新增统计分析节并过禁语扫描
+18. **大输入是一堵显式的门**：默认 300 MB 内存契约，`--max-input-mb` 显式越过；宁可给决策也不给 MemoryError
 
 ---
 

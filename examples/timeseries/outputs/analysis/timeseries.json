@@ -1,0 +1,302 @@
+{
+  "schema_version": "1.0",
+  "source": "D:\\数据处理 skill\\examples\\timeseries\\sensor_log.csv",
+  "time_column": "timestamp",
+  "value_column": "temperature_c",
+  "n_obs": 102,
+  "n_duplicate_timestamps_averaged": 1,
+  "first_timestamp": "2026-01-01 00:00:00",
+  "last_timestamp": "2026-01-05 02:00:00",
+  "step_seconds": 3600.0,
+  "rule_source": "references/nature-statistics-checklist.md#descriptive-discipline",
+  "estimable": true,
+  "stats": {
+    "mann_kendall": {
+      "estimable": true,
+      "method": "Mann-Kendall trend test (two-sided, tie-corrected)",
+      "statistic_name": "S",
+      "statistic": -244,
+      "z": -0.70262,
+      "p_raw": 0.4822954397073186,
+      "kendall_tau": -0.04737,
+      "n": 102,
+      "verdict": "no detectable monotone trend",
+      "rule_source": "scripts/timeseries_analysis.py#mann_kendall"
+    },
+    "sen_slope": {
+      "estimable": true,
+      "method": "Theil-Sen slope (median of pairwise slopes), 95% CI",
+      "slope_per_step": -0.00142061,
+      "ci95": [
+        -0.0049697,
+        0.00238095
+      ],
+      "n": 102,
+      "excludes_zero": false,
+      "rule_source": "scripts/timeseries_analysis.py#sen_slope",
+      "step_unit": "seconds",
+      "slope_per_day": -30.68517139,
+      "ci95_per_day": [
+        -107.34545455,
+        51.42857143
+      ]
+    },
+    "acf_pacf": {
+      "estimable": true,
+      "nlags": 20,
+      "acf": [
+        1.0,
+        0.91401,
+        0.80939,
+        0.62728,
+        0.42909,
+        0.19862,
+        -0.03672,
+        -0.25141,
+        -0.44877,
+        -0.5925,
+        -0.70745,
+        -0.74921,
+        -0.75233,
+        -0.67799,
+        -0.56962,
+        -0.42345,
+        -0.24681,
+        -0.06617,
+        0.11951,
+        0.27459,
+        0.40454
+      ],
+      "acf_ci95": [
+        [
+          1.0,
+          1.0
+        ],
+        [
+          0.71994,
+          1.10807
+        ],
+        [
+          0.49223,
+          1.12654
+        ],
+        [
+          0.24007,
+          1.01449
+        ],
+        [
+          0.00533,
+          0.85285
+        ],
+        [
+          -0.2412,
+          0.63843
+        ],
+        [
+          -0.4799,
+          0.40646
+        ],
+        [
+          -0.69471,
+          0.19188
+        ],
+        [
+          -0.8974,
+          -0.00013
+        ],
+        [
+          -1.05774,
+          -0.12727
+        ],
+        [
+          -1.20028,
+          -0.21462
+        ],
+        [
+          -1.27891,
+          -0.21951
+        ],
+        [
+          -1.32054,
+          -0.18412
+        ],
+        [
+          -1.28255,
+          -0.07343
+        ],
+        [
+          -1.20217,
+          0.06293
+        ],
+        [
+          -1.07503,
+          0.22813
+        ],
+        [
+          -0.90868,
+          0.41505
+        ],
+        [
+          -0.73149,
+          0.59915
+        ],
+        [
+          -0.54606,
+          0.78507
+        ],
+        [
+          -0.39178,
+          0.94097
+        ],
+        [
+          -0.26609,
+          1.07516
+        ]
+      ],
+      "acf_significant_lags": [],
+      "pacf": [
+        1.0,
+        0.91401,
+        -0.1581,
+        -0.52942,
+        -0.20878,
+        -0.20524,
+        -0.23635,
+        -0.02393,
+        -0.12788,
+        -0.00702,
+        -0.14346,
+        0.02727,
+        -0.05614,
+        0.11749,
+        0.01037,
+        -0.09488,
+        0.06827,
+        -0.0189,
+        -0.02043,
+        -0.03898,
+        -0.09845
+      ],
+      "pacf_ci95": [
+        [
+          1.0,
+          1.0
+        ],
+        [
+          0.71994,
+          1.10807
+        ],
+        [
+          -0.35216,
+          0.03597
+        ],
+        [
+          -0.72349,
+          -0.33536
+        ],
+        [
+          -0.40284,
+          -0.01471
+        ],
+        [
+          -0.3993,
+          -0.01117
+        ],
+        [
+          -0.43041,
+          -0.04228
+        ],
+        [
+          -0.218,
+          0.17013
+        ],
+        [
+          -0.32195,
+          0.06619
+        ],
+        [
+          -0.20109,
+          0.18704
+        ],
+        [
+          -0.33753,
+          0.0506
+        ],
+        [
+          -0.1668,
+          0.22133
+        ],
+        [
+          -0.2502,
+          0.13793
+        ],
+        [
+          -0.07657,
+          0.31156
+        ],
+        [
+          -0.1837,
+          0.20443
+        ],
+        [
+          -0.28895,
+          0.09919
+        ],
+        [
+          -0.12579,
+          0.26234
+        ],
+        [
+          -0.21296,
+          0.17517
+        ],
+        [
+          -0.2145,
+          0.17363
+        ],
+        [
+          -0.23304,
+          0.15509
+        ],
+        [
+          -0.29251,
+          0.09562
+        ]
+      ],
+      "pacf_significant_lags": [],
+      "bounds_note": "white-noise 95% bounds; a lag is 'significant' only when its bar exceeds them",
+      "rule_source": "scripts/timeseries_analysis.py#acf_pacf"
+    },
+    "stl": {
+      "estimable": true,
+      "method": "STL decomposition (robust, period=24)",
+      "period": 24,
+      "trend_strength": 0.01202,
+      "seasonal_strength": 0.75704,
+      "strength_note": "Wang/Smith-Hyndman: 0 = none of that component, 1 = the residual explains nothing beyond it",
+      "n": 102,
+      "rule_source": "scripts/timeseries_analysis.py#stl_decomposition"
+    },
+    "changepoint": {
+      "estimable": true,
+      "method": "CUSUM screen on detrended residuals (permutation null, 500 draws, seed=42)",
+      "statistic_name": "max|CUSUM|",
+      "statistic": 11.87487,
+      "p_raw": 0.09181636726546906,
+      "candidate_index": 63,
+      "verdict": "no changepoint detected at alpha=0.05",
+      "rule_source": "scripts/timeseries_analysis.py#cusum_changepoint"
+    }
+  },
+  "figure": {
+    "path": "D:\\数据处理 skill\\examples\\timeseries\\outputs\\charts\\fig_ts_overview.png",
+    "bytes": 149178,
+    "ink_ratio": 0.07541,
+    "non_blank": true,
+    "pixels": [
+      1696,
+      989
+    ]
+  },
+  "scope_note": "descriptive and screening statistics only: no forecast, no ARIMA fit, no causal claim; a trend names a drift, a changepoint names a place to look"
+}

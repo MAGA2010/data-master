@@ -1,0 +1,54 @@
+{
+  "schema_version": "1.0",
+  "title": "Sensor stability review",
+  "mode": "profile-only with descriptive time-series statistics",
+  "timeseries": "D:\\数据处理 skill\\examples\\timeseries\\outputs\\analysis\\timeseries.json",
+  "generated": "2026-10-18T17:39:23.162298+08:00",
+  "report_md": "D:\\数据处理 skill\\examples\\timeseries\\outputs\\report.md",
+  "report_md_sha256": "361e76b2a50c53586bf96a5965b677366ec42a3a55391bbcc5be2f764dccf86a",
+  "report_pdf": "D:\\数据处理 skill\\examples\\timeseries\\outputs\\report.pdf",
+  "pdf": {
+    "pdf_written": true,
+    "backend": "reportlab",
+    "attempts": [
+      {
+        "tier": "reportlab",
+        "interpreter": "C:\\Users\\华为\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+        "in_process": false,
+        "ok": true
+      }
+    ],
+    "sha256": "837150edf53d06fe96985508960dd9f1bcd81b5274bfd6144065a120f882bcab",
+    "reportlab_version": "4.4.9",
+    "pages": 4,
+    "bytes": 171890,
+    "cjk_font_embedded": true,
+    "cjk_font_available": true,
+    "cjk_text_present": true
+  },
+  "profile": "D:\\数据处理 skill\\examples\\timeseries\\outputs\\analysis\\profile.json",
+  "profile_sha256": "a522391b87d2f32b742a69e6dc2415631b477dc47de40c9e496e84c49d8bdb81",
+  "route": "D:\\数据处理 skill\\examples\\timeseries\\outputs\\route.json",
+  "route_sha256": "ed7d868f71c9e4bd4290d0f885e750f7a5378bb2c59c95ec0dac791d45745a62",
+  "provenance": [
+    {
+      "kind": "profile",
+      "value": "time-series",
+      "meaning": "routed modality",
+      "artifact": "D:\\数据处理 skill\\examples\\timeseries\\outputs\\analysis\\profile.json",
+      "script": "scripts/route_input.py + profile_*.py"
+    },
+    {
+      "kind": "anomaly_count",
+      "value": 3,
+      "meaning": "number of integrity flags",
+      "artifact": "D:\\数据处理 skill\\examples\\timeseries\\outputs\\analysis\\profile.json",
+      "script": "profile_*.py"
+    }
+  ],
+  "self_audit": {
+    "n_forbidden": 0,
+    "findings": [],
+    "n_lines_scanned": 97
+  }
+}

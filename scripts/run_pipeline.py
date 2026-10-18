@@ -152,6 +152,177 @@ class Pipeline:
         self.save()
 
 
+DEFAULT_MAX_INPUT_MB = 300.0   # text-mode reads hold ~3-5x the file in memory
+
+
+def input_size_gate(route: Dict[str, Any], options: Dict[str, Any]) -> Optional[str]:
+    """Block inputs too large for the in-memory text-mode contract.
+
+    Every reader in this pipeline reads whole, as text, by design -- that is
+    what keeps a leading zero alive. The price is memory, and a 2 GB CSV
+    should fail with a decision the user can act on, not a MemoryError half
+    an hour into a run. An explicit --max-input-mb is the user overriding the
+    default limit and is honoured with a warning.
+    """
+    limit_mb = options.get("max_input_mb") or DEFAULT_MAX_INPUT_MB
+    explicit = bool(options.get("max_input_mb"))
+    total = 0
+    for f in route.get("files") or []:
+        try:
+            total += Path(str(f.get("path"))).stat().st_size
+        except OSError:
+            pass
+    total_mb = total / (1024.0 * 1024.0)
+    if total_mb <= limit_mb:
+        return None
+    if explicit:
+        return ("WARNING: input is %.0f MB, above the %.0f MB default but "
+                "explicitly allowed via --max-input-mb; the run may exhaust "
+                "memory because every reader holds the file whole, as text"
+                % (total_mb, limit_mb))
+    return ("BLOCKED: input is %.0f MB and the in-memory contract is %.0f MB. "
+            "Options: sample the file, split it, or re-run with "
+            "--max-input-mb %.0f to accept the memory risk explicitly."
+            % (total_mb, DEFAULT_MAX_INPUT_MB, total_mb))
+
+
+VALID_JOURNALS = ("nature", "nejm", "science", "lancet")
+
+
+def apply_answers_run_block(answers_path: Optional[str], options: Dict[str, Any],
+                            profile_path: Path) -> Dict[str, Any]:
+    """Apply the answers file's run-level declarations to the run options.
+
+    The answers file can now settle everything the audit will otherwise flag
+    as AUTHOR_INPUT_NEEDED -- unit key, grouping, design, journal -- in the
+    same file as the cleaning decisions. Command-line and recorded-state
+    values always win; the run block only fills blanks, and every value it
+    fills is validated (columns against the profile, design against the
+    routing table) before the run continues.
+    """
+    if not answers_path:
+        return {}
+    path = Path(answers_path)
+    try:
+        doc = json.loads(path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        raise SystemExit("answers file could not be read: %s" % exc)
+    run = doc.get("run")
+    if not isinstance(run, dict):
+        return {}
+
+    columns: Optional[set] = None
+    if profile_path.exists():
+        try:
+            columns = set((json.loads(profile_path.read_text(encoding="utf-8"))
+                           .get("columns") or {}).keys())
+        except Exception:
+            columns = None
+    designs: set = set()
+    std_path = ROOT / "references" / "journal-reporting-standards.json"
+    if std_path.exists():
+        try:
+            designs = set((json.loads(std_path.read_text(encoding="utf-8"))
+                           .get("designs") or {}).keys())
+        except Exception:
+            pass
+
+    applied: Dict[str, Any] = {}
+    errors: List[str] = []
+
+    def _unset(key: str, default: Any = None) -> bool:
+        val = options.get(key)
+        return val is None or val == "" or val == default
+
+    for key, value in run.items():
+        if key not in ("unit_key", "unit", "group", "outcomes", "design",
+                       "journal", "covariates"):
+            errors.append("run block: unknown key %r (accepted: unit_key, unit, "
+                          "group, outcomes, design, journal, covariates)" % key)
+            continue
+        if not _unset(key, "auto" if key in ("design", "journal") else None):
+            continue  # an explicit CLI/state value wins; the run block stays quiet
+        if key in ("unit_key", "group") and columns is not None and value not in columns:
+            errors.append("run block: %s=%r is not a column of this dataset" % (key, value))
+            continue
+        if key in ("outcomes", "covariates"):
+            cols = [c.strip() for c in str(value).split(",") if c.strip()]
+            if columns is not None:
+                bad = [c for c in cols if c not in columns]
+                if bad:
+                    errors.append("run block: %s names unknown column(s): %s"
+                                  % (key, ", ".join(bad)))
+                    continue
+            value = ",".join(cols)
+        if key == "journal" and value not in VALID_JOURNALS:
+            errors.append("run block: journal=%r; accepted: %s"
+                          % (value, ", ".join(VALID_JOURNALS)))
+            continue
+        if key == "design" and designs and value not in designs:
+            errors.append("run block: design=%r; accepted ids: %s"
+                          % (value, ", ".join(sorted(designs))))
+            continue
+        options[key] = value
+        applied[key] = value
+
+    if errors:
+        print("ERROR: answers run block rejected -- nothing was applied:",
+              file=sys.stderr)
+        for e in errors:
+            print("  - %s" % e, file=sys.stderr)
+        raise SystemExit(2)
+    return applied
+
+
+def augment_answers_template(outdir: Path, options: Dict[str, Any],
+                             group_used: Optional[str]) -> None:
+    """Add the run-level questions to answers.template.json.
+
+    One file should carry every question the pipeline will not answer itself:
+    the cleaning holds (written by cleaning_plan.py) and the run declarations
+    the audit flags as AUTHOR_INPUT_NEEDED when left blank.
+    """
+    path = outdir / "answers.template.json"
+    if not path.exists():
+        return
+    try:
+        doc = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return
+    run: Dict[str, Any] = {}
+    if not options.get("unit_key"):
+        run["unit_key"] = {
+            "value": None,
+            "why": "gate 1 fails without a declared independent unit; name the "
+                   "column that identifies one unit",
+            "required": True}
+    if not options.get("group") and group_used:
+        run["group"] = {
+            "value": None,
+            "why": "the grouping column was auto-selected as %r; name it "
+                   "explicitly to pin the research question" % group_used,
+            "required": False}
+    if options.get("design") in (None, "auto"):
+        run["design"] = {
+            "value": None,
+            "why": "the EQUATOR checklist is undetermined; pass a design id "
+                   "(see references/journal-reporting-standards.json)",
+            "required": False}
+    if options.get("journal") in (None, "auto"):
+        run["journal"] = {
+            "value": None,
+            "why": "journal family defaults to nature; one of nature/nejm/"
+                   "science/lancet",
+            "required": False}
+    if run:
+        doc["run"] = run
+        doc.setdefault("run_instructions",
+                       "fill 'value' for any entry you want to declare; "
+                       "unset entries keep their current behaviour")
+        path.write_text(json.dumps(doc, indent=2, ensure_ascii=False) + "\n",
+                        encoding="utf-8")
+
+
 def parse_options(args) -> Dict[str, Any]:
     return {
         "input": args.inp,
@@ -169,6 +340,8 @@ def parse_options(args) -> Dict[str, Any]:
         "modality": args.modality,
         "answers": str(Path(args.answers).resolve()) if args.answers else None,
         "export_lockfile": bool(args.export_lockfile),
+        "covariates": args.covariates,
+        "max_input_mb": float(args.max_input_mb) if args.max_input_mb else None,
     }
 
 
@@ -241,6 +414,13 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--modality", help="force a router modality")
     ap.add_argument("--answers", help="decisions.json answering the plan's "
                                       "never-automatic flags (see answers.template.json)")
+    ap.add_argument("--covariates", help="comma-list of numeric covariates; "
+                                         "the adjusted (ANCOVA) comparison becomes primary")
+    ap.add_argument("--max-input-mb", type=float,
+                    help="override the %g MB in-memory input limit (the run may "
+                         "then exhaust memory; the default exists because every "
+                         "reader holds the file whole, as text)"
+                         % DEFAULT_MAX_INPUT_MB)
     ap.add_argument("--export-lockfile", action="store_true",
                     help="write lockfile.txt with the exact versions that ran")
     ap.add_argument("--profile-only", action="store_true",
@@ -495,13 +675,49 @@ def write_profile_audit(outdir: Path, profile_path: Path,
     audit_dir = outdir / "audit"
     audit_dir.mkdir(parents=True, exist_ok=True)
     build = read_json(build_path) if build_path.exists() else {}
+    ts_path = outdir / "analysis" / "timeseries.json"
+    has_ts = False
+    if ts_path.exists():
+        try:
+            has_ts = bool(read_json(ts_path).get("estimable"))
+        except Exception:
+            has_ts = False
+    # the profile path now carries real p-values when time-series statistics
+    # ran, so the no-upgrade phrase scan applies there too -- a banned
+    # construction does not stop being banned because the report is shorter
+    phrase_hits: List[str] = []
+    report_md = outdir / "report.md"
+    if has_ts and report_md.exists():
+        try:
+            from final_audit import FORBIDDEN, DISCLAIMER_MARKERS
+            for number, line in enumerate(
+                    report_md.read_text(encoding="utf-8").splitlines(), 1):
+                low = line.lower()
+                if any(m in low for m in DISCLAIMER_MARKERS):
+                    continue
+                for pattern, why in FORBIDDEN:
+                    m = re.search(pattern, line, flags=re.IGNORECASE)
+                    if m:
+                        phrase_hits.append("line %d: %r -- %s"
+                                           % (number, m.group(0), why))
+        except Exception:
+            pass
     payload = {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "mode": "profile-only",
-        "verdict": "PROFILE COMPLETE",
-        "scope": ("routing and profiling only; no statistical inference, "
+        "verdict": ("PROFILE COMPLETE -- DESCRIPTIVE TIME-SERIES STATISTICS"
+                    if has_ts else "PROFILE COMPLETE"),
+        "scope": ("routing, profiling and descriptive time-series statistics "
+                  "(trend, slope with CI, autocorrelation, STL strengths, "
+                  "changepoint screen); no forecast, no imputation, no "
+                  "deduplication, no causal claim"
+                  if has_ts else
+                  "routing and profiling only; no statistical inference, "
                   "imputation, deduplication or causal claim"),
         "profile": str(profile_path),
+        "timeseries": str(ts_path) if has_ts else None,
+        "phrase_scan": {"status": "FAIL" if phrase_hits else "PASS",
+                        "hits": phrase_hits[:10]},
         "pdf_written": bool((build.get("pdf") or {}).get("pdf_written")),
         "open_questions": [
             "AUTHOR_INPUT_NEEDED: what one independent unit represents",
@@ -514,12 +730,15 @@ def write_profile_audit(outdir: Path, profile_path: Path,
     json_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n",
                          encoding="utf-8")
     md = [
-        "# Profile-only audit",
+        "# %s audit" % ("Time-series descriptive" if has_ts else "Profile-only"),
         "",
-        "- Verdict: **PROFILE COMPLETE**",
-        "- Scope: routing and description; no inferential claim was made.",
+        "- Verdict: **%s**" % payload["verdict"],
+        "- Scope: %s." % payload["scope"],
         "- PDF written: **%s**" % ("yes" if payload["pdf_written"] else "no"),
+        "- Phrase scan: **%s** (%d forbidden construction(s) outside disclaimers)"
+        % (payload["phrase_scan"]["status"], len(phrase_hits)),
         "- Profile artifact: `%s`" % profile_path,
+        *(["- Time-series artifact: `%s`" % ts_path] if has_ts else []),
         "",
         "## Open questions",
         "",
@@ -590,6 +809,8 @@ def run_full_tabular(pipe: Pipeline, input_path: Path, outdir: Path,
         ]
         if options.get("outcomes"):
             infer_cmd.extend(["--outcomes", str(options["outcomes"])])
+        if options.get("covariates"):
+            infer_cmd.extend(["--covariates", str(options["covariates"])])
         if options.get("unit_key"):
             infer_cmd.extend(["--unit-key", str(options["unit_key"])])
         code = pipe.run("inferential", infer_cmd, [inferential_path])
@@ -623,6 +844,10 @@ def run_full_tabular(pipe: Pipeline, input_path: Path, outdir: Path,
     code = pipe.run("sensitivity", sens_cmd, [sensitivity_path])
     if code:
         return code
+
+    # the template should carry the run-level questions too, so one file
+    # answers everything the audit would otherwise flag
+    augment_answers_template(outdir, options, options.get("group") or group)
 
     code = pipe.run("chart_decisions", [
         sys.executable, str(HERE / "chart_decision.py"),
@@ -709,9 +934,13 @@ def run_profile_only(pipe: Pipeline, outdir: Path, options: Dict[str, Any],
         outdir, profile_path, outdir / "report_build.json"
     )
     pipe.write_stage(
-        "audit", evidence, "profile-only audit written; no inferential claim made"
+        "audit", evidence, "profile audit written; no inferential claim made"
     )
-    pipe.state["audit_verdict"] = "PROFILE COMPLETE"
+    audit_doc = outdir / "audit" / "profile_only.json"
+    try:
+        pipe.state["audit_verdict"] = read_json(audit_doc).get("verdict")
+    except Exception:
+        pipe.state["audit_verdict"] = "PROFILE COMPLETE"
     return 0
 
 
@@ -861,6 +1090,19 @@ def main(argv=None) -> int:
             log("route: %d unknown file(s) will be listed but not profiled"
                 % route["by_modality"]["unknown"])
 
+        # ---- input size gate: fail with a decision, not a MemoryError ----
+        size_verdict = input_size_gate(route, options)
+        if size_verdict and size_verdict.startswith("BLOCKED"):
+            record_stage(pipe.state, "preflight", "blocked",
+                         evidence=[str(route_path)], message=size_verdict)
+            mark_run(pipe.state, "blocked", message="input exceeds the "
+                     "in-memory contract; use --max-input-mb to override")
+            pipe.save()
+            print(size_verdict, file=sys.stderr)
+            return 2
+        if size_verdict:
+            log(size_verdict)
+
         modalities = sorted(route.get("by_modality", {}))
         modalities = [name for name in modalities if name != "unknown"]
         preflight_path = outdir / "preflight.json"
@@ -916,22 +1158,60 @@ def main(argv=None) -> int:
             and len(files) == 1
             and files[0].get("modality") == "tabular"
         )
-        pipe.state["stage_order"] = (
-            list(STAGE_ORDER) if full_tabular else list(PROFILE_ONLY_STAGES)
+        single_timeseries = (
+            not options.get("profile_only")
+            and len(files) == 1
+            and files[0].get("modality") == "time-series"
         )
-        pipe.state["execution_mode"] = "full-tabular" if full_tabular \
-            else "profile-only"
+        pipe.state["stage_order"] = (
+            list(STAGE_ORDER) if full_tabular
+            else (list(PROFILE_ONLY_STAGES[:4]) + ["timeseries"]
+                  + list(PROFILE_ONLY_STAGES[4:]) if single_timeseries
+                  else list(PROFILE_ONLY_STAGES))
+        )
+        pipe.state["execution_mode"] = (
+            "full-tabular" if full_tabular
+            else "time-series" if single_timeseries
+            else "profile-only")
         pipe.save()
 
         profile_path, _ = profile_all(
             pipe, route, outdir, options.get("modality")
         )
         profile = read_json(profile_path)
+
+        # ---- run-level answers: validate and merge before any stage uses them
+        if options.get("answers"):
+            applied_run = apply_answers_run_block(
+                options["answers"], options, outdir / "analysis" / "profile.json")
+            if applied_run:
+                pipe.state.setdefault("options_from_answers", {}).update(applied_run)
+                pipe.save()
+                log("answers run block applied: %s"
+                    % ", ".join("%s=%s" % kv for kv in sorted(applied_run.items())))
+
         if full_tabular:
             input_path = Path(files[0]["path"]).resolve()
             code = run_full_tabular(
                 pipe, input_path, outdir, options, profile
             )
+        elif single_timeseries:
+            log("execution mode: time-series (descriptive statistics; "
+                "no forecast or causal claim)")
+            ts_input = Path(files[0]["path"]).resolve()
+            ts_out = outdir / "analysis" / "timeseries.json"
+            ts_fig = outdir / "charts" / "fig_ts_overview.png"
+            code = pipe.run("timeseries", [
+                sys.executable, str(HERE / "timeseries_analysis.py"),
+                "--in", str(ts_input),
+                "--profile", str(profile_path),
+                "--out", str(ts_out),
+                "--fig", str(ts_fig),
+                "--title", str(options["title"]),
+            ], [ts_out])
+            if code:
+                return code
+            code = run_profile_only(pipe, outdir, options, profile_path, route_path)
         else:
             log("execution mode: profile-only (no inferential claim will be made)")
             code = run_profile_only(pipe, outdir, options, profile_path, route_path)

@@ -1,10 +1,11 @@
 {
-  "schema_version": "1.0",
-  "instructions": "Answer every decision below by keeping one entry per id, filling 'action' with one of the listed choices, and adding 'rationale'. Then re-run the pipeline with --answers <this file>. A decision applies to every column listed on the flag. Actions not listed here have no automatic implementation and are rejected rather than silently skipped.",
+  "schema_version": "1.1",
+  "instructions": "Answer every decision below by keeping one entry per id, filling 'action' with one of the listed choices, and adding 'rationale'. Then re-run the pipeline with --answers <this file>. A decision applies to every column listed on the flag unless it names a single 'column' of a multi-column flag, in which case it answers that column only and the flag stays open until each column has an answer. Actions not listed here have no automatic implementation and are rejected rather than silently skipped.",
   "decisions": [
     {
       "id": "coerce_numeric_currency@growth_pct",
       "action": null,
+      "column": null,
       "allowed_actions": [
         "keep_as_text",
         "strip_symbol"
@@ -20,6 +21,7 @@
     {
       "id": "coerce_numeric@mostly_text",
       "action": null,
+      "column": null,
       "allowed_actions": [
         "coerce",
         "keep_as_text"
@@ -35,6 +37,7 @@
     {
       "id": "coerce_numeric@postcode",
       "action": null,
+      "column": null,
       "allowed_actions": [
         "coerce",
         "keep_as_text"
@@ -50,6 +53,7 @@
     {
       "id": "coerce_numeric_currency@revenue",
       "action": null,
+      "column": null,
       "allowed_actions": [
         "keep_as_text",
         "strip_symbol"

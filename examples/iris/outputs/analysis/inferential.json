@@ -15,6 +15,7 @@
   "alpha": 0.05,
   "n_rows": 158,
   "primary_level": "row",
+  "covariates": [],
   "unit_of_analysis": {
     "structure": "undeclared",
     "note": "no --unit-key given; the row is assumed to be the independent unit, and every test below inherits that assumption"
@@ -142,8 +143,8 @@
             "estimable": true,
             "cliffs_delta": -0.8679,
             "ci95": [
-              -0.9503,
-              -0.7667
+              -0.9478,
+              -0.7671
             ],
             "ci_method": "bootstrap, 10000 resamples, seed=42",
             "n1": 52,
@@ -174,8 +175,8 @@
             "estimable": true,
             "cliffs_delta": -0.9684,
             "ci95": [
-              -0.9996,
-              -0.9097
+              -0.9989,
+              -0.9075
             ],
             "ci_method": "bootstrap, 10000 resamples, seed=42",
             "n1": 52,
@@ -206,8 +207,8 @@
             "estimable": true,
             "cliffs_delta": -0.5714,
             "ci95": [
-              -0.7355,
-              -0.3923
+              -0.7287,
+              -0.3852
             ],
             "ci_method": "bootstrap, 10000 resamples, seed=42",
             "n1": 53,
@@ -347,8 +348,8 @@
             "estimable": true,
             "cliffs_delta": 0.8599,
             "ci95": [
-              0.7499,
-              0.9444
+              0.7495,
+              0.9424
             ],
             "ci_method": "bootstrap, 10000 resamples, seed=42",
             "n1": 51,
@@ -379,8 +380,8 @@
             "estimable": true,
             "cliffs_delta": 0.6976,
             "ci95": [
-              0.5385,
-              0.8371
+              0.5358,
+              0.8382
             ],
             "ci_method": "bootstrap, 10000 resamples, seed=42",
             "n1": 51,
@@ -411,8 +412,8 @@
             "estimable": true,
             "cliffs_delta": -0.3513,
             "ci95": [
-              -0.5471,
-              -0.1432
+              -0.5593,
+              -0.1299
             ],
             "ci_method": "bootstrap, 10000 resamples, seed=42",
             "n1": 49,
@@ -616,8 +617,8 @@
             "estimable": true,
             "cliffs_delta": -0.9601,
             "ci95": [
-              -0.9915,
-              -0.9142
+              -0.9907,
+              -0.9106
             ],
             "ci_method": "bootstrap, 10000 resamples, seed=42",
             "n1": 53,
@@ -822,7 +823,7 @@
             "cliffs_delta": -0.9619,
             "ci95": [
               -0.9935,
-              -0.9158
+              -0.9135
             ],
             "ci_method": "bootstrap, 10000 resamples, seed=42",
             "n1": 51,

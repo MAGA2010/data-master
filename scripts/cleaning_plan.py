@@ -473,6 +473,10 @@ def apply_answers(plan: Dict[str, Any], answers: List[Dict[str, Any]],
     Returns (applied, errors). A single unknown id or unsupported action fails
     the whole file: applying four of five decisions and silently skipping the
     fifth is how a plan comes to say one thing and do another.
+
+    A decision may name a single `column` of a multi-column flag, in which
+    case it resolves that column only; the flag stays open until every column
+    has an answer, and each answer keeps its own provenance.
     """
     roles: Dict[str, str] = profile.get("column_roles") or {
         c: e["role"] for c, e in (profile.get("columns") or {}).items()}
@@ -493,9 +497,34 @@ def apply_answers(plan: Dict[str, Any], answers: List[Dict[str, Any]],
                           % (fid, flag.get("op"),
                              " / ".join(allowed) or "no automatic action", action))
             continue
+
+        # per-column scoping: only a column the flag actually names is valid,
+        # and only while that column is still unresolved
+        columns = list(flag.get("columns") or [])
+        col = dec.get("column")
+        if col is not None:
+            already = (flag.get("resolved_columns") or {})
+            if col not in columns:
+                errors.append("decision %r names column %r, but the flag covers: %s"
+                              % (fid, col, ", ".join(columns) or "(row-level flag)"))
+                continue
+            if col in already:
+                errors.append("column %r of %r is already resolved (%s)"
+                              % (col, fid, already[col].get("action")))
+                continue
+            target_columns = [col]
+        elif len(columns) > 1 and (flag.get("resolved_columns") or {}):
+            errors.append("flag %r is partially resolved per column; answer the "
+                          "remaining columns individually with a 'column' field: %s"
+                          % (fid, ", ".join(c for c in columns
+                                            if c not in flag["resolved_columns"])))
+            continue
+        else:
+            target_columns = columns
+
         effect = ANSWER_ACTIONS[flag["op"]][action]
         if effect == "UNDO":
-            undone = set(flag.get("columns") or [])
+            undone = set(target_columns or columns)
             for a in plan.get("auto_actions", []):
                 if a.get("id") == "t-merge-case-variants":
                     keep = [c for c in (a.get("columns") or []) if c not in undone]
@@ -509,7 +538,7 @@ def apply_answers(plan: Dict[str, Any], answers: List[Dict[str, Any]],
             rule_id, how = effect
             r = TABLE_RULES[rule_id]
             if how == "columns":
-                cols = list(flag.get("columns") or [])
+                cols = list(target_columns)
             else:
                 cols = _targets_for(r["roles"], roles, [])
             plan.setdefault("auto_actions", []).append({
@@ -519,7 +548,8 @@ def apply_answers(plan: Dict[str, Any], answers: List[Dict[str, Any]],
                 "severity": r["severity"],
                 "rule_source": f"{CATALOG}#tabular:{rule_id}",
                 "user_opt_in": {"flag": "--answers", "param": action,
-                                "decision_id": fid},
+                                "decision_id": fid,
+                                **({"column": col} if col else {})},
             })
         provenance = {
             "action": action,
@@ -527,10 +557,23 @@ def apply_answers(plan: Dict[str, Any], answers: List[Dict[str, Any]],
             "decided_at": dec.get("decided_at") or _now_iso(),
             "rationale": dec.get("rationale") or "",
             "source": str(source),
+            **({"column": col} if col else {}),
         }
-        flag["resolved"] = provenance
+        if col is not None:
+            flag.setdefault("resolved_columns", {})[col] = provenance
+            if set(flag["resolved_columns"]) >= set(columns):
+                flag["resolved"] = {
+                    "action": "per-column decisions",
+                    "decided_by": "user",
+                    "decided_at": _now_iso(),
+                    "rationale": "each column answered individually; see "
+                                 "resolved_columns",
+                    "source": str(source),
+                }
+        else:
+            flag["resolved"] = provenance
         plan.setdefault("user_decisions", []).append({"id": fid, **provenance})
-        applied.append(fid)
+        applied.append("%s%s" % (fid, " (%s)" % col if col else ""))
 
     # re-deduplicate auto actions (an answers op may repeat a rule+columns pair)
     seen = set()
@@ -561,17 +604,20 @@ def write_answers_template(plan: Dict[str, Any], path: Path) -> bool:
     if not pending:
         return False
     doc = {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "instructions": (
             "Answer every decision below by keeping one entry per id, filling "
             "'action' with one of the listed choices, and adding 'rationale'. "
             "Then re-run the pipeline with --answers <this file>. A decision "
-            "applies to every column listed on the flag. Actions not listed "
-            "here have no automatic implementation and are rejected rather "
-            "than silently skipped."),
+            "applies to every column listed on the flag unless it names a "
+            "single 'column' of a multi-column flag, in which case it answers "
+            "that column only and the flag stays open until each column has "
+            "an answer. Actions not listed here have no automatic "
+            "implementation and are rejected rather than silently skipped."),
         "decisions": [
             {"id": f["id"],
              "action": None,
+             "column": None,
              "allowed_actions": allowed_actions_for(f),
              "default_if_silent": f.get("default_if_silent"),
              "columns": f.get("columns"),

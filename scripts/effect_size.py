@@ -78,7 +78,8 @@ def _d_magnitude(d: float) -> str:
     return "large"
 
 
-def cliffs_delta(x: np.ndarray, y: np.ndarray) -> Dict[str, Any]:
+def cliffs_delta(x: np.ndarray, y: np.ndarray,
+                 n_boot: "int | None" = None) -> Dict[str, Any]:
     nx, ny = len(x), len(y)
     if nx == 0 or ny == 0:
         return {"estimable": False, "reason": "empty group"}
@@ -99,7 +100,7 @@ def cliffs_delta(x: np.ndarray, y: np.ndarray) -> Dict[str, Any]:
     delta = 2 * u / (nx * ny) - 1
     # bootstrap CI, fully vectorised across resamples
     rng = np.random.default_rng(SEED)
-    B = BOOT_N
+    B = int(n_boot) if n_boot else BOOT_N
     bx = x[rng.integers(0, nx, size=(B, nx))]
     by = y[rng.integers(0, ny, size=(B, ny))]
     allv = np.concatenate([bx, by], axis=1)          # (B, nx+ny)
@@ -107,10 +108,14 @@ def cliffs_delta(x: np.ndarray, y: np.ndarray) -> Dict[str, Any]:
     ranks = np.empty_like(allv, dtype=float)
     np.put_along_axis(ranks, order,
                       np.broadcast_to(np.arange(1, nx + ny + 1, dtype=float), (B, nx + ny)), axis=1)
-    # average ranks for ties, vectorised
-    for b in range(B):
-        row = allv[b]
-        vals, inv, cnt = np.unique(row, return_inverse=True, return_counts=True)
+    # average ranks for ties. Ties are rare in continuous data, and a
+    # per-row np.unique over thousands of bootstrap rows used to dominate the
+    # whole suite, so rows are screened once (one vectorised sort) and only
+    # rows that actually hold ties pay the correction
+    sv = np.sort(allv, axis=1)
+    tie_rows = np.nonzero(np.any(np.diff(sv, axis=1) == 0, axis=1))[0]
+    for b in tie_rows:
+        vals, inv, cnt = np.unique(allv[b], return_inverse=True, return_counts=True)
         if np.any(cnt > 1):
             sums = np.zeros(len(cnt))
             np.add.at(sums, inv, ranks[b])

@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0",
-  "source": "D:\\数据处理 skill\\examples\\timeseries\\sensor_log.csv",
+  "source": "examples\\timeseries\\sensor_log.csv",
   "modality": "time-series",
-  "generated": "2026-10-17T09:24:36.256810+00:00",
+  "generated": "2026-10-18T09:39:06.390045+00:00",
   "read_mode": "text",
   "shape": {
     "n_rows": 103,
