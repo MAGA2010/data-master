@@ -1,0 +1,306 @@
+{
+  "schema_version": "1.2",
+  "source": "D:\\数据处理 skill\\examples\\repeated_measures\\outputs\\cleaned\\cleaned.csv",
+  "group": "arm",
+  "group_levels": [
+    "control",
+    "treatment"
+  ],
+  "group_sizes": {
+    "control": 18,
+    "treatment": 18
+  },
+  "alpha": 0.05,
+  "n_rows": 36,
+  "primary_level": "unit",
+  "covariates": [],
+  "unit_of_analysis": {
+    "unit_key": "subject",
+    "n_rows": 36,
+    "n_units": 12,
+    "rows_per_unit": 3.0,
+    "groups_per_unit_min": 1,
+    "groups_per_unit_max": 1,
+    "structure": "clustered",
+    "note": "every unit belongs to exactly one group; multiple rows per unit are replicates, and the primary analysis is run on per-unit means",
+    "primary_analysis": "per-unit means (mean aggregation disclosed); n below is the number of units, not rows"
+  },
+  "tests": [
+    {
+      "outcome": "response",
+      "estimable": true,
+      "rows_dropped_for_missingness": 0,
+      "n_complete_cases": 12,
+      "design": "2-group numeric",
+      "method": "Student two-sample t-test (pooled variance)",
+      "statistic_name": "t",
+      "statistic": -10.99944453328135,
+      "dof": 10,
+      "p_raw": 6.595407911498383e-07,
+      "n_a": 6,
+      "n_b": 6,
+      "n_total": 12,
+      "means_a_b": [
+        10.1,
+        11.311111
+      ],
+      "medians_a_b": [
+        10.066667,
+        11.3
+      ],
+      "sds_a_b": [
+        0.20221,
+        0.178471
+      ],
+      "assumptions": {
+        "normality_a": {
+          "test": null,
+          "passes": null,
+          "n": 6,
+          "gating": false,
+          "note": "n=6 < 8; a normality test has no power here, assumed normal"
+        },
+        "normality_b": {
+          "test": null,
+          "passes": null,
+          "n": 6,
+          "gating": false,
+          "note": "n=6 < 8; a normality test has no power here, assumed normal"
+        },
+        "variance": {
+          "test": "Levene",
+          "statistic": 0.12422,
+          "p": 0.731813,
+          "passes": true,
+          "equal_variance": true
+        }
+      },
+      "rejected_alternatives": [
+        {
+          "test": "Welch t-test",
+          "reason": "equal variance holds (Levene p > alpha); the pooled test is more powerful"
+        }
+      ],
+      "effect_sizes": {
+        "mean_difference_ci95": {
+          "difference": -1.211111,
+          "se": 0.110107,
+          "dof": 9.848,
+          "ci_low": -1.456958,
+          "ci_high": -0.965264,
+          "ci_level": 0.95,
+          "excludes_zero": true
+        },
+        "cohens_d": {
+          "estimable": true,
+          "cohens_d": -6.3505,
+          "hedges_g": -5.862,
+          "ci95": [
+            -9.355,
+            -3.346
+          ],
+          "ci_method": "analytic (z approx)",
+          "n1": 6,
+          "n2": 6,
+          "mean1": 10.1,
+          "mean2": 11.311111,
+          "magnitude": "large",
+          "n_zero_variance_groups": 0
+        },
+        "hedges_g": -5.86203,
+        "cliffs_delta": {
+          "estimable": true,
+          "cliffs_delta": -1.0,
+          "ci95": [
+            -1.0,
+            -1.0
+          ],
+          "ci_method": "bootstrap, 10000 resamples, seed=42",
+          "n1": 6,
+          "n2": 6,
+          "magnitude": "large"
+        }
+      },
+      "robustness_cross_check": {
+        "test": "Mann-Whitney U",
+        "statistic": 0.0,
+        "p_raw": 0.0021645,
+        "agrees_with_primary": true,
+        "note": "cross-check only; the primary test is reported above"
+      },
+      "group_a": "control",
+      "group_b": "treatment",
+      "rule_source": "scripts/stats_inferential.py#two_group_numeric",
+      "analysis_level": "unit",
+      "p_adjusted": 6.595407911498383e-07,
+      "significant_after_correction": true
+    }
+  ],
+  "secondary_row_level": {
+    "analysis_level": "row",
+    "role": "secondary; retained for comparison, not evidence",
+    "tests": [
+      {
+        "outcome": "response",
+        "estimable": true,
+        "rows_dropped_for_missingness": 0,
+        "n_complete_cases": 36,
+        "design": "2-group numeric",
+        "method": "Welch two-sample t-test (unequal variance)",
+        "statistic_name": "t",
+        "statistic": -6.970452087874754,
+        "dof": 20.367,
+        "p_raw": 8.256543635078415e-07,
+        "n_a": 18,
+        "n_b": 18,
+        "n_total": 36,
+        "means_a_b": [
+          10.1,
+          11.311111
+        ],
+        "medians_a_b": [
+          10.1,
+          11.45
+        ],
+        "sds_a_b": [
+          0.222288,
+          0.702842
+        ],
+        "assumptions": {
+          "normality_a": {
+            "test": "Shapiro-Wilk",
+            "statistic": 0.97255,
+            "p": 0.844079,
+            "passes": true,
+            "n": 18,
+            "gating": true,
+            "note": "n<30: this result gates test selection"
+          },
+          "normality_b": {
+            "test": "Shapiro-Wilk",
+            "statistic": 0.92474,
+            "p": 0.156844,
+            "passes": true,
+            "n": 18,
+            "gating": true,
+            "note": "n<30: this result gates test selection"
+          },
+          "variance": {
+            "test": "Levene",
+            "statistic": 18.6445,
+            "p": 0.000129,
+            "passes": false,
+            "equal_variance": false
+          }
+        },
+        "rejected_alternatives": [
+          {
+            "test": "Student t-test",
+            "reason": "Levene indicates unequal variance (p <= alpha)"
+          }
+        ],
+        "effect_sizes": {
+          "mean_difference_ci95": {
+            "difference": -1.211111,
+            "se": 0.173749,
+            "dof": 20.367,
+            "ci_low": -1.573127,
+            "ci_high": -0.849095,
+            "ci_level": 0.95,
+            "excludes_zero": true
+          },
+          "cohens_d": {
+            "estimable": true,
+            "cohens_d": -2.3235,
+            "hedges_g": -2.2719,
+            "ci95": [
+              -3.179,
+              -1.468
+            ],
+            "ci_method": "analytic (z approx)",
+            "n1": 18,
+            "n2": 18,
+            "mean1": 10.1,
+            "mean2": 11.311111,
+            "magnitude": "large",
+            "n_zero_variance_groups": 0
+          },
+          "hedges_g": -2.271851,
+          "cliffs_delta": {
+            "estimable": true,
+            "cliffs_delta": -0.9228,
+            "ci95": [
+              -0.9969,
+              -0.7962
+            ],
+            "ci_method": "bootstrap, 10000 resamples, seed=42",
+            "n1": 18,
+            "n2": 18,
+            "magnitude": "large"
+          }
+        },
+        "robustness_cross_check": {
+          "test": "Mann-Whitney U",
+          "statistic": 12.5,
+          "p_raw": 2.34e-06,
+          "agrees_with_primary": true,
+          "note": "cross-check only; the primary test is reported above"
+        },
+        "group_a": "control",
+        "group_b": "treatment",
+        "rule_source": "scripts/stats_inferential.py#two_group_numeric",
+        "analysis_level": "row (secondary)",
+        "pseudoreplication_warning": "rows repeat within units; this row-level result treats them as independent and its n is inflated accordingly -- it is shown for comparison only and is not the primary evidence",
+        "p_adjusted": 8.256543635078415e-07
+      }
+    ],
+    "multiple_comparisons": {
+      "family_size": 1,
+      "method": "BH",
+      "raw": [
+        8.256543635078415e-07
+      ],
+      "alpha": 0.05,
+      "n_dropped_non_finite": 0,
+      "dropped_note": null,
+      "rule_source": "references/nature-statistics-checklist.md#gate-5",
+      "adjusted": [
+        8.256543635078415e-07
+      ],
+      "n_significant_raw": 1,
+      "n_significant_adjusted": 1
+    }
+  },
+  "multiple_comparisons": {
+    "primary_family": {
+      "family_size": 1,
+      "method": "BH",
+      "raw": [
+        6.595407911498383e-07
+      ],
+      "alpha": 0.05,
+      "n_dropped_non_finite": 0,
+      "dropped_note": null,
+      "rule_source": "references/nature-statistics-checklist.md#gate-5",
+      "adjusted": [
+        6.595407911498383e-07
+      ],
+      "n_significant_raw": 1,
+      "n_significant_adjusted": 1
+    },
+    "note": "one outcome = one member of the family; correction applies across outcomes, and separately within each post-hoc pairwise family"
+  },
+  "correlations": {
+    "matrix": [],
+    "family": {
+      "family_size": 0,
+      "adjusted": []
+    },
+    "analysis_level": "unit",
+    "note": "exploratory only; correlation is not evidence of mechanism"
+  },
+  "rule_source": "references/nature-statistics-checklist.md#gates-1-3-5",
+  "warnings": [
+    "36 rows collapse to 12 units; the primary tests below run on units. Row-level results are kept as a secondary analysis and are not the evidence."
+  ]
+}

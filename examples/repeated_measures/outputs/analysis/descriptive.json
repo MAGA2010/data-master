@@ -1,0 +1,154 @@
+{
+  "schema_version": "1.0",
+  "source": "D:\\数据处理 skill\\examples\\repeated_measures\\outputs\\cleaned\\cleaned.csv",
+  "shape": {
+    "n_rows": 36,
+    "n_cols": 4
+  },
+  "independent_unit": {
+    "independent_unit": "row",
+    "unit_key": "subject",
+    "n_independent": 12,
+    "n_rows": 36,
+    "n_technical_replicates": null,
+    "n_repeated_measures": 3.0,
+    "hierarchy": "36 rows nested under 12 row",
+    "status": "OK",
+    "rule_source": "references/nature-statistics-checklist.md#gate-1"
+  },
+  "alpha": 0.05,
+  "numeric": {
+    "visit": {
+      "n": 36,
+      "n_missing": 0,
+      "missing_pct": 0.0,
+      "mean": 2.0,
+      "sd": 0.828079,
+      "se": 0.138013,
+      "median": 2.0,
+      "q25": 1.0,
+      "q75": 3.0,
+      "iqr": 2.0,
+      "min": 1.0,
+      "max": 3.0,
+      "skew": 0.0,
+      "kurtosis": -1.5441,
+      "n_zeros": 0,
+      "n_negatives": 0,
+      "mean_ci95": [
+        1.719818,
+        2.280182
+      ],
+      "ci_method": "Student t, df=35",
+      "n_outliers_iqr15": 0,
+      "normality": {
+        "test": "Shapiro-Wilk",
+        "W": 0.79454,
+        "p": 1.3e-05,
+        "normal_at_alpha": false
+      }
+    },
+    "response": {
+      "n": 36,
+      "n_missing": 0,
+      "missing_pct": 0.0,
+      "mean": 10.705556,
+      "sd": 0.800694,
+      "se": 0.133449,
+      "median": 10.4,
+      "q25": 10.1,
+      "q75": 11.425,
+      "iqr": 1.325,
+      "min": 9.7,
+      "max": 12.3,
+      "skew": 0.7281,
+      "kurtosis": -0.9384,
+      "n_zeros": 0,
+      "n_negatives": 0,
+      "mean_ci95": [
+        10.43464,
+        10.976471
+      ],
+      "ci_method": "Student t, df=35",
+      "n_outliers_iqr15": 0,
+      "normality": {
+        "test": "Shapiro-Wilk",
+        "W": 0.87054,
+        "p": 0.000587,
+        "normal_at_alpha": false
+      }
+    }
+  },
+  "categorical": {
+    "subject": {
+      "n": 36,
+      "n_missing": 0,
+      "missing_pct": 0.0,
+      "n_unique": 12,
+      "mode": "c01",
+      "counts": {
+        "c01": 3,
+        "c02": 3,
+        "c03": 3,
+        "c04": 3,
+        "c05": 3,
+        "c06": 3,
+        "t01": 3,
+        "t02": 3,
+        "t03": 3,
+        "t04": 3,
+        "t05": 3,
+        "t06": 3
+      },
+      "proportions": {
+        "c01": 0.083333,
+        "c02": 0.083333,
+        "c03": 0.083333,
+        "c04": 0.083333,
+        "c05": 0.083333,
+        "c06": 0.083333,
+        "t01": 0.083333,
+        "t02": 0.083333,
+        "t03": 0.083333,
+        "t04": 0.083333,
+        "t05": 0.083333,
+        "t06": 0.083333
+      }
+    },
+    "arm": {
+      "n": 36,
+      "n_missing": 0,
+      "missing_pct": 0.0,
+      "n_unique": 2,
+      "mode": "control",
+      "counts": {
+        "control": 18,
+        "treatment": 18
+      },
+      "proportions": {
+        "control": 0.5,
+        "treatment": 0.5
+      }
+    }
+  },
+  "datetime": {},
+  "missing_mechanism_screen": [],
+  "correlation_pearson": {
+    "columns": [
+      "visit",
+      "response"
+    ],
+    "matrix": {
+      "visit": {
+        "visit": 1.0,
+        "response": 0.448154
+      },
+      "response": {
+        "visit": 0.448154,
+        "response": 1.0
+      }
+    },
+    "n_pairs": 1,
+    "note": "raw Pearson on untransformed data; treat as exploratory only"
+  }
+}

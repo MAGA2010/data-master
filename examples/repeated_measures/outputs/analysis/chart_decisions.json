@@ -1,0 +1,103 @@
+{
+ "schema_version": "1.1",
+ "source": "examples\\repeated_measures\\measurements.csv",
+ "palette": [
+  "#1f77b4",
+  "#ff7f0e",
+  "#2ca02c",
+  "#d62728",
+  "#9467bd"
+ ],
+ "markers": [
+  "o",
+  "s",
+  "^",
+  "D",
+  "v"
+ ],
+ "n_decisions": 1,
+ "decisions": [
+  {
+   "argument_task": "establish the shape of each numeric variable before any test assumes one",
+   "chart_type": "distribution_panel",
+   "spec": {
+    "panels": [
+     {
+      "column": "response",
+      "n": 36,
+      "shape": "moderately right-skewed",
+      "skew_pearson": 0.7281,
+      "skew_bowley": 0.5471698113207527,
+      "skew_used": 0.7281,
+      "median": 10.4,
+      "q25": 10.1,
+      "q75": 11.425,
+      "mean": 10.705556,
+      "min": 9.7,
+      "max": 12.3,
+      "title": "response is moderately right-skewed (median 10.40, IQR 10.10 to 11.43, n = 36)"
+     },
+     {
+      "column": "visit",
+      "n": 36,
+      "shape": "roughly symmetric",
+      "skew_pearson": 0.0,
+      "skew_bowley": 0.0,
+      "skew_used": 0.0,
+      "median": 2.0,
+      "q25": 1.0,
+      "q75": 3.0,
+      "mean": 2.0,
+      "min": 1.0,
+      "max": 3.0,
+      "title": "visit is roughly symmetric (median 2.00, IQR 1.00 to 3.00, n = 36)"
+     }
+    ],
+    "bins": "auto",
+    "show_median_iqr": true
+   },
+   "uncertainty": "median and interquartile range marked on every panel",
+   "title": "1 of 2 measured variables are skewed, so the analyses below summarise them by median rather than mean",
+   "caption": "Distribution of each numeric variable, with the median and interquartile range marked. Panel order follows absolute skewness. Full box-and-whisker statistics are in Table 2.",
+   "body": {
+    "fact": "response is moderately right-skewed (median 10.40, IQR 10.10 to 11.43, n = 36); visit is roughly symmetric (median 2.00, IQR 1.00 to 3.00, n = 36).",
+    "interpretation": "Skewed variables are summarised by the median and IQR, and rank-based or Welch methods are preferred for them.",
+    "implication": "These summaries, not the raw shape, should carry into any downstream model."
+   },
+   "complexity_principles": [
+    "1_one_argument",
+    "6_uncertainty",
+    "8_minimum_complexity"
+   ],
+   "rationale": "The shape of every numeric variable decides which test is legitimate later, so it is one argument and belongs in one figure. Splitting it across four would restate it four times.",
+   "rejected": [
+    {
+     "chart_type": "one histogram per variable as separate figures",
+     "reason": "same argument repeated; the reader has to re-read the framing each time"
+    },
+    {
+     "chart_type": "box plot only",
+     "reason": "understates the tail, which is precisely what decides the test choice"
+    }
+   ],
+   "id": "fig01_distribution_panel",
+   "output_path": "charts/fig01_distribution_panel.png",
+   "order": 1
+  }
+ ],
+ "rules": {
+  "one_argument_per_figure": "panels, not repeats; a figure that cannot change the reader's understanding is not emitted",
+  "uncertainty_mandatory": "every estimate carries an interval, a band or a smoother",
+  "title_is_the_finding": "titles are computed from the numbers, never written by hand",
+  "2d_before_3d": "a third dimension must change the ranking, and needs a 2D fallback",
+  "no_pie_for_comparison": "pie and donut are excluded for >3 categories and for any time axis",
+  "restatements_excluded": "a column determined by the grouping variable is not evidence about it, and is kept out of both the figures and the family"
+ },
+ "rule_source": "references/chart-decision-catalog.md",
+ "dtype_provenance": {
+  "dtype_source": "cleaning_run.json",
+  "dtype_manifest_path": "D:\\数据处理 skill\\examples\\repeated_measures\\outputs\\cleaned\\cleaning_run.json",
+  "n_columns_typed_from_manifest": 4,
+  "read_mode": "text"
+ }
+}

@@ -1,0 +1,104 @@
+{
+  "auto_actions": [
+    {
+      "id": "t-fix-unicode",
+      "op": "fix_unicode",
+      "columns": [
+        "arm",
+        "response",
+        "subject",
+        "visit"
+      ],
+      "severity": "P3",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-fix-unicode"
+    },
+    {
+      "id": "t-strip-ws",
+      "op": "strip_whitespace",
+      "columns": [
+        "arm",
+        "response",
+        "subject",
+        "visit"
+      ],
+      "severity": "P3",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-strip-ws"
+    },
+    {
+      "id": "t-collapse-whitespace",
+      "op": "collapse_whitespace",
+      "columns": [
+        "arm",
+        "response",
+        "subject",
+        "visit"
+      ],
+      "severity": "P3",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-collapse-whitespace"
+    },
+    {
+      "id": "t-trim-quotes",
+      "op": "trim_paired_quotes",
+      "columns": [
+        "arm",
+        "response",
+        "subject",
+        "visit"
+      ],
+      "severity": "P3",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-trim-quotes"
+    },
+    {
+      "id": "t-coerce-numeric",
+      "op": "coerce_numeric",
+      "columns": [
+        "response",
+        "visit"
+      ],
+      "severity": "P2",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-coerce-numeric"
+    },
+    {
+      "id": "t-normalize-dtypes",
+      "op": "normalize_dtypes",
+      "columns": [
+        "arm",
+        "response",
+        "subject",
+        "visit"
+      ],
+      "severity": "P2",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-normalize-dtypes"
+    },
+    {
+      "id": "t-drop-all-null-cols",
+      "op": "drop_all_null_cols",
+      "columns": [],
+      "severity": "P1",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-drop-all-null-cols"
+    },
+    {
+      "id": "t-drop-all-null-rows",
+      "op": "drop_all_null_rows",
+      "columns": [],
+      "severity": "P1",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-drop-all-null-rows"
+    },
+    {
+      "id": "t-rename-clean",
+      "op": "rename_columns_append_cleaned",
+      "columns": [],
+      "severity": "P2",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-rename-clean"
+    }
+  ],
+  "never_automatic_flags": [],
+  "n_rows": 36,
+  "schema_version": "1.3",
+  "source": "examples\\repeated_measures\\measurements.csv",
+  "read_mode": "text",
+  "user_flags": {},
+  "n_auto_actions": 9,
+  "n_never_automatic_flags": 0,
+  "principle": "high-risk operations are never silent; see references/never-automatic-list.md"
+}

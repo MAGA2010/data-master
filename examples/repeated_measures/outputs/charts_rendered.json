@@ -1,0 +1,37 @@
+{
+ "schema_version": "1.0",
+ "dtype_provenance": {
+  "dtype_source": "cleaning_run.json",
+  "dtype_manifest_path": "D:\\数据处理 skill\\examples\\repeated_measures\\outputs\\cleaned\\cleaning_run.json",
+  "n_columns_typed_from_manifest": 4,
+  "read_mode": "text"
+ },
+ "palette": [
+  "#1f77b4",
+  "#ff7f0e",
+  "#2ca02c",
+  "#d62728",
+  "#9467bd"
+ ],
+ "n_rendered": 1,
+ "n_skipped": 0,
+ "rendered": [
+  {
+   "path": "D:\\数据处理 skill\\examples\\repeated_measures\\outputs\\charts\\fig01_distribution_panel.png",
+   "bytes": 89713,
+   "ink_ratio": 0.42265,
+   "non_blank": true,
+   "pixels": [
+    1379,
+    535
+   ],
+   "id": "fig01_distribution_panel",
+   "chart_type": "distribution_panel",
+   "title": "1 of 2 measured variables are skewed, so the analyses below summarise them by median rather than mean",
+   "ok": true
+  }
+ ],
+ "skipped": [],
+ "note": "ink_ratio is the fraction of non-white pixels; a figure below ~0.01 is suspect and should be opened before it is trusted",
+ "rule_source": "references/chart-decision-catalog.md#complexity-principles"
+}

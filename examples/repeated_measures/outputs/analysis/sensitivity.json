@@ -1,0 +1,125 @@
+{
+  "schema_version": "1.0",
+  "source": "D:\\数据处理 skill\\examples\\repeated_measures\\outputs\\cleaned\\cleaned.csv",
+  "group": "arm",
+  "alpha": 0.05,
+  "analysis_level": "unit",
+  "jackknife": {
+    "blocks": 10,
+    "seed": 42
+  },
+  "outcomes": [
+    {
+      "outcome": "response",
+      "design": "2-group numeric",
+      "primary": {
+        "method": "Student two-sample t-test (pooled variance)",
+        "statistic": -10.99944453328135,
+        "p_raw": 6.595407911498383e-07,
+        "p_adjusted": 6.595407911498383e-07,
+        "analysis_level": "unit"
+      },
+      "perturbations": [
+        {
+          "name": "leave_one_group_out",
+          "description": "drop one group and refit on the rest",
+          "status": "not_applicable",
+          "reason": "k=2 groups; dropping one leaves a single group"
+        },
+        {
+          "name": "block_jackknife",
+          "description": "drop 1/10 of the analysis units and refit",
+          "status": "not_applicable",
+          "reason": "only 12 units; block deletion leaves too few per block"
+        },
+        {
+          "name": "exclude_extremes",
+          "description": "exclude values outside the 1.5*IQR fence of their own group (pre-specified, disclosed)",
+          "status": "not_applicable",
+          "reason": "no value fell outside its group's fence"
+        },
+        {
+          "name": "strict_complete_case",
+          "description": "restrict to rows complete across every numeric outcome (listwise), versus the primary's per-outcome complete cases",
+          "parameter": "n=36 of 36 rows",
+          "status": "ran",
+          "method": "Student two-sample t-test (pooled variance)",
+          "statistic": -10.99944453328135,
+          "p_raw": 6.595407911498383e-07,
+          "effect_key": "cohens_d",
+          "effect_value": {
+            "estimable": true,
+            "cohens_d": -6.3505,
+            "hedges_g": -5.862,
+            "ci95": [
+              -9.355,
+              -3.346
+            ],
+            "ci_method": "analytic (z approx)",
+            "n1": 6,
+            "n2": 6,
+            "mean1": 10.1,
+            "mean2": 11.311111,
+            "magnitude": "large",
+            "n_zero_variance_groups": 0
+          },
+          "n": 12,
+          "agrees": true
+        },
+        {
+          "name": "imputation_sensitivity",
+          "description": "complete-case refit on the columns the cleaning plan imputed",
+          "status": "not_applicable",
+          "reason": "nothing was imputed; every analysed value was observed"
+        },
+        {
+          "name": "row_level_comparison",
+          "description": "the row-level secondary analysis from inferential.json, kept for comparison; it treats repeated rows as independent and its n is inflated",
+          "status": "ran",
+          "method": "Welch two-sample t-test (unequal variance)",
+          "statistic": -6.970452087874754,
+          "p_raw": 8.256543635078415e-07,
+          "effect_key": "cohens_d",
+          "effect_value": {
+            "estimable": true,
+            "cohens_d": -2.3235,
+            "hedges_g": -2.2719,
+            "ci95": [
+              -3.179,
+              -1.468
+            ],
+            "ci_method": "analytic (z approx)",
+            "n1": 18,
+            "n2": 18,
+            "mean1": 10.1,
+            "mean2": 11.311111,
+            "magnitude": "large",
+            "n_zero_variance_groups": 0
+          },
+          "n": 36,
+          "agrees": true
+        },
+        {
+          "name": "rank_cross_check",
+          "description": "the rank-based cross-check recorded on the primary test in inferential.json (assumption robustness)",
+          "status": "ran",
+          "method": "Mann-Whitney U",
+          "statistic": 0.0,
+          "p_raw": 0.0021645,
+          "agrees": true
+        }
+      ],
+      "n_perturbations_ran": 3,
+      "n_agreeing": 3,
+      "n_conflicting": 0
+    }
+  ],
+  "summary": {
+    "n_outcomes": 1,
+    "n_perturbations": 3,
+    "n_agreeing": 3,
+    "n_conflicting": 0,
+    "conflicts": []
+  },
+  "rule_source": "references/nature-statistics-checklist.md#gate-6"
+}

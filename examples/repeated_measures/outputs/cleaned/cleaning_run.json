@@ -1,0 +1,176 @@
+{
+  "schema_version": "1.1",
+  "reproducibility_check": {
+    "passed": true,
+    "reason": "hash matches",
+    "expected_hash": "6f62b85a4cf5d53709fdb9ffc95686bda19f7ed7b50f37f733e82dd570680585",
+    "regenerated_hash": "6f62b85a4cf5d53709fdb9ffc95686bda19f7ed7b50f37f733e82dd570680585"
+  },
+  "source": "D:\\数据处理 skill\\examples\\repeated_measures\\measurements.csv",
+  "n_raw": 36,
+  "n_clean": 36,
+  "columns_before": [
+    "subject",
+    "arm",
+    "visit",
+    "response"
+  ],
+  "columns_after": [
+    "subject",
+    "arm",
+    "visit",
+    "response"
+  ],
+  "columns_dropped": [],
+  "raw_hash": "2519c6d2304dc3810a044aa3d4dbc9fe96e92e73a78ae4293fc74680ec621ad7",
+  "cleaned_hash": "6f62b85a4cf5d53709fdb9ffc95686bda19f7ed7b50f37f733e82dd570680585",
+  "source_spec": {
+    "path": "D:\\数据处理 skill\\examples\\repeated_measures\\measurements.csv",
+    "extension": ".csv",
+    "read_mode": "text",
+    "schema_declares_types": false
+  },
+  "read_mode": "text",
+  "columns_touched_by_ops": [
+    "response",
+    "visit"
+  ],
+  "dtype_manifest": {
+    "subject": "string",
+    "arm": "string",
+    "visit": "Int64",
+    "response": "Float64"
+  },
+  "untouched_column_audit": {
+    "passed": true,
+    "reason": "every column no operation named kept exactly its raw values",
+    "columns_checked": 2,
+    "columns_violating": [],
+    "violations": []
+  },
+  "applied_ops": [
+    {
+      "id": "t-fix-unicode",
+      "op": "fix_unicode",
+      "columns": [
+        "arm",
+        "response",
+        "subject",
+        "visit"
+      ],
+      "severity": "P3",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-fix-unicode",
+      "origin": "rule",
+      "n_before": 36,
+      "n_after": 36
+    },
+    {
+      "id": "t-strip-ws",
+      "op": "strip_whitespace",
+      "columns": [
+        "arm",
+        "response",
+        "subject",
+        "visit"
+      ],
+      "severity": "P3",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-strip-ws",
+      "origin": "rule",
+      "n_before": 36,
+      "n_after": 36
+    },
+    {
+      "id": "t-collapse-whitespace",
+      "op": "collapse_whitespace",
+      "columns": [
+        "arm",
+        "response",
+        "subject",
+        "visit"
+      ],
+      "severity": "P3",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-collapse-whitespace",
+      "origin": "rule",
+      "n_before": 36,
+      "n_after": 36
+    },
+    {
+      "id": "t-trim-quotes",
+      "op": "trim_paired_quotes",
+      "columns": [
+        "arm",
+        "response",
+        "subject",
+        "visit"
+      ],
+      "severity": "P3",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-trim-quotes",
+      "origin": "rule",
+      "n_before": 36,
+      "n_after": 36
+    },
+    {
+      "id": "t-coerce-numeric",
+      "op": "coerce_numeric",
+      "columns": [
+        "response",
+        "visit"
+      ],
+      "severity": "P2",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-coerce-numeric",
+      "origin": "rule",
+      "n_before": 36,
+      "n_after": 36
+    },
+    {
+      "id": "t-normalize-dtypes",
+      "op": "normalize_dtypes",
+      "columns": [
+        "arm",
+        "response",
+        "subject",
+        "visit"
+      ],
+      "severity": "P2",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-normalize-dtypes",
+      "origin": "rule",
+      "n_before": 36,
+      "n_after": 36
+    },
+    {
+      "id": "t-drop-all-null-cols",
+      "op": "drop_all_null_cols",
+      "columns": [],
+      "severity": "P1",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-drop-all-null-cols",
+      "origin": "rule",
+      "n_before": 36,
+      "n_after": 36
+    },
+    {
+      "id": "t-drop-all-null-rows",
+      "op": "drop_all_null_rows",
+      "columns": [],
+      "severity": "P1",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-drop-all-null-rows",
+      "origin": "rule",
+      "n_before": 36,
+      "n_after": 36
+    },
+    {
+      "id": "t-rename-clean",
+      "op": "rename_columns_append_cleaned",
+      "columns": [],
+      "severity": "P2",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-rename-clean",
+      "origin": "rule",
+      "n_before": 36,
+      "n_after": 36
+    }
+  ],
+  "case_variant_merge_map": [],
+  "withheld": [],
+  "failed": [],
+  "never_automatic_flags": [],
+  "user_flags": {}
+}

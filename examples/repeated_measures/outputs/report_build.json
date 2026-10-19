@@ -1,0 +1,124 @@
+{
+  "schema_version": "1.0",
+  "title": "Repeated-measures treatment comparison",
+  "template": "nature",
+  "generated": "2026-10-19 18:17 中国标准时间",
+  "report_md": "D:\\数据处理 skill\\examples\\repeated_measures\\outputs\\report.md",
+  "report_md_sha256": "f4283c49d1f86655a88158ce98f579cb4208b511d490a3e05fc06439baadbff2",
+  "executive_summary_md": "D:\\数据处理 skill\\examples\\repeated_measures\\outputs\\executive_summary.md",
+  "report_pdf": "D:\\数据处理 skill\\examples\\repeated_measures\\outputs\\report.pdf",
+  "pdf": {
+    "pdf_written": true,
+    "backend": "reportlab",
+    "attempts": [
+      {
+        "tier": "reportlab",
+        "interpreter": "C:\\Users\\华为\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+        "in_process": false,
+        "ok": true
+      }
+    ],
+    "sha256": "eff25e3ed7e77356c05c586948c283ffa3b2e23d0bfe89ce9dcc054efbccdbbe",
+    "reportlab_version": "4.4.9",
+    "pages": 8,
+    "bytes": 127312,
+    "cjk_font_embedded": true,
+    "cjk_font_available": true,
+    "cjk_text_present": true
+  },
+  "pdf_probe": {
+    "pdf_written": true,
+    "backend": "reportlab",
+    "attempts": [
+      {
+        "tier": "reportlab",
+        "interpreter": "C:\\Users\\华为\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+        "in_process": false,
+        "ok": true
+      }
+    ],
+    "sha256": "de09fc999f93f93f4169941a332ca59b945b61013464d6482e90d49f3fe85265",
+    "reportlab_version": "4.4.9",
+    "pages": 8,
+    "bytes": 127075,
+    "cjk_font_embedded": true,
+    "cjk_font_available": true,
+    "cjk_text_present": true,
+    "probed_from": "throwaway first pass; the delivered PDF is re-rendered"
+  },
+  "artifact_hashes": {
+    "profile": "bb4737ea248965fe",
+    "plan": "7ac8130efd147906",
+    "validation": "ad2137c384c90c6e",
+    "descriptive": "6cbb044156c80a75",
+    "inferential": "777cf97debe33ea1",
+    "decisions": "a6d3103be5b99c94",
+    "rendered": "e1a6abf058364938"
+  },
+  "cleaned_sha256": "6f62b85a4cf5d53709fdb9ffc95686bda19f7ed7b50f37f733e82dd570680585",
+  "environment": {
+    "python": "3.13.15",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "libs": {
+      "pandas": "3.0.3",
+      "numpy": "2.4.6",
+      "scipy": "1.18.1"
+    },
+    "assembled_at": "2026-10-19 18:17 中国标准时间",
+    "pipeline": {
+      "git_commit": "028ac9a03e9be1f0f58f426bb5a92cf4f35075d0",
+      "git_branch": "main",
+      "git_dirty": true,
+      "git_dirty_files": 1,
+      "git_describe": "028ac9a",
+      "note": "working tree was dirty when this run started; the commit alone does not reproduce it"
+    }
+  },
+  "caveats": [
+    {
+      "id": "no_defect_detected",
+      "caveat": "No defect requiring a caveat was detected in this run. That is a statement about the checks that ran, not a guarantee that the data are fit for the conclusions drawn.",
+      "limits": "all claims",
+      "resolved_by": "not applicable"
+    }
+  ],
+  "provenance": [
+    {
+      "kind": "header",
+      "value": 36,
+      "meaning": "rows analysed",
+      "artifact": "cleaning_run.json",
+      "script": "scripts/execute_cleaning.py",
+      "rule_source": ""
+    },
+    {
+      "kind": "headline",
+      "value": "`response` is compared across arm: Cohen's d = -6.35, 95% CI -9.36 to -3.35, BH-adjusted p = 6.6e-07 across a family of 1 outcomes",
+      "meaning": "strongest group separation",
+      "artifact": "inferential.json",
+      "script": "scripts/stats_inferential.py",
+      "rule_source": ""
+    },
+    {
+      "kind": "method_rejection",
+      "value": "Welch t-test",
+      "meaning": "rejected for response",
+      "artifact": "inferential.json",
+      "script": "scripts/stats_inferential.py",
+      "rule_source": "scripts/stats_inferential.py#two_group_numeric"
+    },
+    {
+      "kind": "multiplicity",
+      "value": "BH",
+      "meaning": "family correction method",
+      "artifact": "inferential.json",
+      "script": "scripts/stats_inferential.py",
+      "rule_source": "references/nature-statistics-checklist.md#gate-5"
+    }
+  ],
+  "self_audit": {
+    "n_forbidden": 0,
+    "findings": [],
+    "n_lines_scanned": 189
+  }
+}
