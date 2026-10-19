@@ -22,7 +22,10 @@ function managedPaths(env = process.env) {
 
 function findPython(env = process.env, run = spawnSync) {
   const candidates = env.DATA_MASTER_PYTHON ? [[env.DATA_MASTER_PYTHON]]
-    : process.platform === 'win32' ? [['py', '-3'], ['python'], ['python3']]
+    // setup-python and activated environments put the intended interpreter on
+    // PATH. The Windows `py -3` launcher may instead select a newer global
+    // interpreter that lacks this environment's dependencies.
+    : process.platform === 'win32' ? [['python'], ['py', '-3'], ['python3']]
       : [['python3'], ['python']];
   for (const [command, ...prefix] of candidates) {
     const result = run(command, [...prefix, '-c',
