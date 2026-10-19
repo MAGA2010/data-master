@@ -836,6 +836,104 @@ def test_gate6_requires_sensitivity_artifact():
 
 # ----------------------------------------------------------- answers file
 
+COMPACT_CSV = TRAPS / "compact_date_or_number.csv"
+
+
+def _compact_plan(out):
+    prof = out / "profile.json"
+    plan_path = out / "cleaning_plan.json"
+    for script, args in (
+        ("profile_tabular.py", ("--in", COMPACT_CSV, "--out", prof)),
+        ("cleaning_plan.py", ("--profile", prof, "--out", plan_path)),
+    ):
+        proc = _run(script, *args)
+        eq(proc.returncode, 0, proc.stdout + proc.stderr)
+    return prof, plan_path, json.loads(plan_path.read_text(encoding="utf-8"))
+
+
+@check("compact dates or integers are held with evidence and preserved by default")
+def test_compact_date_or_number_hold():
+    raw_bytes = COMPACT_CSV.read_bytes()
+    with tempfile.TemporaryDirectory() as td:
+        out = Path(td)
+        _, plan_path, plan = _compact_plan(out)
+        flag = next(f for f in plan["never_automatic_flags"]
+                    if f["id"] == "coerce_numeric_or_date@compact_value")
+        eq(flag["columns"], ["compact_value"])
+        eq(flag["default_if_silent"], "keep_as_text")
+        assert flag["reason"], "the ambiguity needs an explanation"
+        eq(flag["detail"]["hold"], "numeric_or_date")
+        for probe in ("numeric_probe", "date_probe"):
+            evidence = flag["detail"][probe]
+            eq(evidence["all_parse"], True, probe)
+            eq(evidence["n_parsed"], 6, probe)
+            eq(evidence["n_failed"], 0, probe)
+        template = json.loads((out / "answers.template.json").read_text(encoding="utf-8"))
+        pending = next(d for d in template["decisions"] if d["id"] == flag["id"])
+        eq(set(pending["allowed_actions"]), {"keep_as_text", "integers", "dates"})
+        assert not any("compact_value" in a["columns"] for a in plan["auto_actions"]
+                       if a["op"] in ("coerce_numeric", "coerce_dates"))
+
+        proc = _run("execute_cleaning.py", "--in", COMPACT_CSV,
+                    "--plan", plan_path, "--out", out / "cleaned")
+        eq(proc.returncode, 0, proc.stdout + proc.stderr)
+        raw = dm_types.read_table(COMPACT_CSV)
+        clean, _ = dm_types.load_cleaned(out / "cleaned" / "cleaned.csv")
+        eq(clean.to_dict("list"), raw.to_dict("list"), "default values and row order")
+        assert dm_types.is_string_like(clean["compact_value"].dtype)
+        run = json.loads((out / "cleaned" / "cleaning_run.json").read_text(encoding="utf-8"))
+        assert "compact_value" not in ec.converting_columns(run["applied_ops"])
+        eq(run["untouched_column_audit"]["passed"], True)
+        eq(run["reproducibility_check"]["passed"], True)
+    eq(COMPACT_CSV.read_bytes(), raw_bytes, "raw fixture changed")
+
+
+@check("an explicit compact-date answer converts only its target with provenance")
+def test_compact_date_answer():
+    raw_bytes = COMPACT_CSV.read_bytes()
+    with tempfile.TemporaryDirectory() as td:
+        out = Path(td)
+        prof, plan_path, _ = _compact_plan(out)
+        decision = {"id": "coerce_numeric_or_date@compact_value", "action": "dates",
+                    "decided_by": "test-suite", "decided_at": "2025-07-01T00:00:00Z",
+                    "rationale": "synthetic codebook declares YYYYMMDD calendar dates"}
+        answers = out / "answers.json"
+        answers.write_text(json.dumps({"decisions": [decision]}), encoding="utf-8")
+        proc = _run("cleaning_plan.py", "--profile", prof, "--out", plan_path,
+                    "--answers", answers)
+        eq(proc.returncode, 0, proc.stdout + proc.stderr)
+        plan = json.loads(plan_path.read_text(encoding="utf-8"))
+        flag = next(f for f in plan["never_automatic_flags"] if f["id"] == decision["id"])
+        provenance = {k: v for k, v in decision.items() if k != "id"}
+        provenance["source"] = str(answers)
+        eq(flag["resolved"], provenance, "resolved decision provenance")
+        eq(plan["user_decisions"], [{"id": decision["id"], **provenance}])
+        conversions = [a for a in plan["auto_actions"]
+                       if a["op"] in ("coerce_numeric", "coerce_dates")]
+        eq([(a["op"], a["columns"]) for a in conversions],
+           [("coerce_dates", ["compact_value"])])
+        eq(conversions[0]["user_opt_in"],
+           {"flag": "--answers", "param": "dates", "decision_id": decision["id"]})
+
+        proc = _run("execute_cleaning.py", "--in", COMPACT_CSV,
+                    "--plan", plan_path, "--out", out / "cleaned")
+        eq(proc.returncode, 0, proc.stdout + proc.stderr)
+        clean, _ = dm_types.load_cleaned(out / "cleaned" / "cleaned.csv")
+        eq(clean["compact_value"].dt.strftime("%Y-%m-%d").tolist(),
+           ["2024-01-15", "2024-02-29", "2024-03-01", "2024-12-31",
+            "2025-01-01", "2025-06-30"])
+        raw = dm_types.read_table(COMPACT_CSV)
+        for control in ("sample_code", "note"):
+            eq(clean[control].tolist(), raw[control].tolist(), control)
+        run = json.loads((out / "cleaned" / "cleaning_run.json").read_text(encoding="utf-8"))
+        eq(set(ec.converting_columns(run["applied_ops"])), {"compact_value"})
+        recorded = next(f for f in run["never_automatic_flags"] if f["id"] == decision["id"])
+        eq(recorded["resolved"], provenance, "execution lost decision provenance")
+        eq(run["untouched_column_audit"]["passed"], True)
+        eq(run["reproducibility_check"]["passed"], True)
+    eq(COMPACT_CSV.read_bytes(), raw_bytes, "raw fixture changed")
+
+
 @check("the answers file resolves holds with provenance and rejects bad ids")
 def test_answers_roundtrip():
     with tempfile.TemporaryDirectory() as td:
