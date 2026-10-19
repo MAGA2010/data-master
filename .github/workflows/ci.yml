@@ -131,8 +131,9 @@ jobs:
                       and f.get("resolved"))
           assert flag["resolved"]["decided_by"] == "ci", flag
           aud = json.loads((out / "audit" / "final_audit.json").read_text(encoding="utf-8"))
-          label = aud.get("journal", {}).get("label", "")
-          assert "NEJM" in label, "run block journal did not reach the audit: %r" % label
+          journal = aud.get("journal", {})
+          assert journal.get("journal") == "nejm", \
+              "run block journal did not reach the audit: %r" % journal
           print("answers round-trip OK: decision resolved with provenance, journal applied")
           PY
 

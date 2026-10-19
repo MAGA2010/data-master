@@ -8,7 +8,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-2EA44F)](LICENSE)
 [![Codex Skill](https://img.shields.io/badge/Codex-skill-111827)](SKILL.md)
 
-[中文](README.zh-CN.md) · [Examples](#reproducible-case-studies) · [Evaluation](EVALUATION.md) · [Roadmap](ROADMAP.md)
+[中文](README.zh-CN.md) · [Examples](#reproducible-case-studies) · [Evaluation](EVALUATION.md) · [Roadmap](ROADMAP.md) · [Launch kit](docs/LAUNCH_KIT.md)
 
 ![data-master turns raw data into a verified report](docs/assets/demo.gif)
 

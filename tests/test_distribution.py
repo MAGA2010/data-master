@@ -29,7 +29,7 @@ class InstalledDistribution(unittest.TestCase):
         wheels = cls.base / "wheels"
         built = subprocess.run([sys.executable, "-m", "pip", "wheel", str(ROOT),
                                 "--no-deps", "--wheel-dir", str(wheels)],
-                               capture_output=True, text=True, timeout=180)
+                               capture_output=True, text=True, errors="replace", timeout=180)
         if built.returncode:
             raise RuntimeError(built.stdout + built.stderr)
         cls.wheel = next(wheels.glob("data_master-*.whl"))
@@ -40,7 +40,8 @@ class InstalledDistribution(unittest.TestCase):
         cls.executable = bin_dir / ("data-master.exe" if os.name == "nt" else "data-master")
         installed = subprocess.run([str(cls.python), "-m", "pip", "install", "--no-deps",
                                     "--force-reinstall", str(cls.wheel)],
-                                   capture_output=True, text=True, timeout=90, cwd=cls.work)
+                                   capture_output=True, text=True, errors="replace",
+                                   timeout=90, cwd=cls.work)
         if installed.returncode:
             raise RuntimeError(installed.stdout + installed.stderr)
 
@@ -85,7 +86,12 @@ class InstalledDistribution(unittest.TestCase):
     def test_doctor_uses_installed_resources_and_real_imports(self):
         result = json.loads(self.command("doctor", "--json"))
         self.assertTrue(result["healthy"], result)
-        self.assertIn(str(self.env), result["runtime"])
+        # Windows runners may create the venv through an 8.3 short path such
+        # as RUNNER~1 while Python resolves it to the long user profile name.
+        # Compare resolved filesystem locations instead of path spellings.
+        actual_env = self.python.resolve().parents[1]
+        runtime = Path(result["runtime"]).resolve()
+        self.assertTrue(runtime.is_relative_to(actual_env), (actual_env, runtime))
         self.assertNotIn(str(ROOT), result["runtime"])
         self.assertEqual(result["import_errors"], {})
 
