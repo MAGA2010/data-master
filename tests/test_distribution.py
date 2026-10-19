@@ -63,6 +63,10 @@ class InstalledDistribution(unittest.TestCase):
         self.assertFalse(any("/outputs/" in name or "/.git/" in name or "/tests/" in name
                              for name in names), names)
 
+    def test_declared_package_directories_exist_in_a_clean_checkout(self):
+        text = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+        self.assertNotIn('"data_master._runtime.templates"', text)
+
     def test_installed_version_and_help(self):
         self.assertIn("0.2.0", self.command("--version"))
         self.assertIn("analyze", self.command("--help"))

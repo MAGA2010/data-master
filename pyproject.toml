@@ -31,8 +31,7 @@ data-master = "data_master.cli:main"
 # runtime resources enter the wheel; user outputs and committed reports do not.
 [tool.setuptools]
 packages = ["data_master", "data_master._runtime", "data_master._runtime.scripts",
-  "data_master._runtime.references", "data_master._runtime.templates",
-  "data_master._runtime.examples.independent_groups"]
+  "data_master._runtime.references", "data_master._runtime.examples.independent_groups"]
 include-package-data = false
 
 [tool.setuptools.package-dir]
@@ -40,14 +39,12 @@ data_master = "data_master"
 "data_master._runtime" = "."
 "data_master._runtime.scripts" = "scripts"
 "data_master._runtime.references" = "references"
-"data_master._runtime.templates" = "templates"
 "data_master._runtime.examples.independent_groups" = "examples/independent_groups"
 
 [tool.setuptools.package-data]
 "data_master._runtime" = ["requirements.txt", "SKILL.md", "LICENSE",
   "skill-package.json", "skills/*/SKILL.md"]
 "data_master._runtime.references" = ["*.md", "*.json"]
-"data_master._runtime.templates" = ["*.md", "*.json", "*.html"]
 "data_master._runtime.examples.independent_groups" = ["measurements.csv", "README.md"]
 
 [tool.setuptools.dynamic]

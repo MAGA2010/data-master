@@ -12,7 +12,7 @@
   "bin": {"data-master": "bin/data-master.cjs"},
   "files": [
     "bin/*.cjs", "data_master/*.py", "scripts/*.py", "references/*.md",
-    "references/*.json", "templates/", "requirements.txt", "pyproject.toml",
+    "references/*.json", "requirements.txt", "pyproject.toml",
     "SKILL.md", "LICENSE", "skill-package.json", "skills/*/SKILL.md",
     "examples/independent_groups/measurements.csv",
     "examples/independent_groups/README.md"
