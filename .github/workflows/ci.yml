@@ -34,9 +34,22 @@ jobs:
       - name: Numerical references and artifact integrity
         run: python tests/test_reliability.py
 
+      - name: Installed wheel outside the checkout
+        if: matrix.python == '3.13'
+        run: python tests/test_distribution.py
+
       - name: Completed-run tampering and PDF recovery
         if: matrix.os == 'ubuntu-latest' && matrix.python == '3.13'
         run: python tests/test_pipeline_integrity.py
+
+      - uses: actions/setup-node@v7
+        if: matrix.python == '3.13'
+        with:
+          node-version: '22'
+
+      - name: Packed npm launcher and analysis outside the checkout
+        if: matrix.python == '3.13'
+        run: npm test
 
       - name: One-command iris pipeline
         run: |

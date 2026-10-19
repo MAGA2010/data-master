@@ -1,6 +1,6 @@
 ---
 name: data-master
-description: "Universal data processing pipeline — Agent auto-detects data modality (tabular / text / time-series / image / audio / geo / mixed), runs full-auto cleaning, then Nature-grade statistics, and delivers report + charts. Use when the user says clean this data, analyze my data, 跑数据, 出报告, 做图表, generate report from CSV, statistical analysis, EDA + inference, Nature-grade audit, or wants any data processed end-to-end with reproducible evidence."
+description: "Analyze datasets with preserved raw inputs, explicit cleaning decisions, reproducible figures and PDF reports. Full statistics for one tabular file; descriptive time-series analysis; integrity profiling for text, image, audio, geographic and mixed inputs. Use for data cleaning, EDA, group comparisons, statistical reports, 跑数据 or 数据分析 with a traceable evidence trail."
 allowed-tools: Bash(python *), Bash(py *), PowerShell(python *), PowerShell(py *), WebSearch, WebFetch
 ---
 
@@ -9,6 +9,13 @@ allowed-tools: Bash(python *), Bash(py *), PowerShell(python *), PowerShell(py *
 Turn **any data** into a **cleaned, audited, Nature-grade report + charts** with one command. The agent reads the data, decides modality, picks methods, runs the pipeline, and writes evidence-backed outputs. The user never has to choose a statistical test or a chart type.
 
 ## Contract
+
+Installed CLI: `data-master analyze <file> --out <dir>`; use
+`data-master doctor --json` to diagnose the environment and
+`data-master verify <dir> --json` to check saved artifact hashes.
+`data-master demo --out <new-dir>` runs a synthetic example. Existing
+`python scripts/run_pipeline.py` commands below remain supported; installing
+the Python package does not itself install this skill into an agent.
 
 - **Input**: `$ARGUMENTS` = a file, a folder, or a glob. Optional flags:
   - `--report nature` (default) | `standard` | `executive` — report template.

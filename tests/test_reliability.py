@@ -195,6 +195,11 @@ class StatisticalReferences(unittest.TestCase):
 
 
 class EvidenceIntegrity(unittest.TestCase):
+    def test_nested_runtime_does_not_claim_parent_repository_commit(self):
+        # scripts/ is inside the checkout, but is not its source root.
+        result = ps.pipeline_provenance(ROOT / "scripts")
+        self.assertIsNone(result["git_commit"])
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)

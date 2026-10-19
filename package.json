@@ -1,0 +1,16 @@
+{
+  "name": "@maga2010/data-master",
+  "version": "0.2.0",
+  "description": "GitHub-installable launcher for auditable Python data analysis",
+  "private": true,
+  "license": "MIT",
+  "repository": {"type": "git", "url": "https://github.com/MAGA2010/data-master.git"},
+  "engines": {"node": ">=20"},
+  "bin": {"data-master": "bin/data-master.cjs"},
+  "files": [
+    "bin/*.cjs", "data_master/*.py", "scripts/*.py", "references/*.md",
+    "references/*.json", "templates/", "requirements.txt", "pyproject.toml",
+    "SKILL.md", "skills/*/SKILL.md", "examples/independent_groups/measurements.csv"
+  ],
+  "scripts": {"test": "node --test tests/npm/*.test.cjs"}
+}

@@ -12,14 +12,20 @@ for one.
 ## Before you open a PR
 
 ```powershell
-python tests/test_pipeline_invariants.py          # 33 checks, no pytest needed
+python tests/test_pipeline_invariants.py
+python tests/test_reliability.py
+python tests/test_pipeline_integrity.py
+python tests/test_distribution.py
+npm test
 python scripts/assemble_report.py --raw examples/iris/iris_dirty.csv --outdir examples/iris/outputs --title "Iris morphometrics"
 python scripts/final_audit.py --outdir examples/iris/outputs
 ```
 
 The audit exits 1 on the iris example **by design**: the independent unit is not
 declared, so Gate 1 fails. That is the expected state, not a broken build. What
-must hold is that every other gate passes and `structural` is 6/6.
+must hold is that Gate 2 warns about the undetermined missingness mechanism,
+the remaining applicable gates pass, and `structural` is 6/6. See
+[Validation](docs/VALIDATION.md) for the scope of each test suite and wheel checks.
 
 ## Adding a cleaning rule
 

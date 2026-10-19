@@ -368,6 +368,10 @@ def pipeline_provenance(root: Path) -> Dict[str, Any]:
                 raise RuntimeError(proc.stderr.strip() or "git exited %d" % proc.returncode)
             return proc.stdout.strip()
 
+        # An installed wheel may sit in a venv inside some unrelated checkout.
+        # That parent repository's commit does not identify the installed code.
+        if Path(_git("rev-parse", "--show-toplevel")).resolve() != root.resolve():
+            raise RuntimeError("runtime is not the repository root")
         commit = _git("rev-parse", "HEAD")
         status = _git("status", "--porcelain")
         branch = _git("rev-parse", "--abbrev-ref", "HEAD")
@@ -387,9 +391,14 @@ def pipeline_provenance(root: Path) -> Dict[str, Any]:
                      "commit is sufficient to reproduce the pipeline code"),
         }
     except Exception as exc:
+        try:
+            package_version = importlib.metadata.version("data-master")
+        except importlib.metadata.PackageNotFoundError:
+            package_version = None
         return {
             "git_commit": None,
             "git_dirty": None,
+            "package_version": package_version,
             "note": "git unavailable or not a repository (%s); cite the code "
                     "version manually" % type(exc).__name__,
         }

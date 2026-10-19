@@ -59,6 +59,73 @@ judgment that was actually applied visible, testable, and easier to correct.
 
 ## Installation
 
+### Install with npm from GitHub
+
+Requires Node.js 20+ and Python 3.11+. This package is installed from GitHub;
+it is not published to the npm registry.
+
+```bash
+npm install -g github:MAGA2010/data-master
+data-master setup
+data-master doctor
+data-master demo --out outputs/first-demo
+```
+
+Or use npx without a global npm installation:
+
+```bash
+npx --yes --package=github:MAGA2010/data-master data-master setup
+npx --yes --package=github:MAGA2010/data-master data-master demo --out outputs/first-demo
+```
+
+The npm package has no installation hooks and no JavaScript dependencies.
+Only the explicit `setup` command creates a cached Python virtual environment
+and downloads the declared Python dependencies. It leaves global Python packages
+alone. Ordinary analysis commands do not install anything. Set
+`DATA_MASTER_PYTHON` to an existing Python environment's executable to use that
+environment directly instead; set `DATA_MASTER_CACHE` to relocate the managed
+environment. `--version` and `--help` work even without Python. For reproducible
+GitHub installations, append `#<commit>` to the GitHub package specifier.
+
+The npm and Python entry points share the same analysis engine and evidence
+contract. Choose either installation route. Installing the npm wrapper does not
+automatically register the Codex skill.
+
+### Install the CLI
+
+From a cloned checkout:
+
+```bash
+python -m pip install .
+data-master doctor
+data-master demo --out outputs/first-demo
+data-master verify outputs/first-demo --json
+```
+
+The demo copies a small synthetic dataset into a new output directory and runs
+the full analysis, PDF and audit workflow. It refuses to overwrite an existing
+directory. Open `outputs/first-demo/report.pdf` to read the result. If your
+Python scripts directory is not on PATH, use `python -m data_master` in place of
+`data-master`.
+
+This installs from the checkout; no PyPI publication is assumed. The wheel
+includes the runtime scripts, method references and demo input, so the installed
+commands also work outside the repository. The Codex skill still needs the
+separate skill-folder installation below.
+
+```bash
+data-master analyze measurements.csv --out outputs/study --group treatment --unit-key participant_id
+data-master resume outputs/study/state.json
+```
+
+`analyze` and `resume` forward pipeline options, including `--answers` and
+`--covariates`. Use `data-master analyze --help` for the full option list.
+`doctor --json` checks bundled resources, dependency versions and actual imports
+without installing packages or changing user data. Exit codes: `0` success,
+`1` failed analysis/audit or integrity check, `2` usage/environment problem.
+Audit verdicts remain separate from process success: a completed report can
+still contain unresolved scientific questions.
+
 ### Requirements
 
 - Python 3.11, 3.12, or 3.13
@@ -466,6 +533,7 @@ Run the invariant and regression suite:
 python tests/test_pipeline_invariants.py
 python tests/test_reliability.py
 python tests/test_pipeline_integrity.py
+python tests/test_distribution.py
 ```
 
 Check syntax:

@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "data-master"
+version = "0.2.0"
+description = "Auditable data analysis with reproducible cleaning, statistics and PDF reports"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+dynamic = ["dependencies"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+  "Topic :: Scientific/Engineering :: Information Analysis",
+]
+
+[project.urls]
+Repository = "https://github.com/MAGA2010/data-master"
+Issues = "https://github.com/MAGA2010/data-master/issues"
+
+[project.scripts]
+data-master = "data_master.cli:main"
+
+# Keep the standalone scripts and skill layout intact. Only explicitly listed
+# runtime resources enter the wheel; user outputs and committed reports do not.
+[tool.setuptools]
+packages = ["data_master", "data_master._runtime", "data_master._runtime.scripts",
+  "data_master._runtime.references", "data_master._runtime.templates",
+  "data_master._runtime.examples.independent_groups"]
+include-package-data = false
+
+[tool.setuptools.package-dir]
+data_master = "data_master"
+"data_master._runtime" = "."
+"data_master._runtime.scripts" = "scripts"
+"data_master._runtime.references" = "references"
+"data_master._runtime.templates" = "templates"
+"data_master._runtime.examples.independent_groups" = "examples/independent_groups"
+
+[tool.setuptools.package-data]
+"data_master._runtime" = ["requirements.txt", "SKILL.md"]
+"data_master._runtime.references" = ["*.md", "*.json"]
+"data_master._runtime.templates" = ["*.md", "*.json", "*.html"]
+"data_master._runtime.examples.independent_groups" = ["measurements.csv"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
