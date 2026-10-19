@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const os = require('node:os');
 const { spawnSync } = require('node:child_process');
-const { findPython, main, setup, managedPaths } = require('../../bin/data-master.cjs');
+const { findPython, main, setup, managedPaths, installSkill } = require('../../bin/data-master.cjs');
 
 test('Python discovery rejects old versions and honors executable paths containing spaces', () => {
   const calls = [];
@@ -65,6 +65,20 @@ test('setup creates a venv, propagates pip failure, releases lock, and retries',
   } finally { fs.rmSync(cache, { recursive: true, force: true }); }
 });
 
+test('skill install is atomic, complete, and refuses to overwrite', () => {
+  const base = fs.mkdtempSync(path.join(os.tmpdir(), 'dm-skill-'));
+  const target = path.join(base, 'custom skills', 'data-master');
+  try {
+    assert.equal(installSkill(['install', '--target', target]), 0);
+    for (const needed of ['SKILL.md', 'scripts/run_pipeline.py',
+      'references/workflow-contract.md', 'skills/data-router/SKILL.md']) {
+      assert.ok(fs.existsSync(path.join(target, needed)), needed);
+    }
+    assert.equal(installSkill(['install', '--target', target]), 2);
+    assert.ok(fs.existsSync(path.join(target, 'SKILL.md')));
+  } finally { fs.rmSync(base, { recursive: true, force: true }); }
+});
+
 test('packed npm install runs outside checkout and preserves demo evidence', { timeout: 240000 }, () => {
   const root = path.resolve(__dirname, '../..');
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'dm-npm-'));
@@ -83,7 +97,8 @@ test('packed npm install runs outside checkout and preserves demo evidence', { t
     const pack = JSON.parse(invoke(['pack', root, '--pack-destination', temp, '--json']))[0];
     const names = pack.files.map(f => f.path);
     for (const needed of ['bin/data-master.cjs', 'data_master/cli.py', 'scripts/run_pipeline.py',
-      'references/journal-reporting-standards.json', 'examples/independent_groups/measurements.csv']) {
+      'references/journal-reporting-standards.json', 'examples/independent_groups/measurements.csv',
+      'skill-package.json', 'skills/data-router/SKILL.md']) {
       assert.ok(names.includes(needed), needed);
     }
     assert.ok(!names.some(n => n.includes('/outputs/') || n.startsWith('.git/') || n.startsWith('node_modules/')));
@@ -92,6 +107,9 @@ test('packed npm install runs outside checkout and preserves demo evidence', { t
     invoke(['install', '--prefix', temp, '--ignore-scripts', '--no-audit', '--no-fund', path.join(temp, pack.filename)]);
     const exec = (...args) => invoke(['exec', '--prefix', temp, '--offline', '--', 'data-master', ...args]);
     assert.match(exec('--version'), /0\.2\.0/);
+    const skill = path.join(temp, 'installed skill');
+    exec('skill', 'install', '--target', skill);
+    assert.ok(fs.existsSync(path.join(skill, 'SKILL.md')));
     assert.equal(JSON.parse(exec('doctor', '--json')).healthy, true);
     const out = path.join(temp, 'report with spaces');
     exec('demo', '--out', out);

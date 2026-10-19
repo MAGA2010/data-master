@@ -13,9 +13,11 @@ Turn **any data** into a **cleaned, audited, Nature-grade report + charts** with
 Installed CLI: `data-master analyze <file> --out <dir>`; use
 `data-master doctor --json` to diagnose the environment and
 `data-master verify <dir> --json` to check saved artifact hashes.
-`data-master demo --out <new-dir>` runs a synthetic example. Existing
+`data-master demo --out <new-dir>` runs a synthetic example, and
+`data-master skill install` installs this skill atomically from the npm or
+Python distribution. Existing
 `python scripts/run_pipeline.py` commands below remain supported; installing
-the Python package does not itself install this skill into an agent.
+the CLI alone does not register the skill until `skill install` is run.
 
 - **Input**: `$ARGUMENTS` = a file, a folder, or a glob. Optional flags:
   - `--report nature` (default) | `standard` | `executive` — report template.

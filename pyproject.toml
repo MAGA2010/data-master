@@ -9,6 +9,8 @@ description = "Auditable data analysis with reproducible cleaning, statistics an
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
+authors = [{name = "S. Wang"}]
+keywords = ["data-analysis", "reproducible-research", "statistics", "agent-skills"]
 dynamic = ["dependencies"]
 classifiers = [
   "Programming Language :: Python :: 3",
@@ -19,6 +21,8 @@ classifiers = [
 [project.urls]
 Repository = "https://github.com/MAGA2010/data-master"
 Issues = "https://github.com/MAGA2010/data-master/issues"
+Changelog = "https://github.com/MAGA2010/data-master/blob/main/CHANGELOG.md"
+Documentation = "https://github.com/MAGA2010/data-master#readme"
 
 [project.scripts]
 data-master = "data_master.cli:main"
@@ -40,10 +44,11 @@ data_master = "data_master"
 "data_master._runtime.examples.independent_groups" = "examples/independent_groups"
 
 [tool.setuptools.package-data]
-"data_master._runtime" = ["requirements.txt", "SKILL.md"]
+"data_master._runtime" = ["requirements.txt", "SKILL.md", "LICENSE",
+  "skill-package.json", "skills/*/SKILL.md"]
 "data_master._runtime.references" = ["*.md", "*.json"]
 "data_master._runtime.templates" = ["*.md", "*.json", "*.html"]
-"data_master._runtime.examples.independent_groups" = ["measurements.csv"]
+"data_master._runtime.examples.independent_groups" = ["measurements.csv", "README.md"]
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}

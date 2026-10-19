@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+title: "data-master: Auditable data analysis from one command"
+message: "If data-master supports your work, cite this software and the exact version used."
+type: software
+authors:
+  - family-names: Wang
+    given-names: S.
+repository-code: "https://github.com/MAGA2010/data-master"
+url: "https://github.com/MAGA2010/data-master"
+license: MIT
+version: 0.2.0
+date-released: 2026-10-19
+keywords:
+  - reproducible research
+  - data analysis
+  - data quality
+  - statistics
+  - agent skills

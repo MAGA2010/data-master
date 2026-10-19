@@ -1,0 +1,24 @@
+name: Feature request
+description: Propose a user problem or supported workflow
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: User problem
+      description: Describe the analysis you cannot complete today.
+    validations:
+      required: true
+  - type: textarea
+    id: example
+    attributes:
+      label: Concrete example
+      description: Show the input shape, desired command and expected artifact.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Method or compatibility evidence
+      description: Link a standard or reference implementation when the request changes a statistical decision.

@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security report
+    url: https://github.com/MAGA2010/data-master/security/policy
+    about: Report vulnerabilities and accidental data disclosure privately.

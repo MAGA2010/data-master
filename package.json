@@ -4,13 +4,18 @@
   "description": "GitHub-installable launcher for auditable Python data analysis",
   "private": true,
   "license": "MIT",
+  "homepage": "https://github.com/MAGA2010/data-master#readme",
+  "bugs": {"url": "https://github.com/MAGA2010/data-master/issues"},
+  "keywords": ["codex-skill", "agent-skills", "data-analysis", "reproducible-research", "statistics"],
   "repository": {"type": "git", "url": "https://github.com/MAGA2010/data-master.git"},
   "engines": {"node": ">=20"},
   "bin": {"data-master": "bin/data-master.cjs"},
   "files": [
     "bin/*.cjs", "data_master/*.py", "scripts/*.py", "references/*.md",
     "references/*.json", "templates/", "requirements.txt", "pyproject.toml",
-    "SKILL.md", "skills/*/SKILL.md", "examples/independent_groups/measurements.csv"
+    "SKILL.md", "LICENSE", "skill-package.json", "skills/*/SKILL.md",
+    "examples/independent_groups/measurements.csv",
+    "examples/independent_groups/README.md"
   ],
   "scripts": {"test": "node --test tests/npm/*.test.cjs"}
 }

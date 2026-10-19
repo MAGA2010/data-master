@@ -1,0 +1,49 @@
+name: Bug report
+description: Report an installation, integrity, analysis or report-generation defect
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: "Thank you. Remove sensitive data and reduce the example before attaching it."
+  - type: textarea
+    id: observed
+    attributes:
+      label: What happened?
+      description: Include the command, exit code and the artifact that shows the defect.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What should have happened?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Minimal reproduction
+      description: Provide synthetic or de-identified data when possible.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: data-master version or commit
+      placeholder: "v0.2.0 or commit SHA"
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options: [Windows, macOS, Linux, Other]
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Data safety
+      options:
+        - label: I removed secrets, personal data and confidential records.
+          required: true

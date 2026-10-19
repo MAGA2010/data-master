@@ -12,6 +12,9 @@ import sys
 from . import __version__
 
 
+SKILL_MANIFEST = "skill-package.json"
+
+
 def runtime_root() -> Path:
     installed = Path(__file__).resolve().parent / "_runtime"
     return installed if installed.is_dir() else Path(__file__).resolve().parents[1]
@@ -108,11 +111,54 @@ def demo(arguments: list[str]) -> int:
                       "--title", "Synthetic independent groups"])
 
 
+def install_skill(arguments: list[str]) -> int:
+    parser = argparse.ArgumentParser(prog="data-master skill install")
+    parser.add_argument("action", choices=["install"])
+    parser.add_argument("--target")
+    args = parser.parse_args(arguments)
+    root = runtime_root()
+    default_home = Path(os.environ.get("CODEX_HOME", Path.home() / ".codex"))
+    target = Path(args.target).expanduser().resolve() if args.target else \
+        (default_home / "skills" / "data-master").resolve()
+    if target.exists():
+        print("Skill destination already exists: %s\nRemove it or choose --target DIR. "
+              "Existing files were not changed." % target, file=sys.stderr)
+        return 2
+    try:
+        manifest = json.loads((root / SKILL_MANIFEST).read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        print("Invalid packaged skill manifest: %s" % exc, file=sys.stderr)
+        return 2
+    target.parent.mkdir(parents=True, exist_ok=True)
+    staging = target.parent / (".data-master-install-%s" % os.getpid())
+    try:
+        staging.mkdir()
+        for relative in manifest["include"]:
+            source = root / relative
+            destination = staging / relative
+            if not source.exists():
+                raise FileNotFoundError("Packaged skill resource is missing: %s" % relative)
+            if source.is_dir():
+                shutil.copytree(source, destination, ignore=shutil.ignore_patterns(
+                    "__pycache__", "*.pyc", ".git", "outputs"))
+            else:
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(source, destination)
+        staging.replace(target)
+    except (OSError, KeyError) as exc:
+        shutil.rmtree(staging, ignore_errors=True)
+        print("Skill installation failed: %s" % exc, file=sys.stderr)
+        return 2
+    print("Installed data-master skill: %s" % target)
+    print("Restart Codex, then ask it to analyze a dataset with data-master.")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     arguments = list(sys.argv[1:] if argv is None else argv)
     parser = argparse.ArgumentParser(prog="data-master", description="Auditable analysis with saved evidence.")
     parser.add_argument("--version", action="version", version="data-master " + __version__)
-    parser.add_argument("command", choices=["analyze", "demo", "doctor", "resume", "verify"], nargs="?")
+    parser.add_argument("command", choices=["analyze", "demo", "doctor", "resume", "skill", "verify"], nargs="?")
     if not arguments or arguments[0] in ("-h", "--help", "--version"):
         parser.parse_args(arguments)
         if not arguments:
@@ -121,6 +167,8 @@ def main(argv: list[str] | None = None) -> int:
     command = parser.parse_args(arguments[:1]).command
     rest = arguments[1:]
     try:
+        if command == "skill":
+            return install_skill(rest)
         if command == "demo":
             return demo(rest)
         if command == "doctor":

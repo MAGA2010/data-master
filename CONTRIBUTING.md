@@ -1,5 +1,10 @@
 # Contributing
 
+Thank you for helping make data analysis easier to inspect and reproduce. The
+[roadmap](ROADMAP.md#contribution-sized-tasks) contains tasks designed for a
+first contribution. For larger changes, open a feature request with a concrete
+input shape and expected artifact before implementation.
+
 ## The one rule
 
 **A change to a statistical decision needs a test that would have failed before it.**
@@ -17,6 +22,7 @@ python tests/test_reliability.py
 python tests/test_pipeline_integrity.py
 python tests/test_distribution.py
 npm test
+python scripts/package_skill.py --out dist/data-master-test.skill
 python scripts/assemble_report.py --raw examples/iris/iris_dirty.csv --outdir examples/iris/outputs --title "Iris morphometrics"
 python scripts/final_audit.py --outdir examples/iris/outputs
 ```
@@ -26,6 +32,10 @@ declared, so Gate 1 fails. That is the expected state, not a broken build. What
 must hold is that Gate 2 warns about the undetermined missingness mechanism,
 the remaining applicable gates pass, and `structural` is 6/6. See
 [Validation](docs/VALIDATION.md) for the scope of each test suite and wheel checks.
+
+Use the pull request template to report what changed and the commands you ran.
+Never attach confidential or personally identifying data. A small synthetic
+fixture is preferred to a redacted production file.
 
 ## Adding a cleaning rule
 
@@ -58,7 +68,7 @@ audit reads the JSON; the markdown that nobody can execute is the one that drift
 
 ## Style
 
-- Python 3.10+, standard library preferred, pandas/numpy/scipy where they earn it.
+- Python 3.11+, standard library preferred, pandas/numpy/scipy where they earn it.
 - No silent `except Exception: pass`. Catch what you expect and say what happened.
 - Comments explain *why*, especially where the obvious implementation is wrong.
 - Keep a stage's script runnable on its own; the pipeline calls scripts, not

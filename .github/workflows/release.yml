@@ -1,0 +1,59 @@
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  artifacts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+      - name: Build release artifacts
+        shell: bash
+        run: |
+          mkdir -p dist
+          python -m pip install --upgrade pip
+          python -m pip wheel . --no-deps --wheel-dir dist
+          python scripts/package_skill.py --out dist/data-master-${GITHUB_REF_NAME#v}.skill
+          npm pack --pack-destination dist
+          (cd dist && sha256sum * > SHA256SUMS)
+      - name: Validate packaged skill
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import zipfile
+          archive = next(Path("dist").glob("*.skill"))
+          with zipfile.ZipFile(archive) as z:
+              names = z.namelist()
+          required = {
+              "data-master/SKILL.md",
+              "data-master/scripts/run_pipeline.py",
+              "data-master/references/workflow-contract.md",
+              "data-master/skills/data-router/SKILL.md",
+          }
+          assert required <= set(names), required - set(names)
+          assert not any("/outputs/" in name or "/.git/" in name for name in names)
+          print(f"validated {archive}: {len(names)} files")
+          PY
+      - name: Publish GitHub release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="$GITHUB_REF_NAME"
+          notes="docs/releases/${tag}.md"
+          if [[ -f "$notes" ]]; then
+            gh release create "$tag" dist/* --verify-tag --title "data-master $tag" --notes-file "$notes"
+          else
+            gh release create "$tag" dist/* --verify-tag --title "data-master $tag" --generate-notes
+          fi

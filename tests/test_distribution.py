@@ -58,6 +58,8 @@ class InstalledDistribution(unittest.TestCase):
         self.assertIn("data_master/_runtime/requirements.txt", names)
         self.assertIn("data_master/_runtime/references/journal-reporting-standards.json", names)
         self.assertIn("data_master/_runtime/examples/independent_groups/measurements.csv", names)
+        self.assertIn("data_master/_runtime/skill-package.json", names)
+        self.assertIn("data_master/_runtime/skills/data-router/SKILL.md", names)
         self.assertFalse(any("/outputs/" in name or "/.git/" in name or "/tests/" in name
                              for name in names), names)
 
@@ -67,6 +69,14 @@ class InstalledDistribution(unittest.TestCase):
         self.assertIn("--unit-key", self.command("analyze", "--help"))
         self.assertIn("--json", self.command("verify", "--help"))
         self.command("unknown-command", expected=2)
+
+    def test_installed_cli_can_install_the_skill_atomically(self):
+        target = self.work / "codex skills" / "data-master"
+        self.command("skill", "install", "--target", target)
+        self.assertTrue((target / "SKILL.md").is_file())
+        self.assertTrue((target / "scripts" / "run_pipeline.py").is_file())
+        self.assertTrue((target / "skills" / "data-router" / "SKILL.md").is_file())
+        self.command("skill", "install", "--target", target, expected=2)
 
     def test_doctor_uses_installed_resources_and_real_imports(self):
         result = json.loads(self.command("doctor", "--json"))

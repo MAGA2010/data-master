@@ -1,0 +1,12 @@
+{
+  "name": "data-master",
+  "include": [
+    "SKILL.md",
+    "LICENSE",
+    "requirements.txt",
+    "scripts",
+    "references",
+    "skills",
+    "examples/independent_groups"
+  ]
+}
