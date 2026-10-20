@@ -8,8 +8,8 @@ authors:
 repository-code: "https://github.com/MAGA2010/data-master"
 url: "https://github.com/MAGA2010/data-master"
 license: MIT
-version: 0.2.0
-date-released: 2026-10-19
+version: 0.3.0
+date-released: 2026-10-20
 keywords:
   - reproducible research
   - data analysis

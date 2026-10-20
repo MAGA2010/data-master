@@ -1,6 +1,6 @@
 # data-master lockfile -- exact versions that produced this run's artifacts.
 # Install with:  python -m pip install -r lockfile.txt
-# pipeline commit: unknown (git unavailable or not a repository (RuntimeError); cite the code version manually)
+# pipeline commit: 8749c5ea1ff44b0e8376d75b61b238747708557f (dirty working tree)
 # python: 3.13.15 on Windows-11-10.0.26200-SP0
 numpy==2.4.6
 pandas==3.0.3
@@ -10,7 +10,7 @@ statsmodels==0.15.0
 openpyxl==3.1.5
 pyarrow==25.0.1
 Pillow==12.3.0
-# reportlab: not installed in this environment
+reportlab==5.0.1
 pypdf==6.16.1
-# fpdf2: not installed in this environment
-# pyshp: not installed in this environment
+fpdf2==2.8.9
+pyshp==3.1.6

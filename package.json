@@ -1,8 +1,9 @@
 {
   "name": "@maga2010/data-master",
-  "version": "0.2.0",
-  "description": "GitHub-installable launcher for auditable Python data analysis",
-  "private": true,
+  "version": "0.3.0",
+  "description": "Launcher for auditable Python data analysis and the data-master agent skill",
+  "private": false,
+  "publishConfig": {"access": "public"},
   "license": "MIT",
   "homepage": "https://github.com/MAGA2010/data-master#readme",
   "bugs": {"url": "https://github.com/MAGA2010/data-master/issues"},

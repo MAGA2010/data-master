@@ -69,7 +69,7 @@ class InstalledDistribution(unittest.TestCase):
         self.assertNotIn('"data_master._runtime.templates"', text)
 
     def test_installed_version_and_help(self):
-        self.assertIn("0.2.0", self.command("--version"))
+        self.assertIn("0.3.0", self.command("--version"))
         self.assertIn("analyze", self.command("--help"))
         self.assertIn("--unit-key", self.command("analyze", "--help"))
         self.assertIn("--json", self.command("verify", "--help"))
@@ -106,7 +106,7 @@ class InstalledDistribution(unittest.TestCase):
         self.assertIn("report: reused", self.command("resume", out / "state.json"))
         self.assertTrue(json.loads(self.command("verify", out, "--json"))["valid"])
         state = json.loads((out / "state.json").read_text(encoding="utf-8"))
-        self.assertEqual(state["pipeline"]["package_version"], "0.2.0")
+        self.assertEqual(state["pipeline"]["package_version"], "0.3.0")
         (out / "report.md").write_text("altered", encoding="utf-8")
         self.command("verify", out, "--json", expected=1)
 

@@ -64,6 +64,13 @@
           "parser": "pd.to_datetime(errors='coerce'), per-element format inference"
         },
         "role_hint": "numeric"
+      },
+      "coercion_numeric_stats": {
+        "min": -1.0,
+        "max": 7.9,
+        "negatives": 1,
+        "zeros": 0,
+        "note": "computed on the numeric view the automatic coercion will produce"
       }
     },
     "sepal_width_cm": {
@@ -120,6 +127,13 @@
           "parser": "pd.to_datetime(errors='coerce'), per-element format inference"
         },
         "role_hint": "numeric"
+      },
+      "coercion_numeric_stats": {
+        "min": 2.0,
+        "max": 4.4,
+        "negatives": 0,
+        "zeros": 0,
+        "note": "computed on the numeric view the automatic coercion will produce"
       }
     },
     "petal_length_cm": {
@@ -176,6 +190,13 @@
           "parser": "pd.to_datetime(errors='coerce'), per-element format inference"
         },
         "role_hint": "numeric"
+      },
+      "coercion_numeric_stats": {
+        "min": 1.0,
+        "max": 6.9,
+        "negatives": 0,
+        "zeros": 0,
+        "note": "computed on the numeric view the automatic coercion will produce"
       }
     },
     "petal_width_cm": {
@@ -232,6 +253,13 @@
           "parser": "pd.to_datetime(errors='coerce'), per-element format inference"
         },
         "role_hint": "numeric"
+      },
+      "coercion_numeric_stats": {
+        "min": 0.1,
+        "max": 2.5,
+        "negatives": 0,
+        "zeros": 0,
+        "note": "computed on the numeric view the automatic coercion will produce"
       }
     },
     "species_code": {
@@ -286,6 +314,13 @@
           "parser": "pd.to_datetime(errors='coerce'), per-element format inference"
         },
         "role_hint": "numeric"
+      },
+      "coercion_numeric_stats": {
+        "min": 0.0,
+        "max": 2.0,
+        "negatives": 0,
+        "zeros": 52,
+        "note": "computed on the numeric view the automatic coercion will produce"
       }
     },
     "species": {
@@ -453,6 +488,13 @@
   "anomalies": {
     "flags": [
       {
+        "type": "impossible_negative",
+        "column": "sepal_length_cm",
+        "severity": "P1",
+        "n_negatives": 1,
+        "min": -1.0
+      },
+      {
         "type": "residual_case_variants",
         "column": "species",
         "severity": "P2",
@@ -479,7 +521,7 @@
         "pct": 5.7
       }
     ],
-    "n_flags": 4
+    "n_flags": 5
   },
   "target_candidate": {
     "candidates": [

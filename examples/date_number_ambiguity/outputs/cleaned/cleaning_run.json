@@ -1,0 +1,209 @@
+{
+  "schema_version": "1.1",
+  "reproducibility_check": {
+    "passed": true,
+    "reason": "hash matches",
+    "expected_hash": "45480b1e8fbbdd691cb92ee6d335f63cd664a6791f9f578481b114ce8ae9dff6",
+    "regenerated_hash": "45480b1e8fbbdd691cb92ee6d335f63cd664a6791f9f578481b114ce8ae9dff6"
+  },
+  "source": "D:\\数据处理 skill\\examples\\date_number_ambiguity\\session_export.csv",
+  "n_raw": 48,
+  "n_clean": 48,
+  "columns_before": [
+    "subject_id",
+    "session_stamp",
+    "latency_s"
+  ],
+  "columns_after": [
+    "subject_id",
+    "session_stamp",
+    "latency_s"
+  ],
+  "columns_dropped": [],
+  "raw_hash": "62619a7e5b45c756238f3bdfc280fd7d97b4666352a6e11c7bcc0a5b01cc07fe",
+  "cleaned_hash": "45480b1e8fbbdd691cb92ee6d335f63cd664a6791f9f578481b114ce8ae9dff6",
+  "source_spec": {
+    "path": "D:\\数据处理 skill\\examples\\date_number_ambiguity\\session_export.csv",
+    "extension": ".csv",
+    "read_mode": "text",
+    "schema_declares_types": false
+  },
+  "read_mode": "text",
+  "columns_touched_by_ops": [
+    "latency_s"
+  ],
+  "dtype_manifest": {
+    "subject_id": "string",
+    "session_stamp": "string",
+    "latency_s": "Float64"
+  },
+  "untouched_column_audit": {
+    "passed": true,
+    "reason": "every column no operation named kept exactly its raw values",
+    "columns_checked": 2,
+    "columns_violating": [],
+    "violations": []
+  },
+  "applied_ops": [
+    {
+      "id": "t-fix-unicode",
+      "op": "fix_unicode",
+      "columns": [
+        "latency_s",
+        "session_stamp",
+        "subject_id"
+      ],
+      "severity": "P3",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-fix-unicode",
+      "origin": "rule",
+      "n_before": 48,
+      "n_after": 48
+    },
+    {
+      "id": "t-strip-ws",
+      "op": "strip_whitespace",
+      "columns": [
+        "latency_s",
+        "session_stamp",
+        "subject_id"
+      ],
+      "severity": "P3",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-strip-ws",
+      "origin": "rule",
+      "n_before": 48,
+      "n_after": 48
+    },
+    {
+      "id": "t-collapse-whitespace",
+      "op": "collapse_whitespace",
+      "columns": [
+        "latency_s",
+        "session_stamp",
+        "subject_id"
+      ],
+      "severity": "P3",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-collapse-whitespace",
+      "origin": "rule",
+      "n_before": 48,
+      "n_after": 48
+    },
+    {
+      "id": "t-trim-quotes",
+      "op": "trim_paired_quotes",
+      "columns": [
+        "latency_s",
+        "session_stamp",
+        "subject_id"
+      ],
+      "severity": "P3",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-trim-quotes",
+      "origin": "rule",
+      "n_before": 48,
+      "n_after": 48
+    },
+    {
+      "id": "t-coerce-numeric",
+      "op": "coerce_numeric",
+      "columns": [
+        "latency_s"
+      ],
+      "severity": "P2",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-coerce-numeric",
+      "origin": "rule",
+      "n_before": 48,
+      "n_after": 48
+    },
+    {
+      "id": "t-normalize-dtypes",
+      "op": "normalize_dtypes",
+      "columns": [
+        "latency_s",
+        "session_stamp",
+        "subject_id"
+      ],
+      "severity": "P2",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-normalize-dtypes",
+      "origin": "rule",
+      "n_before": 48,
+      "n_after": 48
+    },
+    {
+      "id": "t-drop-all-null-cols",
+      "op": "drop_all_null_cols",
+      "columns": [],
+      "severity": "P1",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-drop-all-null-cols",
+      "origin": "rule",
+      "n_before": 48,
+      "n_after": 48
+    },
+    {
+      "id": "t-drop-all-null-rows",
+      "op": "drop_all_null_rows",
+      "columns": [],
+      "severity": "P1",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-drop-all-null-rows",
+      "origin": "rule",
+      "n_before": 48,
+      "n_after": 48
+    },
+    {
+      "id": "t-rename-clean",
+      "op": "rename_columns_append_cleaned",
+      "columns": [],
+      "severity": "P2",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-rename-clean",
+      "origin": "rule",
+      "n_before": 48,
+      "n_after": 48
+    }
+  ],
+  "case_variant_merge_map": [],
+  "withheld": [],
+  "failed": [],
+  "never_automatic_flags": [
+    {
+      "id": "coerce_numeric_or_date@session_stamp",
+      "op": "coerce_numeric_or_date",
+      "columns": [
+        "session_stamp"
+      ],
+      "reason": "every value parses both as an integer and as a date (e.g. '20240115'), and the file does not record which one was meant. Reading a study's dates as integers is the kind of error that survives every later check",
+      "ask_user": "Choose: keep_as_text (default) / integers --force-coerce-numeric session_stamp / dates --force-coerce-dates session_stamp",
+      "default_if_silent": "keep_as_text",
+      "severity": "P1",
+      "rule_source": "references/never-automatic-list.md#conditional-never",
+      "detail": {
+        "hold": "numeric_or_date",
+        "numeric_probe": {
+          "n_non_null": 48,
+          "n_parsed": 48,
+          "n_failed": 0,
+          "all_parse": true,
+          "parse_fraction_of_non_null": 1.0,
+          "sample_failed": [],
+          "failed_are_blank_or_sentinel": false,
+          "has_currency_or_percent": false,
+          "currency_or_percent_samples": [],
+          "would_parse_after_symbol_strip": null,
+          "leading_zero_suspected_id": false,
+          "leading_zero_fraction": 0.0,
+          "leading_zero_samples": [],
+          "parser": "pd.to_numeric(errors='coerce') after removing thousands separators"
+        },
+        "date_probe": {
+          "n_non_null": 48,
+          "n_parsed": 48,
+          "n_failed": 0,
+          "all_parse": true,
+          "parse_fraction_of_non_null": 1.0,
+          "sample_failed": [],
+          "parser": "pd.to_datetime(errors='coerce'), per-element format inference"
+        },
+        "numeric_override": "--force-coerce-numeric session_stamp",
+        "date_override": "--force-coerce-dates session_stamp"
+      }
+    }
+  ],
+  "user_flags": {}
+}

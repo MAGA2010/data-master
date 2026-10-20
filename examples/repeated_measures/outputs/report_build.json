@@ -2,10 +2,20 @@
   "schema_version": "1.0",
   "title": "Repeated-measures treatment comparison",
   "template": "nature",
-  "generated": "2026-10-19 18:17 中国标准时间",
+  "generated": "2026-10-19 20:06 中国标准时间",
   "report_md": "D:\\数据处理 skill\\examples\\repeated_measures\\outputs\\report.md",
-  "report_md_sha256": "f4283c49d1f86655a88158ce98f579cb4208b511d490a3e05fc06439baadbff2",
+  "report_md_sha256": "f7d29edce892ff8cb9f3dfcb6475b7203475de7d12de0f36f4cc93a51047be55",
   "executive_summary_md": "D:\\数据处理 skill\\examples\\repeated_measures\\outputs\\executive_summary.md",
+  "report_html": "D:\\数据处理 skill\\examples\\repeated_measures\\outputs\\report.html",
+  "html": {
+    "path": "D:\\数据处理 skill\\examples\\repeated_measures\\outputs\\report.html",
+    "bytes": 144553,
+    "source_md": "D:\\数据处理 skill\\examples\\repeated_measures\\outputs\\report.md",
+    "source_md_sha256": "8d99a482cd01e9d6f50e0871723a86480625b3464047cd01e8dc8b4e6a42bb57",
+    "images_embedded": 1,
+    "images_missing": [],
+    "self_contained": true
+  },
   "report_pdf": "D:\\数据处理 skill\\examples\\repeated_measures\\outputs\\report.pdf",
   "pdf": {
     "pdf_written": true,
@@ -13,15 +23,15 @@
     "attempts": [
       {
         "tier": "reportlab",
-        "interpreter": "C:\\Users\\华为\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
-        "in_process": false,
+        "interpreter": "C:\\Users\\华为\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+        "in_process": true,
         "ok": true
       }
     ],
-    "sha256": "eff25e3ed7e77356c05c586948c283ffa3b2e23d0bfe89ce9dcc054efbccdbbe",
-    "reportlab_version": "4.4.9",
+    "sha256": "80387305c48f42000d4df9929bdb791076cb4203a5092ce1344b264ba4dd6790",
+    "reportlab_version": "5.0.1",
     "pages": 8,
-    "bytes": 127312,
+    "bytes": 127059,
     "cjk_font_embedded": true,
     "cjk_font_available": true,
     "cjk_text_present": true
@@ -32,22 +42,22 @@
     "attempts": [
       {
         "tier": "reportlab",
-        "interpreter": "C:\\Users\\华为\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
-        "in_process": false,
+        "interpreter": "C:\\Users\\华为\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+        "in_process": true,
         "ok": true
       }
     ],
-    "sha256": "de09fc999f93f93f4169941a332ca59b945b61013464d6482e90d49f3fe85265",
-    "reportlab_version": "4.4.9",
+    "sha256": "926c3283b2387d5af6c6302f4a14b473c323d757dba69b21e4d57c7e35219cf7",
+    "reportlab_version": "5.0.1",
     "pages": 8,
-    "bytes": 127075,
+    "bytes": 126770,
     "cjk_font_embedded": true,
     "cjk_font_available": true,
     "cjk_text_present": true,
     "probed_from": "throwaway first pass; the delivered PDF is re-rendered"
   },
   "artifact_hashes": {
-    "profile": "bb4737ea248965fe",
+    "profile": "cd348014d1cca169",
     "plan": "7ac8130efd147906",
     "validation": "ad2137c384c90c6e",
     "descriptive": "6cbb044156c80a75",
@@ -64,13 +74,13 @@
       "numpy": "2.4.6",
       "scipy": "1.18.1"
     },
-    "assembled_at": "2026-10-19 18:17 中国标准时间",
+    "assembled_at": "2026-10-19 20:06 中国标准时间",
     "pipeline": {
-      "git_commit": "028ac9a03e9be1f0f58f426bb5a92cf4f35075d0",
+      "git_commit": "8749c5ea1ff44b0e8376d75b61b238747708557f",
       "git_branch": "main",
       "git_dirty": true,
-      "git_dirty_files": 1,
-      "git_describe": "028ac9a",
+      "git_dirty_files": 47,
+      "git_describe": "v0.2.0-2-g8749c5e-dirty",
       "note": "working tree was dirty when this run started; the commit alone does not reproduce it"
     }
   },
@@ -119,6 +129,6 @@
   "self_audit": {
     "n_forbidden": 0,
     "findings": [],
-    "n_lines_scanned": 189
+    "n_lines_scanned": 188
   }
 }

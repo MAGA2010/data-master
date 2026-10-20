@@ -440,6 +440,13 @@ def audit_untouched_columns(raw: pd.DataFrame, clean: pd.DataFrame,
     violations: List[Dict[str, Any]] = []
     checked: List[str] = []
 
+    def present_values(series: pd.Series) -> List[str]:
+        # pd.NA and np.nan are both "no value"; `v == v` cannot test for them
+        # because pd.NA refuses a boolean context, and a text column with
+        # blanks crashes that check outright
+        return [str(v) for v in series.tolist()
+                if v is not None and not pd.isna(v)]
+
     for col in raw.columns:
         if col in touched_set or col not in clean.columns:
             continue
@@ -447,8 +454,8 @@ def audit_untouched_columns(raw: pd.DataFrame, clean: pd.DataFrame,
         # Replay the automatic hygiene the plan promised, so the comparison is
         # against the state the ops are supposed to produce, not the raw bytes.
         projected = hygiene_project(raw[col])
-        raw_vals = [str(v) for v in projected.tolist() if v is not None and v == v]
-        cln_vals = [str(v) for v in clean[col].tolist() if v is not None and v == v]
+        raw_vals = present_values(projected)
+        cln_vals = present_values(clean[col])
         raw_counter = Counter(raw_vals)
         cln_counter = Counter(cln_vals)
         introduced = sorted((cln_counter - raw_counter).elements())

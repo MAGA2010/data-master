@@ -525,6 +525,11 @@ def main(argv=None) -> int:
                         outdir=outdir)
     md_path.write_text(md, encoding="utf-8")
 
+    # A rendering of the report.md just written: the same saved evidence, no
+    # recomputation, and independent of whether a PDF backend is available.
+    from export_html import render_report_html
+    html_info = render_report_html(md_path, outdir=outdir, title=args.title)
+
     summary = branches(profile)
     has_ts = bool(timeseries and timeseries.get("estimable"))
     executive = [
@@ -561,6 +566,8 @@ def main(argv=None) -> int:
         "generated": datetime.now().astimezone().isoformat(),
         "report_md": str(md_path),
         "report_md_sha256": sha256_of(md_path),
+        "report_html": html_info["path"],
+        "html": html_info,
         "report_pdf": str(pdf_path) if pdf.get("pdf_written") else None,
         "pdf": pdf,
         "profile": str(profile_path),
@@ -594,6 +601,10 @@ def main(argv=None) -> int:
     )
 
     print("[profile-report] report.md  %d bytes" % md_path.stat().st_size)
+    print("[profile-report] report.html %d bytes (%d figure(s) embedded%s)"
+          % (html_info["bytes"], html_info["images_embedded"],
+             "" if html_info["self_contained"]
+             else "; MISSING: %s" % ", ".join(html_info["images_missing"])))
     if pdf.get("pdf_written"):
         print("[profile-report] report.pdf %s bytes, backend=%s"
               % (pdf.get("bytes"), pdf.get("backend")))

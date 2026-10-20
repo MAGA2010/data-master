@@ -227,18 +227,51 @@ def variance_effects(groups: List[np.ndarray], n_boot: int = BOOTSTRAP) -> Dict[
 
 
 def rank_effects(groups: List[np.ndarray], n_boot: int = BOOTSTRAP) -> Dict[str, Any]:
-    """epsilon^2 for Kruskal-Wallis plus Cliff's delta for every pair."""
+    """epsilon^2 for Kruskal-Wallis plus Cliff's delta for every pair.
+
+    epsilon^2 gets the same bootstrap percentile interval omega^2 has: without
+    one, a rank-path report can quote p next to an effect size but no
+    uncertainty, and the uncertainty-visible gate fails for datasets whose
+    only defensible test is rank-based.
+    """
     k = len(groups)
     h, _ = stats.kruskal(*groups)
     allv = np.concatenate(groups)
     n = len(allv)
     n_eff = n - sum(len(g) ** 2 for g in groups) / n
     eps2 = (h - k + 1) / n_eff if n_eff > 0 else float("nan")
+
+    def _eps(res: List[np.ndarray]) -> float:
+        try:
+            hh, _ = stats.kruskal(*res)
+        except ValueError:
+            return float("nan")
+        all_r = np.concatenate(res)
+        nn = len(all_r)
+        ne = nn - sum(len(g) ** 2 for g in res) / nn
+        return (hh - len(res) + 1) / ne if ne > 0 else float("nan")
+
+    ci = {"low": None, "high": None}
+    rng = np.random.default_rng(SEED)
+    boot: List[float] = []
+    for _ in range(n_boot):
+        res = []
+        for g in groups:
+            idx = rng.integers(0, len(g), len(g))
+            res.append(g[idx])
+        boot.append(_eps(res))
+    boot = [b for b in boot if np.isfinite(b)]
+    if boot:
+        arr = np.asarray(boot)
+        ci = {"low": round(float(np.percentile(arr, 2.5)), 6),
+              "high": round(float(np.percentile(arr, 97.5)), 6),
+              "method": f"bootstrap percentile, {n_boot} resamples, seed={SEED}"}
     pairs = {}
     for a, b in itertools.combinations(range(k), 2):
         d = cliffs_delta(groups[a], groups[b], n_boot=n_boot)
         pairs[f"g{a + 1}_vs_g{b + 1}"] = d
     return {"epsilon_squared_rank": round(float(eps2), 6),
+            "epsilon_squared_rank_ci95": ci,
             "n_effective": round(float(n_eff), 3),
             "cliffs_delta_by_pair": pairs}
 
@@ -248,6 +281,19 @@ def rank_effects(groups: List[np.ndarray], n_boot: int = BOOTSTRAP) -> Dict[str,
 def two_group_numeric(a_vals: np.ndarray, b_vals: np.ndarray,
                       a_name: str, b_name: str, alpha: float = ALPHA) -> Dict[str, Any]:
     na, nb = len(a_vals), len(b_vals)
+    if na < 2 or nb < 2:
+        # a single observation has no variance; every parametric and rank
+        # comparison would either crash or return a NaN that looks like a p
+        return {
+            "estimable": False,
+            "reason": (f"n={na}/{nb}; a group with fewer than 2 observations "
+                       "has no variance to compare against"),
+            "p_raw": None,
+            "p_adjusted": None,
+            "n_a": na, "n_b": nb,
+            "group_a": a_name, "group_b": b_name,
+            "rule_source": "scripts/stats_inferential.py#two_group_numeric",
+        }
     checks = [normality(a_vals), normality(b_vals)]
     assumptions: Dict[str, Any] = {
         "normality_a": checks[0], "normality_b": checks[1],
@@ -338,7 +384,17 @@ def _degeneracy(vals: List[np.ndarray]) -> Optional[str]:
     Welch's weights are n/s^2, so the statistic becomes 0/0 and scipy returns
     NaN -- which used to travel into the multiplicity family. Reporting NaN as
     a p-value is worse than reporting nothing: it looks like a computed result.
+    A group with a single observation is the same failure one step earlier:
+    ddof=1 variance is undefined, so scipy returns NaN from the F-family and
+    the NaN again travels downstream looking like a result.
     """
+    singleton = [str(i) for i, v in enumerate(vals) if len(v) < 2]
+    if singleton:
+        return ("group(s) %s hold fewer than 2 observations; within-group "
+                "variance cannot be estimated there, so no omnibus mean "
+                "comparison is defined -- the group needs more data or an "
+                "explicit merge decision, not a silent NaN"
+                % ", ".join(singleton))
     within = [float(np.var(v, ddof=1)) for v in vals if len(v) > 1]
     if any(sd2 == 0.0 for sd2 in within):
         flat = [str(i) for i, v in enumerate(vals) if len(v) > 1 and float(np.var(v, ddof=1)) == 0.0]
@@ -1461,7 +1517,8 @@ def main() -> int:
                     "independent and its n is inflated accordingly -- it is shown "
                     "for comparison only and is not the primary evidence")
         fam_idx = [i for i, t in enumerate(sec_tests)
-                   if t.get("estimable") and t.get("p_raw") is not None]
+                   if t.get("estimable") and t.get("p_raw") is not None
+                   and np.isfinite(t["p_raw"])]
         sec_family = (correct_pvalues([sec_tests[i]["p_raw"] for i in fam_idx],
                                       args.correction, args.alpha)
                       if fam_idx else {"family_size": 0, "adjusted": []})
@@ -1473,12 +1530,25 @@ def main() -> int:
                      "multiple_comparisons": sec_family}
 
     # ---- multiplicity across the primary family ----
-    fam_idx = [i for i, t in enumerate(tests) if t.get("estimable") and t.get("p_raw") is not None]
+    # Same finiteness rule as correct_pvalues: a NaN p_raw on an estimable
+    # test is dropped from the family here rather than misaligning the
+    # adjusted list -- the class of crash the ambiguity fixture exposed when
+    # a singleton group pushed a NaN through f_oneway.
+    fam_idx = [i for i, t in enumerate(tests)
+               if t.get("estimable") and t.get("p_raw") is not None
+               and np.isfinite(t["p_raw"])]
     family = (correct_pvalues([tests[i]["p_raw"] for i in fam_idx], args.correction, args.alpha)
               if fam_idx else {"family_size": 0, "adjusted": []})
     for j, i in enumerate(fam_idx):
         tests[i]["p_adjusted"] = family["adjusted"][j]
         tests[i]["significant_after_correction"] = bool(family["adjusted"][j] < args.alpha)
+    for t in tests:
+        if t.get("estimable") and t.get("p_raw") is not None \
+                and not np.isfinite(t["p_raw"]):
+            t["p_raw"] = None
+            t["reason"] = (str(t.get("reason") or "") +
+                           "; the test returned a non-finite p-value, which is "
+                           "reported as not estimated rather than shown as a number").strip("; ")
 
     # ---- exploratory correlation family, at the primary analysis level ----
     corr_frame = analysis_df if structure in ("clustered", "incomplete_repeated") else df

@@ -1,0 +1,121 @@
+respondent_id,age_years,satisfaction,visit_frequency,recommend,minutes_spent
+0001,55,Very dissatisfied,Sometimes,No,3.8
+0002,63,Satisfied,Often,Yes,21.7
+0003,-999,Neutral,Often,No,13.5
+0004,78,Satisfied,Often,No,
+0005,19,,Rarely,No,
+0006,-999,Very dissatisfied,,No,9.0
+0007,49,Satisfied,Never,Yes,17.6
+0008,-999,Very dissatisfied,Sometimes,Yes,2.1
+0009,75,Very dissatisfied,Never,No,
+0010,45,Satisfied,Sometimes,Yes,21.9
+0011,25,Satisfied,Never,Yes,27.1
+0012,57,Very satisfied,Sometimes,Yes,
+0013,61,Neutral,Sometimes,No,10.7
+0014,35,Dissatisfied,Rarely,Yes,3.2
+0015,49,Dissatisfied,Sometimes,No,0.5
+0016,60,Dissatisfied,Rarely,Yes,3.8
+0017,24,Very dissatisfied,,Yes,7.9
+0018,-999,Satisfied,Sometimes,Yes,14.5
+0019,40,Satisfied,Often,Yes,7.6
+0020,41,Neutral,Rarely,Yes,15.4
+0021,27,Satisfied,Rarely,Yes,15.6
+0022,61,Neutral,Sometimes,No,11.6
+0023,32,Satisfied,Never,Yes,
+0024,34,Dissatisfied,Rarely,No,8.5
+0025,49,Neutral,Sometimes,Yes,14.9
+0026,38,Very dissatisfied,Never,No,0.5
+0027,70,Very dissatisfied,,No,5.1
+0028,79,Neutral,Often,No,11.0
+0029,41,Very dissatisfied,Rarely,No,10.5
+0030,-999,Dissatisfied,Often,No,
+0031,21,Very dissatisfied,Sometimes,No,12.5
+0032,38,Dissatisfied,Rarely,No,11.4
+0033,23,Very dissatisfied,Sometimes,No,12.5
+0034,77,Neutral,Sometimes,No,10.2
+0035,18,Dissatisfied,Never,Yes,12.2
+0036,76,Satisfied,Never,No,19.5
+0037,63,Very dissatisfied,Often,No,0.5
+0038,75,Satisfied,Rarely,Yes,17.0
+0039,63,Very dissatisfied,Sometimes,No,4.2
+0040,24,Satisfied,Rarely,Yes,14.1
+0041,22,Dissatisfied,Sometimes,Yes,5.9
+0042,67,Very dissatisfied,Never,No,0.5
+0043,75,Dissatisfied,Rarely,Yes,7.1
+0044,31,Satisfied,Never,Yes,19.3
+0045,37,Dissatisfied,Often,No,5.9
+0046,58,Neutral,Never,Yes,6.7
+0047,54,Very satisfied,Never,Yes,28.2
+0048,71,Very satisfied,Rarely,Yes,22.5
+0049,47,Very dissatisfied,Rarely,Yes,6.1
+0050,64,Very satisfied,Sometimes,Yes,23.1
+0051,42,Neutral,Sometimes,No,10.8
+0052,21,Very dissatisfied,Rarely,No,8.4
+0053,-999,Dissatisfied,Rarely,No,6.9
+0054,54,Very satisfied,Sometimes,No,24.1
+0055,72,Satisfied,Often,Yes,
+0056,28,Dissatisfied,Rarely,Yes,
+0057,24,,Sometimes,No,4.4
+0058,69,Satisfied,Often,Yes,25.6
+0059,52,Neutral,Rarely,No,13.7
+0060,32,Satisfied,Rarely,Yes,25.7
+0061,48,Very dissatisfied,Often,No,7.8
+0062,30,Very satisfied,Often,Yes,25.8
+0063,78,Neutral,Sometimes,Yes,10.7
+0064,40,Very satisfied,Rarely,Yes,23.9
+0065,30,Very dissatisfied,Sometimes,Yes,13.2
+0066,52,Satisfied,Never,Yes,22.7
+0067,41,Very dissatisfied,Sometimes,Yes,3.5
+0068,73,Very satisfied,Never,Yes,22.1
+0069,-999,,Sometimes,Yes,29.3
+0070,29,Neutral,Never,Yes,10.9
+0071,23,Very dissatisfied,Often,Yes,9.7
+0072,70,Dissatisfied,Sometimes,No,5.4
+0073,74,,Often,No,15.5
+0074,44,Very dissatisfied,Rarely,No,12.1
+0075,77,Neutral,Never,Yes,16.3
+0076,79,Neutral,Sometimes,Yes,14.0
+0077,23,Satisfied,Often,Yes,18.6
+0078,57,Satisfied,Often,Yes,17.7
+0079,35,Very satisfied,Sometimes,Yes,23.9
+0080,31,Neutral,Never,No,17.7
+0081,51,Neutral,,Yes,17.6
+0082,49,Satisfied,Rarely,No,19.6
+0083,-999,Dissatisfied,Sometimes,No,4.0
+0084,64,Very dissatisfied,Often,No,3.9
+0085,75,Dissatisfied,Sometimes,No,10.2
+0086,69,Very satisfied,Sometimes,Yes,24.2
+0087,39,Very satisfied,Rarely,Yes,18.6
+0088,46,Neutral,Rarely,No,15.7
+0089,-999,Very satisfied,Often,Yes,34.4
+0090,41,,Never,Yes,19.1
+0091,19,Very dissatisfied,Often,No,
+0092,63,Satisfied,Rarely,Yes,24.5
+0093,29,Very dissatisfied,Never,Yes,4.3
+0094,24,Satisfied,Sometimes,Yes,16.4
+0095,42,Very dissatisfied,Rarely,No,6.7
+0096,61,Dissatisfied,Sometimes,Yes,11.3
+0097,42,Very satisfied,Rarely,Yes,22.4
+0098,42,,Often,No,9.9
+0099,-999,Very dissatisfied,Often,Yes,0.5
+0100,61,Neutral,Often,Yes,15.6
+0101,36,Neutral,Sometimes,Yes,14.5
+0102,23,,Rarely,No,8.4
+0103,78,Dissatisfied,Sometimes,No,10.5
+0104,33,Dissatisfied,Never,No,9.2
+0105,-999,Very dissatisfied,Often,No,11.3
+0106,35,Very satisfied,Rarely,Yes,22.2
+0107,72,Dissatisfied,Often,No,8.8
+0108,36,Dissatisfied,Often,No,3.4
+0109,20,Dissatisfied,Never,No,4.5
+0110,77,Satisfied,,Yes,17.0
+0111,60,Satisfied,Rarely,Yes,11.8
+0112,70,Very dissatisfied,Often,No,2.6
+0113,44,Very satisfied,Sometimes,Yes,18.7
+0114,-999,Neutral,Often,No,11.0
+0115,35,Neutral,Sometimes,Yes,13.5
+0116,53,Dissatisfied,Sometimes,No,12.8
+0117,29,Very dissatisfied,Never,No,0.5
+0118,76,Dissatisfied,Often,No,8.2
+0119,35,Very dissatisfied,Sometimes,Yes,9.5
+0120,68,Dissatisfied,Often,Yes,14.5

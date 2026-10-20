@@ -27,8 +27,9 @@ evidence.
 > saves sensitivity checks, and produces a PDF plus a separate audit that can
 > refuse a “submission-ready” verdict.
 >
-> The repository includes three synthetic failure-case studies, Windows/Linux CI
-> on Python 3.11–3.13, an evaluation dashboard, and a v0.2.0 release with a wheel,
+> The repository includes five synthetic failure-case studies, Windows/Linux CI
+> on Python 3.11–3.13, macOS distribution coverage, an evaluation dashboard, and
+> a v0.3.0 release with a wheel,
 > npm archive, `.skill` archive, and checksums.
 >
 > Repository: https://github.com/MAGA2010/data-master
@@ -55,7 +56,7 @@ evidence.
 > checks, and emits a separate audit verdict. If a critical study decision is
 > missing, it delivers the report but refuses to call it submission-ready.
 >
-> The repository has a 24-second demo, three reproducible case studies, a public
+> The repository has a 24-second demo, five reproducible case studies, a public
 > evaluation dashboard, and release artifacts for the CLI and skill package:
 > https://github.com/MAGA2010/data-master
 >
@@ -73,8 +74,9 @@ evidence.
 > cleaning decision, uses unit-aware statistics, runs sensitivity checks, and
 > produces machine-verifiable evidence alongside the PDF.
 >
-> Version 0.2.0 now includes one-command GitHub installation, three reproducible
-> case studies, an evaluation dashboard, Windows/Linux CI, and signed-by-checksum
+> Version 0.3.0 includes one-command GitHub installation, five reproducible
+> case studies, an evaluation dashboard, Windows/Linux CI, macOS distribution
+> coverage, and signed-by-checksum
 > release artifacts.
 >
 > Explore it or contribute a failure case: https://github.com/MAGA2010/data-master
@@ -85,7 +87,7 @@ evidence.
 
 > I built data-master: an open-source Codex skill + CLI that turns messy datasets
 > into auditable PDF reports. Reproducible cleaning, unit-aware stats, sensitivity
-> checks, and evidence you can verify. v0.2.0: https://github.com/MAGA2010/data-master
+> checks, and evidence you can verify. v0.3.0: https://github.com/MAGA2010/data-master
 
 ## Maintainer outreach
 
@@ -99,7 +101,9 @@ Use this short note only when a project or community is directly relevant.
 ## Links to rotate
 
 - Repository: https://github.com/MAGA2010/data-master
-- Release: https://github.com/MAGA2010/data-master/releases/tag/v0.2.0
+- Release: https://github.com/MAGA2010/data-master/releases/tag/v0.3.0
+- Date-or-number benchmark: https://github.com/MAGA2010/data-master/blob/main/docs/case-studies/identifier-traps.md#benchmark-date-or-number
+- Synthetic survey: https://github.com/MAGA2010/data-master/blob/main/docs/case-studies/survey-data.md
 - Evaluation: https://github.com/MAGA2010/data-master/blob/main/EVALUATION.md
 - Identifier traps: https://github.com/MAGA2010/data-master/blob/main/docs/case-studies/identifier-traps.md
 - Repeated rows: https://github.com/MAGA2010/data-master/blob/main/docs/case-studies/unit-aware-comparison.md

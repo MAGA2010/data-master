@@ -47,7 +47,7 @@ def build(output: Path) -> Path:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--out", default="dist/data-master-0.2.0.skill")
+    parser.add_argument("--out", default="dist/data-master-0.3.0.skill")
     args = parser.parse_args(argv)
     try:
         result = build(Path(args.out).resolve())

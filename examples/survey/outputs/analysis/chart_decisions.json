@@ -1,0 +1,170 @@
+{
+ "schema_version": "1.1",
+ "source": "examples\\survey\\survey_responses.csv",
+ "palette": [
+  "#1f77b4",
+  "#ff7f0e",
+  "#2ca02c",
+  "#d62728",
+  "#9467bd"
+ ],
+ "markers": [
+  "o",
+  "s",
+  "^",
+  "D",
+  "v"
+ ],
+ "n_decisions": 2,
+ "decisions": [
+  {
+   "argument_task": "establish the shape of each numeric variable before any test assumes one",
+   "chart_type": "distribution_panel",
+   "spec": {
+    "panels": [
+     {
+      "column": "age_years",
+      "n": 120,
+      "shape": "strongly left-skewed",
+      "skew_pearson": -2.6846,
+      "skew_bowley": 0.22627737226277372,
+      "skew_used": 2.6846,
+      "median": 42.0,
+      "q25": 28.75,
+      "q75": 63.0,
+      "mean": -56.266667,
+      "min": -999.0,
+      "max": 79.0,
+      "title": "age_years is strongly left-skewed (median 42.00, IQR 28.75 to 63.00, n = 120)"
+     },
+     {
+      "column": "minutes_spent",
+      "n": 111,
+      "shape": "slightly right-skewed",
+      "skew_pearson": 0.3905,
+      "skew_bowley": 0.14009661835748752,
+      "skew_used": 0.3905,
+      "median": 11.8,
+      "q25": 7.35,
+      "q75": 17.7,
+      "mean": 12.879279,
+      "min": 0.5,
+      "max": 34.4,
+      "title": "minutes_spent is slightly right-skewed (median 11.80, IQR 7.35 to 17.70, n = 111)"
+     }
+    ],
+    "bins": "auto",
+    "show_median_iqr": true
+   },
+   "uncertainty": "median and interquartile range marked on every panel",
+   "title": "2 of 2 measured variables are skewed, so the analyses below summarise them by median rather than mean",
+   "caption": "Distribution of each numeric variable, with the median and interquartile range marked. Panel order follows absolute skewness. Full box-and-whisker statistics are in Table 2.",
+   "body": {
+    "fact": "age_years is strongly left-skewed (median 42.00, IQR 28.75 to 63.00, n = 120); minutes_spent is slightly right-skewed (median 11.80, IQR 7.35 to 17.70, n = 111).",
+    "interpretation": "Skewed variables are summarised by the median and IQR, and rank-based or Welch methods are preferred for them.",
+    "implication": "These summaries, not the raw shape, should carry into any downstream model."
+   },
+   "complexity_principles": [
+    "1_one_argument",
+    "6_uncertainty",
+    "8_minimum_complexity"
+   ],
+   "rationale": "The shape of every numeric variable decides which test is legitimate later, so it is one argument and belongs in one figure. Splitting it across four would restate it four times.",
+   "rejected": [
+    {
+     "chart_type": "one histogram per variable as separate figures",
+     "reason": "same argument repeated; the reader has to re-read the framing each time"
+    },
+    {
+     "chart_type": "box plot only",
+     "reason": "understates the tail, which is precisely what decides the test choice"
+    }
+   ],
+   "id": "fig01_distribution_panel",
+   "output_path": "charts/fig01_distribution_panel.png",
+   "order": 1
+  },
+  {
+   "argument_task": "test whether satisfaction moves the measured outcomes",
+   "chart_type": "small_multiples_ci",
+   "spec": {
+    "group": "satisfaction",
+    "panels": [
+     {
+      "outcome": "minutes_spent",
+      "group": "satisfaction",
+      "method": "Kruskal-Wallis H (rank-based)",
+      "p_raw": 1.4011461519681638e-15,
+      "p_adjusted": 1.4011461519681638e-15,
+      "means": {
+       "Dissatisfied": 7.645455,
+       "Neutral": 13.142857,
+       "Satisfied": 18.833333,
+       "Very dissatisfied": 6.266667,
+       "Very satisfied": 23.864286
+      },
+      "group_n": {
+       "Dissatisfied": 22,
+       "Neutral": 21,
+       "Satisfied": 21,
+       "Very dissatisfied": 27,
+       "Very satisfied": 14
+      },
+      "n_total": 105,
+      "effect_phrase": "epsilon squared rank = 0.862 (95% CI 0.747 to 0.957)",
+      "significant": true,
+      "title": "minutes_spent differs across satisfaction (adjusted p = 1.401e-15)",
+      "sentence": "minutes_spent differs across satisfaction by epsilon squared rank = 0.862 (95% CI 0.747 to 0.957), BH-adjusted p = 1.401e-15."
+     }
+    ],
+    "n_panels": 1
+   },
+   "uncertainty": "95% confidence intervals on every group mean",
+   "title": "1 of 1 measured outcomes differ across satisfaction after correction for multiple comparisons",
+   "caption": "Mean of each outcome by satisfaction with 95% confidence intervals, Dissatisfied, Neutral, Satisfied, Very dissatisfied, Very satisfied. Kruskal-Wallis H (rank-based). Raw p values are BH-corrected across a family of 1 outcomes.",
+   "body": {
+    "fact": "minutes_spent differs across satisfaction by epsilon squared rank = 0.862 (95% CI 0.747 to 0.957), BH-adjusted p = 1.401e-15.",
+    "interpretation": "Every tested outcome separates the groups.",
+    "implication": "Carry the effect sizes forward, not the p values: a difference that is real can still be too small to matter."
+   },
+   "complexity_principles": [
+    "1_one_argument",
+    "6_uncertainty",
+    "2_third_dimension_must_earn"
+   ],
+   "rationale": "One argument -- does the grouping variable move anything -- shown for every outcome at once. Four separate bar charts would be one argument told four times.",
+   "rejected": [
+    {
+     "chart_type": "pie chart",
+     "reason": "group means are not parts of a whole"
+    },
+    {
+     "chart_type": "3D bar chart",
+     "reason": "the third dimension encodes nothing"
+    },
+    {
+     "chart_type": "radar chart",
+     "reason": "angle and area are hard to compare and imply the axes are commensurate"
+    }
+   ],
+   "id": "fig02_small_multiples_ci",
+   "output_path": "charts/fig02_small_multiples_ci.png",
+   "order": 2
+  }
+ ],
+ "rules": {
+  "one_argument_per_figure": "panels, not repeats; a figure that cannot change the reader's understanding is not emitted",
+  "uncertainty_mandatory": "every estimate carries an interval, a band or a smoother",
+  "title_is_the_finding": "titles are computed from the numbers, never written by hand",
+  "2d_before_3d": "a third dimension must change the ranking, and needs a 2D fallback",
+  "no_pie_for_comparison": "pie and donut are excluded for >3 categories and for any time axis",
+  "restatements_excluded": "a column determined by the grouping variable is not evidence about it, and is kept out of both the figures and the family"
+ },
+ "rule_source": "references/chart-decision-catalog.md",
+ "dtype_provenance": {
+  "dtype_source": "cleaning_run.json",
+  "dtype_manifest_path": "D:\\数据处理 skill\\examples\\survey\\outputs\\cleaned\\cleaning_run.json",
+  "n_columns_typed_from_manifest": 6,
+  "read_mode": "text"
+ }
+}

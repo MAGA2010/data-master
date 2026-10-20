@@ -224,6 +224,13 @@
           "parser": "pd.to_datetime(errors='coerce'), per-element format inference"
         },
         "role_hint": "numeric"
+      },
+      "coercion_numeric_stats": {
+        "min": 46.6,
+        "max": 100.3,
+        "negatives": 0,
+        "zeros": 0,
+        "note": "computed on the numeric view the automatic coercion will produce"
       }
     },
     "turnover": {
@@ -280,6 +287,13 @@
           "parser": "pd.to_datetime(errors='coerce'), per-element format inference"
         },
         "role_hint": "numeric"
+      },
+      "coercion_numeric_stats": {
+        "min": 574.84,
+        "max": 128013.87,
+        "negatives": 0,
+        "zeros": 0,
+        "note": "computed on the numeric view the automatic coercion will produce"
       }
     },
     "signup_date": {

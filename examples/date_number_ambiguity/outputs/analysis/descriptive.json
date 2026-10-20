@@ -1,0 +1,136 @@
+{
+  "schema_version": "1.0",
+  "source": "D:\\数据处理 skill\\examples\\date_number_ambiguity\\outputs\\cleaned\\cleaned.csv",
+  "shape": {
+    "n_rows": 48,
+    "n_cols": 3
+  },
+  "independent_unit": {
+    "independent_unit": "row",
+    "unit_key": null,
+    "n_independent": 48,
+    "n_rows": 48,
+    "n_technical_replicates": null,
+    "n_repeated_measures": null,
+    "hierarchy": "flat (one row = one unit)",
+    "status": "AUTHOR_INPUT_NEEDED",
+    "ask_user": "Is each row an independent unit, or are rows nested within a subject/sample? Provide --unit-key <column> if nested.",
+    "rule_source": "references/nature-statistics-checklist.md#gate-1"
+  },
+  "alpha": 0.05,
+  "numeric": {
+    "latency_s": {
+      "n": 48,
+      "n_missing": 0,
+      "missing_pct": 0.0,
+      "mean": 421.492917,
+      "sd": 70.001469,
+      "se": 10.103842,
+      "median": 417.56,
+      "q25": 361.865,
+      "q75": 477.095,
+      "iqr": 115.23,
+      "min": 276.7,
+      "max": 543.86,
+      "skew": -0.0376,
+      "kurtosis": -0.8649,
+      "n_zeros": 0,
+      "n_negatives": 0,
+      "mean_ci95": [
+        401.166609,
+        441.819224
+      ],
+      "ci_method": "Student t, df=47",
+      "n_outliers_iqr15": 0,
+      "normality": {
+        "test": "Shapiro-Wilk",
+        "W": 0.9731,
+        "p": 0.332859,
+        "normal_at_alpha": true
+      }
+    }
+  },
+  "categorical": {
+    "subject_id": {
+      "n": 48,
+      "n_missing": 0,
+      "missing_pct": 0.0,
+      "n_unique": 8,
+      "mode": "P002",
+      "counts": {
+        "P002": 9,
+        "P005": 9,
+        "P007": 8,
+        "P008": 7,
+        "P004": 6,
+        "P003": 4,
+        "P006": 3,
+        "P001": 2
+      },
+      "proportions": {
+        "P002": 0.1875,
+        "P005": 0.1875,
+        "P007": 0.166667,
+        "P008": 0.145833,
+        "P004": 0.125,
+        "P003": 0.083333,
+        "P006": 0.0625,
+        "P001": 0.041667
+      }
+    },
+    "session_stamp": {
+      "n": 48,
+      "n_missing": 0,
+      "missing_pct": 0.0,
+      "n_unique": 38,
+      "mode": "20240129",
+      "counts": {
+        "20240129": 2,
+        "20240118": 2,
+        "20240126": 2,
+        "20240226": 2,
+        "20240224": 2,
+        "20240205": 2,
+        "20240203": 2,
+        "20240204": 2,
+        "20240309": 2,
+        "20240329": 2,
+        "20240111": 1,
+        "20240127": 1,
+        "20240122": 1,
+        "20240108": 1,
+        "20240124": 1,
+        "20240105": 1,
+        "20240123": 1,
+        "20240115": 1,
+        "20240121": 1,
+        "20240109": 1
+      },
+      "proportions": {
+        "20240129": 0.041667,
+        "20240118": 0.041667,
+        "20240126": 0.041667,
+        "20240226": 0.041667,
+        "20240224": 0.041667,
+        "20240205": 0.041667,
+        "20240203": 0.041667,
+        "20240204": 0.041667,
+        "20240309": 0.041667,
+        "20240329": 0.041667,
+        "20240111": 0.020833,
+        "20240127": 0.020833,
+        "20240122": 0.020833,
+        "20240108": 0.020833,
+        "20240124": 0.020833,
+        "20240105": 0.020833,
+        "20240123": 0.020833,
+        "20240115": 0.020833,
+        "20240121": 0.020833,
+        "20240109": 0.020833
+      }
+    }
+  },
+  "datetime": {},
+  "missing_mechanism_screen": [],
+  "correlation_pearson": {}
+}

@@ -1,6 +1,6 @@
 # Final audit -- Repeated-measures treatment comparison
 
-_Generated 2026-10-19 18:17 中国标准时间 by scripts/final_audit.py from the artifacts on disk. This audit reads the report; it does not trust it._
+_Generated 2026-10-19 20:06 中国标准时间 by scripts/final_audit.py from the artifacts on disk. This audit reads the report; it does not trust it._
 
 **Verdict: SUBMISSION-READY**
 
@@ -43,7 +43,7 @@ No mandatory gate failed. Warnings below are disclosed limits, not hidden failur
 
 ## Gate 7 -- no association-to-mechanism upgrade   [PASS]
 
-- **Evidence**: no forbidden construction appears outside a disclaimer (11 patterns checked across 253 lines).
+- **Evidence**: no forbidden construction appears outside a disclaimer (11 patterns checked across 252 lines).
 
 ## Gate 8 -- unknowns flagged   [PASS]
 
@@ -57,7 +57,7 @@ No mandatory gate failed. Warnings below are disclosed limits, not hidden failur
 | at least one caveat | **PASS** | 1 caveat(s) |
 | figure title / caption / body | **PASS** | all 1 figure(s) carry title, caption and a three-part body |
 | number provenance | **PASS** | 4 registered claim(s) in report_build.json |
-| PDF delivered | **PASS** | backend reportlab, 127312 bytes |
+| PDF delivered | **PASS** | backend reportlab, 127059 bytes |
 | writer self-audit | **PASS** | 0 forbidden phrases in the writer's own scan |
 
 ## Journal routing

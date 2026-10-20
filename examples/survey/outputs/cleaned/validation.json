@@ -7,8 +7,8 @@
       "id": "row_loss",
       "passes": true,
       "detail": {
-        "n_raw": 240,
-        "n_clean": 240,
+        "n_raw": 120,
+        "n_clean": 120,
         "loss_pct": 0.0,
         "limit": 30.0
       },
@@ -18,9 +18,9 @@
       "id": "target_preserved",
       "passes": true,
       "detail": {
-        "target_candidate": "postcode",
-        "n_unique_raw": 6,
-        "n_unique_clean": 6
+        "target_candidate": "recommend",
+        "n_unique_raw": 2,
+        "n_unique_clean": 2
       },
       "severity": "P0"
     },
@@ -32,9 +32,8 @@
         "n_issues": 0,
         "dtype_source": "cleaning_run.json",
         "columns_coerced_by_plan": [
-          "signup_date",
-          "turnover",
-          "weight_kg"
+          "age_years",
+          "minutes_spent"
         ]
       },
       "severity": "P0"

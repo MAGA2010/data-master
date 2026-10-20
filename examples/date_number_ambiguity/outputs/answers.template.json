@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.1",
+  "instructions": "Answer every decision below by keeping one entry per id, filling 'action' with one of the listed choices, and adding 'rationale'. Then re-run the pipeline with --answers <this file>. A decision applies to every column listed on the flag unless it names a single 'column' of a multi-column flag, in which case it answers that column only and the flag stays open until each column has an answer. Actions not listed here have no automatic implementation and are rejected rather than silently skipped.",
+  "decisions": [
+    {
+      "id": "coerce_numeric_or_date@session_stamp",
+      "action": null,
+      "column": null,
+      "allowed_actions": [
+        "dates",
+        "integers",
+        "keep_as_text"
+      ],
+      "default_if_silent": "keep_as_text",
+      "columns": [
+        "session_stamp"
+      ],
+      "question": "Choose: keep_as_text (default) / integers --force-coerce-numeric session_stamp / dates --force-coerce-dates session_stamp",
+      "rationale": "",
+      "decided_by": "user"
+    }
+  ],
+  "run": {
+    "unit_key": {
+      "value": null,
+      "why": "gate 1 fails without a declared independent unit; name the column that identifies one unit",
+      "required": true
+    },
+    "group": {
+      "value": null,
+      "why": "the grouping column was auto-selected as 'subject_id'; name it explicitly to pin the research question",
+      "required": false
+    },
+    "design": {
+      "value": null,
+      "why": "the EQUATOR checklist is undetermined; pass a design id (see references/journal-reporting-standards.json)",
+      "required": false
+    },
+    "journal": {
+      "value": null,
+      "why": "journal family defaults to nature; one of nature/nejm/science/lancet",
+      "required": false
+    }
+  },
+  "run_instructions": "fill 'value' for any entry you want to declare; unset entries keep their current behaviour"
+}

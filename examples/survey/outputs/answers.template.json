@@ -1,0 +1,68 @@
+{
+  "schema_version": "1.1",
+  "instructions": "Answer every decision below by keeping one entry per id, filling 'action' with one of the listed choices, and adding 'rationale'. Then re-run the pipeline with --answers <this file>. A decision applies to every column listed on the flag unless it names a single 'column' of a multi-column flag, in which case it answers that column only and the flag stays open until each column has an answer. Actions not listed here have no automatic implementation and are rejected rather than silently skipped.",
+  "decisions": [
+    {
+      "id": "coerce_numeric@respondent_id",
+      "action": null,
+      "column": null,
+      "allowed_actions": [
+        "coerce",
+        "keep_as_text"
+      ],
+      "default_if_silent": "keep_as_text",
+      "columns": [
+        "respondent_id"
+      ],
+      "question": "Choose: keep_as_text (default; correct for postcode / phone / product code), or coerce -- asserting the leading zeros are spurious, by re-running with --force-coerce-numeric respondent_id",
+      "rationale": "",
+      "decided_by": "user"
+    },
+    {
+      "id": "drop_impossible@age_years",
+      "action": null,
+      "column": null,
+      "allowed_actions": [
+        "flag_only"
+      ],
+      "default_if_silent": "flag_only",
+      "columns": [
+        "age_years"
+      ],
+      "question": "Choose: flag_only / drop_rows / winsorize / set_to_null",
+      "rationale": "",
+      "decided_by": "user"
+    },
+    {
+      "id": "impute_categorical@minutes_spent,satisfaction,visit_frequency",
+      "action": null,
+      "column": null,
+      "allowed_actions": [
+        "leave_as_nan",
+        "mode"
+      ],
+      "default_if_silent": "leave_as_nan",
+      "columns": [
+        "minutes_spent",
+        "satisfaction",
+        "visit_frequency"
+      ],
+      "question": "Choose: mode / sentinel_value / listwise_delete / leave_as_nan",
+      "rationale": "",
+      "decided_by": "user"
+    }
+  ],
+  "run": {
+    "design": {
+      "value": null,
+      "why": "the EQUATOR checklist is undetermined; pass a design id (see references/journal-reporting-standards.json)",
+      "required": false
+    },
+    "journal": {
+      "value": null,
+      "why": "journal family defaults to nature; one of nature/nejm/science/lancet",
+      "required": false
+    }
+  },
+  "run_instructions": "fill 'value' for any entry you want to declare; unset entries keep their current behaviour"
+}

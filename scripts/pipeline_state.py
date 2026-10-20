@@ -199,7 +199,7 @@ def record_stage(
                                  "cleaned/cleaning_run.json", "cleaned/cleaning_report.md"],
             "charts": ["charts/*.png"],
             "timeseries": ["charts/fig_ts_overview.png"],
-            "report": ["report.pdf", "executive_summary.md"],
+            "report": ["report.pdf", "report.html", "executive_summary.md"],
         }
         for pattern in patterns.get(stage, []):
             paths.update(str(p.resolve()) for p in outdir.glob(pattern) if p.is_file())

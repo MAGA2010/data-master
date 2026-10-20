@@ -193,6 +193,21 @@ def profile_columns(df: pd.DataFrame) -> Dict[str, Any]:
                 coercion = probe_coercion(projected)
                 if coercion["interesting"]:
                     entry["coercion"] = coercion
+                    # The numeric view the auto-coercion WILL produce can hold
+                    # impossible values today's role-based scan cannot see: a
+                    # -999 "not answered" code in a text column parses cleanly
+                    # and would otherwise reach the analysis as a real age.
+                    if coercion.get("auto_numeric"):
+                        converted, _ = numeric_view(projected)
+                        if converted is not None:
+                            entry["coercion_numeric_stats"] = {
+                                "min": _sf(converted.min()),
+                                "max": _sf(converted.max()),
+                                "negatives": int((converted < 0).sum()),
+                                "zeros": int((converted == 0).sum()),
+                                "note": "computed on the numeric view the "
+                                        "automatic coercion will produce",
+                            }
             else:
                 v = s.dropna()
                 if len(v):
@@ -246,10 +261,17 @@ def detect_anomalies(df: pd.DataFrame, profile: Dict[str, Any]) -> Dict[str, Any
                 "note": "levels still differ only by case AFTER the automatic whitespace "
                         "and quote hygiene; this is the state the case-merge op will see",
             })
-        if e.get("negatives", 0) > 0 and e["role"] == "numeric" and e["min"] is not None:
+        negatives = e.get("negatives") or 0
+        min_val = e.get("min")
+        if not negatives:
+            # text columns that will auto-coerce carry their impossible-value
+            # evidence on the numeric view (e.g. a -999 missing code)
+            stats = e.get("coercion_numeric_stats") or {}
+            negatives, min_val = stats.get("negatives", 0), stats.get("min")
+        if negatives > 0 and min_val is not None:
             if col.lower().startswith(("sepal", "petal", "age", "height", "width", "length", "size", "count", "weight")):
                 flags.append({"type": "impossible_negative", "column": col, "severity": "P1",
-                              "n_negatives": e["negatives"], "min": e["min"]})
+                              "n_negatives": negatives, "min": min_val})
         if "min_dt" in e:
             try:
                 y0 = pd.Timestamp(e["min_dt"]).year

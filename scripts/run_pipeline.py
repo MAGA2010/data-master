@@ -878,7 +878,7 @@ def run_full_tabular(pipe: Pipeline, input_path: Path, outdir: Path,
         "--title", str(options["title"]), "--template", str(options["report"]),
         "--pdf-backend", str(options["pdf_backend"]),
     ], [report_path, outdir / "report_build.json", outdir / "report.pdf",
-        outdir / "executive_summary.md"])
+        outdir / "report.html", outdir / "executive_summary.md"])
     if code:
         return code
 
@@ -931,7 +931,7 @@ def run_profile_only(pipe: Pipeline, outdir: Path, options: Dict[str, Any],
         "--outdir", str(outdir), "--title", str(options["title"]),
         "--pdf-backend", str(options["pdf_backend"]),
     ], [outdir / "report.md", outdir / "report_build.json", outdir / "report.pdf",
-        outdir / "executive_summary.md"])
+        outdir / "report.html", outdir / "executive_summary.md"])
     if code:
         return code
     evidence = write_profile_audit(

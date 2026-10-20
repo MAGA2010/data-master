@@ -1,6 +1,6 @@
 {
   "title": "Iris morphometrics",
-  "generated": "2026-10-18 17:35 中国标准时间",
+  "generated": "2026-10-19 20:05 中国标准时间",
   "template": "nature",
   "verdict": "NOT SUBMISSION-READY",
   "gates": [
@@ -17,10 +17,12 @@
     {
       "gate": 2,
       "name": "missing data mechanism declared",
-      "status": "PASS",
-      "evidence": "mechanism declared for every variable with missingness: sepal_width_cm 3.8% (MCAR-likely); petal_width_cm 3.8% (MCAR-likely). 0 variable(s) exceed 5%; nothing was imputed, so every statistic is on complete cases.",
-      "issues": [],
-      "fix": ""
+      "status": "WARN",
+      "evidence": "2 variable(s) carry missing values and 2 have no declared mechanism.",
+      "issues": [
+        "AUTHOR_INPUT_NEEDED: missingness mechanism for: sepal_width_cm, petal_width_cm"
+      ],
+      "fix": "record collection context and a justified assumption; a small missing fraction or an association screen cannot establish it."
     },
     {
       "gate": 3,
@@ -58,7 +60,7 @@
       "gate": 7,
       "name": "no association-to-mechanism upgrade",
       "status": "PASS",
-      "evidence": "no forbidden construction appears outside a disclaimer (11 patterns checked across 466 lines).",
+      "evidence": "no forbidden construction appears outside a disclaimer (11 patterns checked across 467 lines).",
       "issues": [],
       "fix": ""
     },
@@ -95,7 +97,7 @@
     {
       "check": "PDF delivered",
       "status": "PASS",
-      "detail": "backend reportlab, 477414 bytes"
+      "detail": "backend reportlab, 478481 bytes"
     },
     {
       "check": "writer self-audit",
@@ -189,8 +191,8 @@
     "Gate 1 (n explicit and unit-defined): independent unit not declared: no --unit-key given; the row is assumed to be the independent unit, and every test below inherits that assumption"
   ],
   "relaxed_gates": [],
-  "n_pass": 7,
-  "n_warn": 0,
+  "n_pass": 6,
+  "n_warn": 1,
   "n_fail": 1,
   "n_na": 0
 }

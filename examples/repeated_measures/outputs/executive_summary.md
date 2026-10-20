@@ -1,6 +1,6 @@
 # Repeated-measures treatment comparison -- Executive summary
 
-_Generated 2026-10-19 18:17 中国标准时间 by scripts/assemble_report.py from the artifacts listed in `report_build.json`. Every statement below is a restatement of the full report, not a separate analysis._
+_Generated 2026-10-19 20:06 中国标准时间 by scripts/assemble_report.py from the artifacts listed in `report_build.json`. Every statement below is a restatement of the full report, not a separate analysis._
 
 **Headline.** `response` is compared across arm: Cohen's d = -6.35, 95% CI -9.36 to -3.35, BH-adjusted p = 6.6e-07 across a family of 1 outcomes.
 

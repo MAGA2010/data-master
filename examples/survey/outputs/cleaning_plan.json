@@ -1,0 +1,193 @@
+{
+  "auto_actions": [
+    {
+      "id": "t-fix-unicode",
+      "op": "fix_unicode",
+      "columns": [
+        "age_years",
+        "minutes_spent",
+        "recommend",
+        "respondent_id",
+        "satisfaction",
+        "visit_frequency"
+      ],
+      "severity": "P3",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-fix-unicode"
+    },
+    {
+      "id": "t-strip-ws",
+      "op": "strip_whitespace",
+      "columns": [
+        "age_years",
+        "minutes_spent",
+        "recommend",
+        "respondent_id",
+        "satisfaction",
+        "visit_frequency"
+      ],
+      "severity": "P3",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-strip-ws"
+    },
+    {
+      "id": "t-collapse-whitespace",
+      "op": "collapse_whitespace",
+      "columns": [
+        "age_years",
+        "minutes_spent",
+        "recommend",
+        "respondent_id",
+        "satisfaction",
+        "visit_frequency"
+      ],
+      "severity": "P3",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-collapse-whitespace"
+    },
+    {
+      "id": "t-trim-quotes",
+      "op": "trim_paired_quotes",
+      "columns": [
+        "age_years",
+        "minutes_spent",
+        "recommend",
+        "respondent_id",
+        "satisfaction",
+        "visit_frequency"
+      ],
+      "severity": "P3",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-trim-quotes"
+    },
+    {
+      "id": "t-coerce-numeric",
+      "op": "coerce_numeric",
+      "columns": [
+        "age_years",
+        "minutes_spent"
+      ],
+      "severity": "P2",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-coerce-numeric"
+    },
+    {
+      "id": "t-normalize-dtypes",
+      "op": "normalize_dtypes",
+      "columns": [
+        "age_years",
+        "minutes_spent",
+        "recommend",
+        "respondent_id",
+        "satisfaction",
+        "visit_frequency"
+      ],
+      "severity": "P2",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-normalize-dtypes"
+    },
+    {
+      "id": "t-drop-all-null-cols",
+      "op": "drop_all_null_cols",
+      "columns": [],
+      "severity": "P1",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-drop-all-null-cols"
+    },
+    {
+      "id": "t-drop-all-null-rows",
+      "op": "drop_all_null_rows",
+      "columns": [],
+      "severity": "P1",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-drop-all-null-rows"
+    },
+    {
+      "id": "t-rename-clean",
+      "op": "rename_columns_append_cleaned",
+      "columns": [],
+      "severity": "P2",
+      "rule_source": "references/cleaning-rule-catalog.md#tabular:t-rename-clean"
+    }
+  ],
+  "never_automatic_flags": [
+    {
+      "id": "coerce_numeric@respondent_id",
+      "op": "coerce_numeric",
+      "columns": [
+        "respondent_id"
+      ],
+      "reason": "every value parses as a number, but 100.0% carry a leading zero (e.g. '0001', '0002', '0003'). Converting would delete the zero-padding and collapse distinct identifiers: in a postcode column, 02134 and 2134 would become one value",
+      "ask_user": "Choose: keep_as_text (default; correct for postcode / phone / product code), or coerce -- asserting the leading zeros are spurious, by re-running with --force-coerce-numeric respondent_id",
+      "default_if_silent": "keep_as_text",
+      "severity": "P1",
+      "rule_source": "references/never-automatic-list.md#conditional-never",
+      "detail": {
+        "hold": "leading_zero",
+        "numeric_probe": {
+          "n_non_null": 120,
+          "n_parsed": 120,
+          "n_failed": 0,
+          "all_parse": true,
+          "parse_fraction_of_non_null": 1.0,
+          "sample_failed": [],
+          "failed_are_blank_or_sentinel": false,
+          "has_currency_or_percent": false,
+          "currency_or_percent_samples": [],
+          "would_parse_after_symbol_strip": null,
+          "leading_zero_suspected_id": true,
+          "leading_zero_fraction": 1.0,
+          "leading_zero_samples": [
+            "0001",
+            "0002",
+            "0003",
+            "0004",
+            "0005"
+          ],
+          "parser": "pd.to_numeric(errors='coerce') after removing thousands separators"
+        },
+        "date_probe": {
+          "n_non_null": 120,
+          "n_parsed": 120,
+          "n_failed": 0,
+          "all_parse": true,
+          "parse_fraction_of_non_null": 1.0,
+          "sample_failed": [],
+          "parser": "pd.to_datetime(errors='coerce'), per-element format inference"
+        },
+        "override": "--force-coerce-numeric respondent_id"
+      }
+    },
+    {
+      "id": "drop_impossible@age_years",
+      "op": "drop_impossible",
+      "columns": [
+        "age_years"
+      ],
+      "reason": "`age_years` has 12 negative value(s) (min=-999.0) for a physically non-negative quantity",
+      "ask_user": "Choose: flag_only / drop_rows / winsorize / set_to_null",
+      "default_if_silent": "flag_only",
+      "severity": "P1",
+      "rule_source": "references/never-automatic-list.md#conditional-never"
+    },
+    {
+      "id": "impute_categorical@minutes_spent,satisfaction,visit_frequency",
+      "op": "impute_categorical",
+      "columns": [
+        "minutes_spent",
+        "satisfaction",
+        "visit_frequency"
+      ],
+      "reason": "categorical column(s) with missing values; adding a mode level invents a category",
+      "ask_user": "Choose: mode / sentinel_value / listwise_delete / leave_as_nan",
+      "default_if_silent": "leave_as_nan",
+      "severity": "P1",
+      "rule_source": "references/never-automatic-list.md#conditional-never",
+      "detail": {
+        "minutes_spent": 7.5,
+        "satisfaction": 5.83,
+        "visit_frequency": 4.17
+      }
+    }
+  ],
+  "n_rows": 120,
+  "schema_version": "1.3",
+  "source": "examples\\survey\\survey_responses.csv",
+  "read_mode": "text",
+  "user_flags": {},
+  "n_auto_actions": 9,
+  "n_never_automatic_flags": 3,
+  "principle": "high-risk operations are never silent; see references/never-automatic-list.md"
+}

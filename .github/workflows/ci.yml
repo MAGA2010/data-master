@@ -34,6 +34,13 @@ jobs:
       - name: Numerical references and artifact integrity
         run: python tests/test_reliability.py
 
+      - name: HTML export, date-number ambiguity and survey case suites
+        if: matrix.python == '3.13'
+        run: |
+          python tests/test_html_export.py
+          python tests/test_date_number_ambiguity.py
+          python tests/test_survey_case.py
+
       - name: Installed wheel outside the checkout
         if: matrix.python == '3.13'
         run: python tests/test_distribution.py
@@ -136,6 +143,27 @@ jobs:
               "run block journal did not reach the audit: %r" % journal
           print("answers round-trip OK: decision resolved with provenance, journal applied")
           PY
+
+  distribution-macos:
+    name: distribution / macos / py3.13
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      # The distribution test installs the wheel into a venv that inherits the
+      # scientific stack from the runner environment (system_site_packages=True),
+      # so the stack is installed once here rather than downloaded per test.
+      - name: Install the scientific stack the test venv inherits
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pandas numpy scipy matplotlib statsmodels pillow reportlab pypdf openpyxl pyarrow
+
+      - name: Installed wheel outside the checkout
+        run: python tests/test_distribution.py
 
   modality-profilers:
     name: modality profilers

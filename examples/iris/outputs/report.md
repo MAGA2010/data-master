@@ -1,6 +1,6 @@
 # Iris morphometrics -- Statistical Report
 
-> **Template**: nature | **Generated**: 2026-10-18 17:35 中国标准时间 | **Pipeline**: data-master
+> **Template**: nature | **Generated**: 2026-10-19 20:05 中国标准时间 | **Pipeline**: data-master
 > **Raw input**: `iris_dirty.csv` (sha256 `d5e5668ecd92e4d3...`) | **Analysed file**: `cleaned.csv`
 > **Rows**: 158 raw -> 158 analysed | **Columns**: 7 | **Modality**: tabular
 > **Independent unit**: no --unit-key given; the row is assumed to be the independent unit, and every test below inherits that assumption
@@ -10,11 +10,11 @@
 
 **Setup.** 158 rows and 7 columns reached the analysis, of which 5 are numeric measurements, compared across 3 levels of `species` (setosa, versicolor, virginica).
 
-**The conflict.** The raw file was not safe to analyse as it stood: 3 label group(s) in `species` differed only by case, which would have split the comparison into spurious sub-groups and halved the group sizes; 9 exact-duplicate rows (5.7%) were present and left in place; 4 conversion(s) were withheld rather than guessed at; `sepal_width_cm` was 3.8% missing and was not imputed.
+**The conflict.** The raw file was not safe to analyse as it stood: 3 label group(s) in `species` differed only by case, which would have split the comparison into spurious sub-groups and halved the group sizes; 9 exact-duplicate rows (5.7%) were present and left in place; 5 conversion(s) were withheld rather than guessed at; `sepal_width_cm` was 3.8% missing and was not imputed.
 
-**How it was resolved.** 10 documented operation(s) were applied, 158 rows became 158, and the cleaned file reproduces byte for byte. The clearest separation is that `petal_length_cm` separates species by omega squared = 0.94 out of a possible 1, 95% CI 0.93 to 0.95, BH-adjusted p = 3.7e-69 across a family of 4 outcomes.
+**How it was resolved.** 10 documented operation(s) were applied, 158 rows became 158, and the cleaned file reproduces byte for byte. The clearest separation is that `petal_length_cm` is compared across species: omega squared = 0.94, 95% CI 0.93 to 0.95, BH-adjusted p = 3.7e-69 across a family of 4 outcomes.
 
-**The caveat that matters most.** 2 variable(s) carry missing values, the most at `sepal_width_cm` (3.8%). Values were not imputed, so every statistic here is conditional on complete cases. Listwise deletion removed rows from `sepal_width_cm` (6 rows, n = 152), `petal_width_cm` (6 rows, n = 152). The screening test returned MCAR-likely, which is a screening result and not proof of a mechanism -- confirm it against how the data were actually collected.
+**The caveat that matters most.** 2 variable(s) carry missing values, the most at `sepal_width_cm` (3.8%). Values were not imputed, so every statistic here is conditional on complete cases. Listwise deletion removed rows from `sepal_width_cm` (6 rows, n = 152), `petal_width_cm` (6 rows, n = 152). The screening test returned undetermined, which is a screening result and not proof of a mechanism -- confirm it against how the data were actually collected.
 
 ## 1. Setup
 
@@ -29,7 +29,7 @@
 
 ### 2.1 Cleaning
 
-The raw file was never modified. 10 operation(s) were applied automatically and 4 were withheld for a human decision. Every applied operation names the columns it is permitted to touch; the run then compares raw against cleaned in text space and fails if any column no operation named gained a value. In this run: all 1 untouched columns kept exactly their raw values.
+The raw file was never modified. 10 operation(s) were applied automatically and 5 were withheld for a human decision. Every applied operation names the columns it is permitted to touch; the run then compares raw against cleaned in text space and fails if any column no operation named gained a value. In this run: all 1 untouched columns kept exactly their raw values.
 
 **Byte-level reproducibility**: passed -- hash matches. Cleaned sha256 `7c1b8a3004c28c85...`.
 
@@ -43,8 +43,8 @@ Types were decided once and replayed, never re-guessed: 7 columns were typed fro
 
 | Variable | Missing | % | Screen | Evidence | Default action |
 |---|---|---|---|---|---|
-| `sepal_width_cm` | 6 | 3.8 | MCAR-likely | missing rate 3.8% below the 5% threshold commonly treated as ignorable | listwise deletion is usually acceptable; report n before/after |
-| `petal_width_cm` | 6 | 3.8 | MCAR-likely | missing rate 3.8% below the 5% threshold commonly treated as ignorable | listwise deletion is usually acceptable; report n before/after |
+| `sepal_width_cm` | 6 | 3.8 | undetermined | missing fraction does not identify MCAR, MAR or MNAR; collection context is required; exploratory association screens cannot distinguish MAR from MNAR | none |
+| `petal_width_cm` | 6 | 3.8 | undetermined | missing fraction does not identify MCAR, MAR or MNAR; collection context is required; exploratory association screens cannot distinguish MAR from MNAR | none |
 
 The screening test is the start of a conversation about how the data were collected, not a demonstration of a mechanism. Nothing was imputed, so every comparison below is on complete cases.
 
@@ -107,12 +107,12 @@ Mean and median are both given because they disagree wherever the distribution i
 | `sepal_width_cm` | one-way ANOVA | F = 55.58 | 152 | omega squared = 0.418 (95% CI 0.30 to 0.54) | = 9.3e-19 | = 9.3e-19 |
 | `petal_length_cm` | Welch ANOVA (unequal variance) | F = 1914.77 | 158 | omega squared = 0.939 (95% CI 0.93 to 0.95) | = 9.2e-70 | = 3.7e-69 |
 | `petal_width_cm` | Welch ANOVA (unequal variance) | F = 1290.93 | 152 | omega squared = 0.926 (95% CI 0.91 to 0.94) | = 3.9e-65 | = 7.8e-65 |
-| `species_code` | not estimable | -- | -- | -- = -- | not estimated | not estimated |
+| `species_code` | not estimable | -- | -- | effect size = -- | not estimated | not estimated |
 
 
 Rows reading *not estimable* were removed from the corrected family rather than counted as non-significant: no p value is reported for them, and the family size above counts only the comparisons that produced one.
 
-Read the effect-size column before the p column. `. The ordering by effect size and the ordering by p value are not the same statement, and at this sample size the p values are small enough that their exact magnitude carries no information beyond "smaller than this table can resolve".petal_length_cm` separates species by omega squared = 0.94 out of a possible 1, 95% CI 0.93 to 0.95, BH-adjusted p = 3.7e-69 across a family of 4 outcomes
+Read the effect-size column before the p column. `petal_length_cm` is compared across species: omega squared = 0.94, 95% CI 0.93 to 0.95, BH-adjusted p = 3.7e-69 across a family of 4 outcomes. The ordering by effect size and the ordering by p value are not the same statement, and at this sample size the p values are small enough that their exact magnitude carries no information beyond "smaller than this table can resolve".
 
 ### 3.5 Pairwise comparisons
 
@@ -152,7 +152,7 @@ These are associations among measurements taken on the same rows. Nothing here f
 
 ## 4. Discussion
 
-**What the data supports.** The measurements differ across levels of `species` by margins far larger than the sampling noise at this size: `petal_length_cm` separates species by omega squared = 0.94 out of a possible 1, 95% CI 0.93 to 0.95, BH-adjusted p = 3.7e-69 across a family of 4 outcomes. The ordering of variables by effect size holds under both the parametric and the rank-based test (Appendix A3), so the finding is not an artefact of one distributional assumption. Two of the measured pairs are strongly associated and one is not, which is reported as association only.
+**What the data supports.** The measurements differ across levels of `species` by margins larger than the sampling noise at this size: `petal_length_cm` is compared across species: omega squared = 0.94, 95% CI 0.93 to 0.95, BH-adjusted p = 3.7e-69 across a family of 4 outcomes. The ordering of variables by effect size holds under both the parametric and the rank-based test (Appendix A3), so the finding is not an artefact of one distributional assumption. Of the 10 measured pairs, 6 are strongly associated (|Spearman rho| >= 0.7); all of it is reported as association only, with no direction and no mechanism.
 
 **What the data does not support.** Nothing here establishes that the group label produced the measurement. The design compares existing groups rather than assigning them, and species, batch, site, instrument and operator all travel together with the group label -- this table cannot separate them. A claim of the form "X caused Y" is therefore not available from these data, and none is made in this report.
 
@@ -160,7 +160,7 @@ These are associations among measurements taken on the same rows. Nothing here f
 
 ## 5. Caveats and limitations
 
-**C1. missingness.** 2 variable(s) carry missing values, the most at `sepal_width_cm` (3.8%). Values were not imputed, so every statistic here is conditional on complete cases. Listwise deletion removed rows from `sepal_width_cm` (6 rows, n = 152), `petal_width_cm` (6 rows, n = 152). The screening test returned MCAR-likely, which is a screening result and not proof of a mechanism -- confirm it against how the data were actually collected.
+**C1. missingness.** 2 variable(s) carry missing values, the most at `sepal_width_cm` (3.8%). Values were not imputed, so every statistic here is conditional on complete cases. Listwise deletion removed rows from `sepal_width_cm` (6 rows, n = 152), `petal_width_cm` (6 rows, n = 152). The screening test returned undetermined, which is a screening result and not proof of a mechanism -- confirm it against how the data were actually collected.
 - *Limits*: every mean, median, interval and p value in the Results section
 - *Status*: AUTHOR_INPUT_NEEDED: how the missing values arose
 
@@ -190,11 +190,11 @@ Every number above is traceable to a script. Nothing in this report was typed by
 
 | Stage | Script | Artifact | sha256 (first 16) |
 |---|---|---|---|
-| Profile | scripts/profile_tabular.py | analysis/profile.json | 3dc825cd3a941c53 |
-| Plan | scripts/cleaning_plan.py | cleaning_plan.json | 116e4b77d3b21f93 |
+| Profile | scripts/profile_tabular.py | analysis/profile.json | eabfcb61223282ce |
+| Plan | scripts/cleaning_plan.py | cleaning_plan.json | 69492b9bd35c25af |
 | Clean | scripts/execute_cleaning.py | cleaned/cleaned.csv | 7c1b8a3004c28c85 |
 | Validate | scripts/validate_clean.py | cleaned/validation.json | 070ee266feb052fd |
-| Describe | scripts/stats_descriptive.py | analysis/descriptive.json | 3f23de383020cb3c |
+| Describe | scripts/stats_descriptive.py | analysis/descriptive.json | 1816f349a61bcfd4 |
 | Infer | scripts/stats_inferential.py | analysis/inferential.json | f2556c0c1455bda5 |
 | Decide figures | scripts/chart_decision.py | analysis/chart_decisions.json | e0548e975a90e8d1 |
 | Render figures | scripts/render_chart.py | charts/*.png | c428ed8bc516c143 |
@@ -205,8 +205,7 @@ A document cannot contain its own hash, so the hash of `report.md` and `report.p
 
 - **Interpreter**: Python 3.13.15 on Windows-11-10.0.26200-SP0
 - **Libraries**: numpy 2.4.6, pandas 3.0.3, scipy 1.18.1
-- **Pipeline code**: data-master commit `08920c90d402` (working tree was dirty; the commit alone does not reproduce it) -- this report names the exact code that produced every number in it.
-- **Exact versions**: `lockfile.txt` beside this report pins every dependency to the version that ran.
+- **Pipeline code**: data-master commit `8749c5ea1ff4` (working tree was dirty; the commit alone does not reproduce it) -- this report names the exact code that produced every number in it.
 - **Random seeds**: 42 -- every resampling interval is seeded, so it reproduces exactly.
 - **Columns any operation was permitted to touch**: `petal_length_cm`, `petal_width_cm`, `sepal_length_cm`, `sepal_width_cm`, `species`, `species_code`
 
@@ -388,6 +387,7 @@ No operation failed.
 - `coerce_numeric` on `height_m` -- 153 of 158 non-null values parse as numbers and the other 5 do not (e.g. '--', '--', '--'). Converting would turn those into missing values, after which a recorded category (say 'unknown') would be indistinguishable from a value that was never collected. The failures are all blank or conventional sentinels, so treating them as missing is defensible -- but 'not recorded' is a claim about the study, not a formatting detail, and it stays yours to make.
 - `merge_case_variants` on `species` -- once the automatic whitespace/quote hygiene has run, 3 label group(s) still differ only by case (6 levels -> 3 after casefold); collapsed automatically because this is a lossless canonicalisation
 - `dedupe_exact` on  -- 9 exact-duplicate rows (5.7% of rows)
+- `drop_impossible` on `sepal_length_cm` -- `sepal_length_cm` has 1 negative value(s) (min=-1.0) for a physically non-negative quantity
 - `impute_categorical` on `petal_width_cm`, `sepal_width_cm` -- categorical column(s) with missing values; adding a mode level invents a category
 
 **Additive-only audit.** The contract forbids modifying the raw file and permits an operation to touch only the columns it names. Columns no operation named: **1, and each kept exactly its raw values -- audit passed**.
@@ -424,7 +424,7 @@ Each value below was registered by the code that read it from an artifact on dis
 | Kind | Value | What it means | Source: script -> artifact | Rule anchor |
 |---|---|---|---|---|
 | `header` | 158 | rows analysed | `execute_cleaning.py` -> `cleaning_run.json` | `--` |
-| `headline` | `petal_length_cm` separates species by omega squared = 0.94 o... | strongest group separation | `stats_inferential.py` -> `inferential.json` | `--` |
+| `headline` | `petal_length_cm` is compared across species: omega squared =... | strongest group separation | `stats_inferential.py` -> `inferential.json` | `--` |
 | `rejected test` | Welch ANOVA | rejected for sepal_length_cm | `stats_inferential.py` -> `inferential.json` | `k_group_numeric` |
 | `rejected test` | Kruskal-Wallis H | rejected for sepal_length_cm | `stats_inferential.py` -> `inferential.json` | `k_group_numeric` |
 | `rejected test` | Welch ANOVA | rejected for sepal_width_cm | `stats_inferential.py` -> `inferential.json` | `k_group_numeric` |
@@ -439,7 +439,7 @@ Only the basename of each artifact and script is shown here; the full path, the 
 
 ## Appendix B. Open questions the data cannot answer
 
-7 questions must be answered by someone who knows how the data were collected. They are listed with the consequence of leaving them unanswered, because an unanswered question that carries no stated cost is one nobody will prioritise.
+8 questions must be answered by someone who knows how the data were collected. They are listed with the consequence of leaving them unanswered, because an unanswered question that carries no stated cost is one nobody will prioritise.
 
 | # | Question | Why it matters | Cost of leaving it open |
 |---|---|---|---|
@@ -449,7 +449,8 @@ Only the basename of each artifact and script is shown here; the full path, the 
 | 4 | How should `coerce_numeric` on `height_m` be resolved? | 153 of 158 non-null values parse as numbers and the other 5 do not (e.g. '--', '--', '--'). Converting would turn those into missing values, after which a recorded category (say 'unknown') would be indistinguishable from a value that was never collected. The failures are all blank or conventional sentinels, so treating them as missing is defensible -- but 'not recorded' is a claim about the study, not a formatting detail, and it stays yours to make. | MEDIUM -- the pipeline stopped at this decision instead of guessing |
 | 5 | How should `merge_case_variants` on `species` be resolved? | once the automatic whitespace/quote hygiene has run, 3 label group(s) still differ only by case (6 levels -> 3 after casefold); collapsed automatically because this is a lossless canonicalisation | MEDIUM -- the pipeline stopped at this decision instead of guessing |
 | 6 | How should `dedupe_exact` on the file be resolved? | 9 exact-duplicate rows (5.7% of rows) | MEDIUM -- the pipeline stopped at this decision instead of guessing |
-| 7 | How should `impute_categorical` on `petal_width_cm`, `sepal_width_cm` be resolved? | categorical column(s) with missing values; adding a mode level invents a category | MEDIUM -- the pipeline stopped at this decision instead of guessing |
+| 7 | How should `drop_impossible` on `sepal_length_cm` be resolved? | `sepal_length_cm` has 1 negative value(s) (min=-1.0) for a physically non-negative quantity | MEDIUM -- the pipeline stopped at this decision instead of guessing |
+| 8 | How should `impute_categorical` on `petal_width_cm`, `sepal_width_cm` be resolved? | categorical column(s) with missing values; adding a mode level invents a category | MEDIUM -- the pipeline stopped at this decision instead of guessing |
 
 
 Of these, 3 are already reflected as caveats in section 5.
@@ -463,4 +464,4 @@ Of these, 3 are already reflected as caveats in section 5.
 
 ---
 
-*End of report. Generated 2026-10-18 17:35 中国标准时间 by data-master. The raw input was never modified: every value above was read from the cleaned file or from a recorded artifact. Each number is registered in `report_build.json`; the gate verdict, including anything that failed, is in `audit/final_audit.md`.*
+*End of report. Generated 2026-10-19 20:05 中国标准时间 by data-master. The raw input was never modified: every value above was read from the cleaned file or from a recorded artifact. Each number is registered in `report_build.json`; the gate verdict, including anything that failed, is in `audit/final_audit.md`.*

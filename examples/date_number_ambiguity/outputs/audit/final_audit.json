@@ -1,0 +1,197 @@
+{
+  "title": "Date-versus-number ambiguity",
+  "generated": "2026-10-19 20:08 中国标准时间",
+  "template": "nature",
+  "verdict": "NOT SUBMISSION-READY",
+  "gates": [
+    {
+      "gate": 1,
+      "name": "n explicit and unit-defined",
+      "status": "FAIL",
+      "evidence": "n is recorded per outcome (e.g. n=48) and per group, but the independent unit is not declared in the input.",
+      "issues": [
+        "independent unit not declared: no --unit-key given; the row is assumed to be the independent unit, and every test below inherits that assumption"
+      ],
+      "fix": "pass --unit-key with what one row represents, or record it in the run manifest; the report already marks this AUTHOR_INPUT_NEEDED."
+    },
+    {
+      "gate": 2,
+      "name": "missing data mechanism declared",
+      "status": "PASS",
+      "evidence": "no variable carries missing values (n=48 analysed).",
+      "issues": [],
+      "fix": ""
+    },
+    {
+      "gate": 3,
+      "name": "effect size accompanies p",
+      "status": "PASS",
+      "evidence": "all 1 estimable tests carry an effect size with a 95% CI.",
+      "issues": [],
+      "fix": ""
+    },
+    {
+      "gate": 4,
+      "name": "uncertainty visible",
+      "status": "PASS",
+      "evidence": "every descriptive statistic carries an SE, every comparison figure states its interval, and every prose p value sits beside a CI.",
+      "issues": [],
+      "fix": ""
+    },
+    {
+      "gate": 5,
+      "name": "multiple comparisons corrected",
+      "status": "N/A",
+      "evidence": "only 1 test was estimable, so there is no family to correct.",
+      "issues": [],
+      "fix": ""
+    },
+    {
+      "gate": 6,
+      "name": "sensitivity tested",
+      "status": "PASS",
+      "evidence": "9 perturbation(s) ran across 1 outcome(s) (leave-one-group-out, block jackknife, extreme-value fence, strict complete cases) and every one agreed with the primary verdict at alpha=0.05. Appendix A1 reports them.",
+      "issues": [],
+      "fix": ""
+    },
+    {
+      "gate": 7,
+      "name": "no association-to-mechanism upgrade",
+      "status": "PASS",
+      "evidence": "no forbidden construction appears outside a disclaimer (11 patterns checked across 315 lines).",
+      "issues": [],
+      "fix": ""
+    },
+    {
+      "gate": 8,
+      "name": "unknowns flagged",
+      "status": "PASS",
+      "evidence": "every unknown the pipeline detected is written AUTHOR_INPUT_NEEDED and repeated in Appendix B (unit undeclared).",
+      "issues": [],
+      "fix": ""
+    }
+  ],
+  "structural": [
+    {
+      "check": "required sections",
+      "status": "PASS",
+      "detail": "all 10 required sections present"
+    },
+    {
+      "check": "at least one caveat",
+      "status": "PASS",
+      "detail": "1 caveat(s)"
+    },
+    {
+      "check": "figure title / caption / body",
+      "status": "PASS",
+      "detail": "all 2 figure(s) carry title, caption and a three-part body"
+    },
+    {
+      "check": "number provenance",
+      "status": "PASS",
+      "detail": "5 registered claim(s) in report_build.json"
+    },
+    {
+      "check": "PDF delivered",
+      "status": "PASS",
+      "detail": "backend reportlab, 171285 bytes"
+    },
+    {
+      "check": "writer self-audit",
+      "status": "PASS",
+      "detail": "0 forbidden phrases in the writer's own scan"
+    }
+  ],
+  "journal": {
+    "journal": "nature",
+    "label": "Nature Portfolio",
+    "reporting_standards": "Nature Portfolio reporting standards + the 8 data-master statistical gates",
+    "url": "https://www.nature.com/nature-portfolio/editorial-policies/reporting-standards",
+    "checklist": "Nature Portfolio reporting standards (design checklist AUTHOR_INPUT_NEEDED)",
+    "checklist_url": "https://www.nature.com/nature-portfolio/editorial-policies/reporting-standards",
+    "design": "generic",
+    "mandatory_statistical_gates": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "items": [
+      {
+        "item": "n_and_unit",
+        "status": "CHECKED BY THE 8 GATES",
+        "how": "inferential.unit_of_analysis.unit_key is set and every estimable test reports n"
+      },
+      {
+        "item": "missing_data",
+        "status": "CHECKED BY THE 8 GATES",
+        "how": "every column above 5% missing carries a declared mechanism"
+      },
+      {
+        "item": "effect_size_ci",
+        "status": "CHECKED BY THE 8 GATES",
+        "how": "every estimable test carries an effect size with a 95% CI"
+      },
+      {
+        "item": "multiplicity",
+        "status": "CHECKED BY THE 8 GATES",
+        "how": "a multiplicity family is declared whenever more than one test is reported"
+      },
+      {
+        "item": "data_availability",
+        "status": "AUTHOR INPUT NEEDED",
+        "how": "author-supplied"
+      },
+      {
+        "item": "code_availability",
+        "status": "AUTHOR INPUT NEEDED",
+        "how": "author-supplied"
+      },
+      {
+        "item": "funding",
+        "status": "AUTHOR INPUT NEEDED",
+        "how": "author-supplied"
+      },
+      {
+        "item": "conflict_of_interest",
+        "status": "AUTHOR INPUT NEEDED",
+        "how": "author-supplied"
+      },
+      {
+        "item": "author_contributions",
+        "status": "AUTHOR INPUT NEEDED",
+        "how": "author-supplied"
+      }
+    ]
+  },
+  "design_notes": [
+    "no design statement was found in the data or the report; pass --design to select the EQUATOR checklist that applies",
+    "checklist selected: Nature Portfolio reporting standards (design checklist AUTHOR_INPUT_NEEDED)",
+    "journal resolved to nature"
+  ],
+  "mandatory_failures": [
+    {
+      "gate": 1,
+      "name": "n explicit and unit-defined",
+      "status": "FAIL",
+      "evidence": "n is recorded per outcome (e.g. n=48) and per group, but the independent unit is not declared in the input.",
+      "issues": [
+        "independent unit not declared: no --unit-key given; the row is assumed to be the independent unit, and every test below inherits that assumption"
+      ],
+      "fix": "pass --unit-key with what one row represents, or record it in the run manifest; the report already marks this AUTHOR_INPUT_NEEDED."
+    }
+  ],
+  "blocking": [
+    "Gate 1 (n explicit and unit-defined): independent unit not declared: no --unit-key given; the row is assumed to be the independent unit, and every test below inherits that assumption"
+  ],
+  "relaxed_gates": [],
+  "n_pass": 6,
+  "n_warn": 0,
+  "n_fail": 1,
+  "n_na": 1
+}

@@ -9,7 +9,7 @@
 | Cleaned sha256 | `7c1b8a3004c28c85cfb2ff94ee43d4cf0f7be37b60dbe361f9d55160208592df` |
 | Reproducible script | `clean_iris_dirty.py` |
 | Ops applied | 10 |
-| Decisions pending | 3 |
+| Decisions pending | 4 |
 | Decisions answered via answers file | 0 |
 
 > The raw file is never modified. Everything below is additive.
@@ -64,6 +64,15 @@ These were **not** applied. Each one changes the analysis and needs an explicit 
 - **If you say nothing**: `keep_all`
 - **Rule**: references/never-automatic-list.md#conditional-never
 - **Answer with**: fill `answers.template.json` (id `dedupe_exact@__rows__`) and re-run with `--answers`
+
+### `drop_impossible` (P1)
+
+- **Columns**: `sepal_length_cm`
+- **Why flagged**: `sepal_length_cm` has 1 negative value(s) (min=-1.0) for a physically non-negative quantity
+- **Question**: Choose: flag_only / drop_rows / winsorize / set_to_null
+- **If you say nothing**: `flag_only`
+- **Rule**: references/never-automatic-list.md#conditional-never
+- **Answer with**: fill `answers.template.json` (id `drop_impossible@sepal_length_cm`) and re-run with `--answers`
 
 ### `impute_categorical` (P1)
 

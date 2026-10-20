@@ -106,7 +106,7 @@ test('packed npm install runs outside checkout and preserves demo evidence', { t
     for (const hook of ['install', 'postinstall', 'preinstall', 'prepare']) assert.equal(metadata.scripts[hook], undefined);
     invoke(['install', '--prefix', temp, '--ignore-scripts', '--no-audit', '--no-fund', path.join(temp, pack.filename)]);
     const exec = (...args) => invoke(['exec', '--prefix', temp, '--offline', '--', 'data-master', ...args]);
-    assert.match(exec('--version'), /0\.2\.0/);
+    assert.match(exec('--version'), /0\.3\.0/);
     const skill = path.join(temp, 'installed skill');
     exec('skill', 'install', '--target', skill);
     assert.ok(fs.existsSync(path.join(skill, 'SKILL.md')));

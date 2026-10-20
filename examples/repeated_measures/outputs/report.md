@@ -1,6 +1,6 @@
 # Repeated-measures treatment comparison -- Statistical Report
 
-> **Template**: nature | **Generated**: 2026-10-19 18:17 中国标准时间 | **Pipeline**: data-master
+> **Template**: nature | **Generated**: 2026-10-19 20:06 中国标准时间 | **Pipeline**: data-master
 > **Raw input**: `measurements.csv` (sha256 `2519c6d2304dc381...`) | **Analysed file**: `cleaned.csv`
 > **Rows**: 36 raw -> 36 analysed | **Columns**: 4 | **Modality**: tabular
 > **Independent unit**: every unit belongs to exactly one group; multiple rows per unit are replicates, and the primary analysis is run on per-unit means
@@ -88,11 +88,11 @@ Mean and median are both given because they disagree wherever the distribution i
 | `response` | Student two-sample t-test (pooled variance) | t = -11.00 | 12 | Cohen's d = -6.351 (95% CI -9.36 to -3.35) | = 6.6e-07 | = 6.6e-07 |
 
 
-Read the effect-size column before the p column. `. The ordering by effect size and the ordering by p value are not the same statement, and at this sample size the p values are small enough that their exact magnitude carries no information beyond "smaller than this table can resolve".response` is compared across arm: Cohen's d = -6.35, 95% CI -9.36 to -3.35, BH-adjusted p = 6.6e-07 across a family of 1 outcomes
+Read the effect-size column before the p column. `response` is compared across arm: Cohen's d = -6.35, 95% CI -9.36 to -3.35, BH-adjusted p = 6.6e-07 across a family of 1 outcomes. The ordering by effect size and the ordering by p value are not the same statement, and at this sample size the p values are small enough that their exact magnitude carries no information beyond "smaller than this table can resolve".
 
 ## 4. Discussion
 
-**What the data supports.** The measurements differ across levels of `arm` by margins far larger than the sampling noise at this size: `response` is compared across arm: Cohen's d = -6.35, 95% CI -9.36 to -3.35, BH-adjusted p = 6.6e-07 across a family of 1 outcomes. The ordering of variables by effect size holds under both the parametric and the rank-based test (Appendix A3), so the finding is not an artefact of one distributional assumption. Two of the measured pairs are strongly associated and one is not, which is reported as association only.
+**What the data supports.** The measurements differ across levels of `arm` by margins larger than the sampling noise at this size: `response` is compared across arm: Cohen's d = -6.35, 95% CI -9.36 to -3.35, BH-adjusted p = 6.6e-07 across a family of 1 outcomes.
 
 **What the data does not support.** Nothing here establishes that the group label produced the measurement. The design compares existing groups rather than assigning them, and species, batch, site, instrument and operator all travel together with the group label -- this table cannot separate them. A claim of the form "X caused Y" is therefore not available from these data, and none is made in this report.
 
@@ -110,7 +110,7 @@ Every number above is traceable to a script. Nothing in this report was typed by
 
 | Stage | Script | Artifact | sha256 (first 16) |
 |---|---|---|---|
-| Profile | scripts/profile_tabular.py | analysis/profile.json | bb4737ea248965fe |
+| Profile | scripts/profile_tabular.py | analysis/profile.json | cd348014d1cca169 |
 | Plan | scripts/cleaning_plan.py | cleaning_plan.json | 7ac8130efd147906 |
 | Clean | scripts/execute_cleaning.py | cleaned/cleaned.csv | 6f62b85a4cf5d537 |
 | Validate | scripts/validate_clean.py | cleaned/validation.json | ad2137c384c90c6e |
@@ -125,8 +125,7 @@ A document cannot contain its own hash, so the hash of `report.md` and `report.p
 
 - **Interpreter**: Python 3.13.15 on Windows-11-10.0.26200-SP0
 - **Libraries**: numpy 2.4.6, pandas 3.0.3, scipy 1.18.1
-- **Pipeline code**: data-master commit `028ac9a03e9b` (working tree was dirty; the commit alone does not reproduce it) -- this report names the exact code that produced every number in it.
-- **Exact versions**: `lockfile.txt` beside this report pins every dependency to the version that ran.
+- **Pipeline code**: data-master commit `8749c5ea1ff4` (working tree was dirty; the commit alone does not reproduce it) -- this report names the exact code that produced every number in it.
 - **Random seeds**: 42 -- every resampling interval is seeded, so it reproduces exactly.
 - **Columns any operation was permitted to touch**: `response`, `visit`
 
@@ -250,4 +249,4 @@ Only the basename of each artifact and script is shown here; the full path, the 
 
 ---
 
-*End of report. Generated 2026-10-19 18:17 中国标准时间 by data-master. The raw input was never modified: every value above was read from the cleaned file or from a recorded artifact. Each number is registered in `report_build.json`; the gate verdict, including anything that failed, is in `audit/final_audit.md`.*
+*End of report. Generated 2026-10-19 20:06 中国标准时间 by data-master. The raw input was never modified: every value above was read from the cleaned file or from a recorded artifact. Each number is registered in `report_build.json`; the gate verdict, including anything that failed, is in `audit/final_audit.md`.*

@@ -33,6 +33,21 @@
       "decided_by": "user"
     },
     {
+      "id": "drop_impossible@sepal_length_cm",
+      "action": null,
+      "column": null,
+      "allowed_actions": [
+        "flag_only"
+      ],
+      "default_if_silent": "flag_only",
+      "columns": [
+        "sepal_length_cm"
+      ],
+      "question": "Choose: flag_only / drop_rows / winsorize / set_to_null",
+      "rationale": "",
+      "decided_by": "user"
+    },
+    {
       "id": "impute_categorical@petal_width_cm,sepal_width_cm",
       "action": null,
       "column": null,

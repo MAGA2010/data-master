@@ -1,0 +1,250 @@
+{
+  "schema_version": "1.0",
+  "source": "D:\\数据处理 skill\\examples\\survey\\outputs\\cleaned\\cleaned.csv",
+  "shape": {
+    "n_rows": 120,
+    "n_cols": 6
+  },
+  "independent_unit": {
+    "independent_unit": "row",
+    "unit_key": "respondent_id",
+    "n_independent": 120,
+    "n_rows": 120,
+    "n_technical_replicates": null,
+    "n_repeated_measures": 1.0,
+    "hierarchy": "120 rows nested under 120 row",
+    "status": "OK",
+    "rule_source": "references/nature-statistics-checklist.md#gate-1"
+  },
+  "alpha": 0.05,
+  "numeric": {
+    "age_years": {
+      "n": 120,
+      "n_missing": 0,
+      "missing_pct": 0.0,
+      "mean": -56.266667,
+      "sd": 316.060619,
+      "se": 28.852255,
+      "median": 42.0,
+      "q25": 28.75,
+      "q75": 63.0,
+      "iqr": 34.25,
+      "min": -999.0,
+      "max": 79.0,
+      "skew": -2.6846,
+      "kurtosis": 5.3313,
+      "n_zeros": 0,
+      "n_negatives": 12,
+      "mean_ci95": [
+        -113.397013,
+        0.86368
+      ],
+      "ci_method": "Student t, df=119",
+      "n_outliers_iqr15": 12,
+      "normality": {
+        "test": "Shapiro-Wilk",
+        "W": 0.3943,
+        "p": 0.0,
+        "normal_at_alpha": false
+      }
+    },
+    "minutes_spent": {
+      "n": 111,
+      "n_missing": 9,
+      "missing_pct": 7.5,
+      "mean": 12.879279,
+      "sd": 7.513855,
+      "se": 0.713184,
+      "median": 11.8,
+      "q25": 7.35,
+      "q75": 17.7,
+      "iqr": 10.35,
+      "min": 0.5,
+      "max": 34.4,
+      "skew": 0.3905,
+      "kurtosis": -0.4209,
+      "n_zeros": 0,
+      "n_negatives": 0,
+      "mean_ci95": [
+        11.465917,
+        14.292642
+      ],
+      "ci_method": "Student t, df=110",
+      "n_outliers_iqr15": 1,
+      "normality": {
+        "test": "Shapiro-Wilk",
+        "W": 0.97499,
+        "p": 0.034933,
+        "normal_at_alpha": false
+      }
+    }
+  },
+  "categorical": {
+    "respondent_id": {
+      "n": 120,
+      "n_missing": 0,
+      "missing_pct": 0.0,
+      "n_unique": 120,
+      "mode": "0001",
+      "counts": {
+        "0001": 1,
+        "0002": 1,
+        "0003": 1,
+        "0004": 1,
+        "0005": 1,
+        "0006": 1,
+        "0007": 1,
+        "0008": 1,
+        "0009": 1,
+        "0010": 1,
+        "0011": 1,
+        "0012": 1,
+        "0013": 1,
+        "0014": 1,
+        "0015": 1,
+        "0016": 1,
+        "0017": 1,
+        "0018": 1,
+        "0019": 1,
+        "0020": 1
+      },
+      "proportions": {
+        "0001": 0.008333,
+        "0002": 0.008333,
+        "0003": 0.008333,
+        "0004": 0.008333,
+        "0005": 0.008333,
+        "0006": 0.008333,
+        "0007": 0.008333,
+        "0008": 0.008333,
+        "0009": 0.008333,
+        "0010": 0.008333,
+        "0011": 0.008333,
+        "0012": 0.008333,
+        "0013": 0.008333,
+        "0014": 0.008333,
+        "0015": 0.008333,
+        "0016": 0.008333,
+        "0017": 0.008333,
+        "0018": 0.008333,
+        "0019": 0.008333,
+        "0020": 0.008333
+      }
+    },
+    "satisfaction": {
+      "n": 113,
+      "n_missing": 7,
+      "missing_pct": 5.83,
+      "n_unique": 5,
+      "mode": "Very dissatisfied",
+      "counts": {
+        "Very dissatisfied": 29,
+        "Dissatisfied": 24,
+        "Satisfied": 24,
+        "Neutral": 21,
+        "Very satisfied": 15
+      },
+      "proportions": {
+        "Very dissatisfied": 0.256637,
+        "Dissatisfied": 0.212389,
+        "Satisfied": 0.212389,
+        "Neutral": 0.185841,
+        "Very satisfied": 0.132743
+      }
+    },
+    "visit_frequency": {
+      "n": 115,
+      "n_missing": 5,
+      "missing_pct": 4.17,
+      "n_unique": 4,
+      "mode": "Sometimes",
+      "counts": {
+        "Sometimes": 36,
+        "Often": 29,
+        "Rarely": 29,
+        "Never": 21
+      },
+      "proportions": {
+        "Sometimes": 0.313043,
+        "Often": 0.252174,
+        "Rarely": 0.252174,
+        "Never": 0.182609
+      }
+    },
+    "recommend": {
+      "n": 120,
+      "n_missing": 0,
+      "missing_pct": 0.0,
+      "n_unique": 2,
+      "mode": "Yes",
+      "counts": {
+        "Yes": 65,
+        "No": 55
+      },
+      "proportions": {
+        "Yes": 0.541667,
+        "No": 0.458333
+      }
+    }
+  },
+  "datetime": {},
+  "missing_mechanism_screen": [
+    {
+      "column": "satisfaction",
+      "n_missing": 7,
+      "missing_pct": 5.83,
+      "mechanism": "undetermined",
+      "assumption_status": "AUTHOR_INPUT_NEEDED",
+      "imputation_default": "none",
+      "evidence": [
+        "missing fraction does not identify MCAR, MAR or MNAR; collection context is required",
+        "exploratory association screens cannot distinguish MAR from MNAR"
+      ],
+      "rule_source": "references/nature-statistics-checklist.md#gate-2"
+    },
+    {
+      "column": "visit_frequency",
+      "n_missing": 5,
+      "missing_pct": 4.17,
+      "mechanism": "undetermined",
+      "assumption_status": "AUTHOR_INPUT_NEEDED",
+      "imputation_default": "none",
+      "evidence": [
+        "missing fraction does not identify MCAR, MAR or MNAR; collection context is required",
+        "exploratory association screens cannot distinguish MAR from MNAR"
+      ],
+      "rule_source": "references/nature-statistics-checklist.md#gate-2"
+    },
+    {
+      "column": "minutes_spent",
+      "n_missing": 9,
+      "missing_pct": 7.5,
+      "mechanism": "undetermined",
+      "assumption_status": "AUTHOR_INPUT_NEEDED",
+      "imputation_default": "none",
+      "evidence": [
+        "missing fraction does not identify MCAR, MAR or MNAR; collection context is required",
+        "exploratory association screens cannot distinguish MAR from MNAR"
+      ],
+      "rule_source": "references/nature-statistics-checklist.md#gate-2"
+    }
+  ],
+  "correlation_pearson": {
+    "columns": [
+      "age_years",
+      "minutes_spent"
+    ],
+    "matrix": {
+      "age_years": {
+        "age_years": 1.0,
+        "minutes_spent": 0.022868
+      },
+      "minutes_spent": {
+        "age_years": 0.022868,
+        "minutes_spent": 1.0
+      }
+    },
+    "n_pairs": 1,
+    "note": "raw Pearson on untransformed data; treat as exploratory only"
+  }
+}

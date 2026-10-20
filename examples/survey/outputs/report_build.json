@@ -1,0 +1,146 @@
+{
+  "schema_version": "1.0",
+  "title": "Synthetic survey responses",
+  "template": "nature",
+  "generated": "2026-10-19 20:07 中国标准时间",
+  "report_md": "D:\\数据处理 skill\\examples\\survey\\outputs\\report.md",
+  "report_md_sha256": "c185dbbcff4c958836dea658049575cb2b42f670cf0a4a9c38c3f0bd4e609cbe",
+  "executive_summary_md": "D:\\数据处理 skill\\examples\\survey\\outputs\\executive_summary.md",
+  "report_html": "D:\\数据处理 skill\\examples\\survey\\outputs\\report.html",
+  "html": {
+    "path": "D:\\数据处理 skill\\examples\\survey\\outputs\\report.html",
+    "bytes": 229575,
+    "source_md": "D:\\数据处理 skill\\examples\\survey\\outputs\\report.md",
+    "source_md_sha256": "7f4194553bac5c126dab763c84ca142713adcde86ae5b93f152ac8346a2b63b6",
+    "images_embedded": 2,
+    "images_missing": [],
+    "self_contained": true
+  },
+  "report_pdf": "D:\\数据处理 skill\\examples\\survey\\outputs\\report.pdf",
+  "pdf": {
+    "pdf_written": true,
+    "backend": "reportlab",
+    "attempts": [
+      {
+        "tier": "reportlab",
+        "interpreter": "C:\\Users\\华为\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+        "in_process": true,
+        "ok": true
+      }
+    ],
+    "sha256": "010129ad3265b1b16c970d920d9822df243542b5748127369b673a8c2a9758cf",
+    "reportlab_version": "5.0.1",
+    "pages": 11,
+    "bytes": 195956,
+    "cjk_font_embedded": true,
+    "cjk_font_available": true,
+    "cjk_text_present": true
+  },
+  "pdf_probe": {
+    "pdf_written": true,
+    "backend": "reportlab",
+    "attempts": [
+      {
+        "tier": "reportlab",
+        "interpreter": "C:\\Users\\华为\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+        "in_process": true,
+        "ok": true
+      }
+    ],
+    "sha256": "39c4aa08d8c1c7f74feeaa91219c9c1bfaec5b32b15ac8b4b2c28ef7b25c82fb",
+    "reportlab_version": "5.0.1",
+    "pages": 11,
+    "bytes": 196123,
+    "cjk_font_embedded": true,
+    "cjk_font_available": true,
+    "cjk_text_present": true,
+    "probed_from": "throwaway first pass; the delivered PDF is re-rendered"
+  },
+  "artifact_hashes": {
+    "profile": "7cf1ef05d05552d2",
+    "plan": "7176bc9d669e8010",
+    "validation": "a21d5a6adff9c3a8",
+    "descriptive": "6258fc3c41de7f74",
+    "inferential": "7e403b9156c093a7",
+    "decisions": "2887f493ce9cfac3",
+    "rendered": "4f3ae11be2a4b262"
+  },
+  "cleaned_sha256": "a023b82a29c35fa8d69e3e4d780db97134241d3a88c4aea6f47e3a11c563d274",
+  "environment": {
+    "python": "3.13.15",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "libs": {
+      "pandas": "3.0.3",
+      "numpy": "2.4.6",
+      "scipy": "1.18.1"
+    },
+    "assembled_at": "2026-10-19 20:07 中国标准时间",
+    "pipeline": {
+      "git_commit": "8749c5ea1ff44b0e8376d75b61b238747708557f",
+      "git_branch": "main",
+      "git_dirty": true,
+      "git_dirty_files": 48,
+      "git_describe": "v0.2.0-2-g8749c5e-dirty",
+      "note": "working tree was dirty when this run started; the commit alone does not reproduce it"
+    }
+  },
+  "caveats": [
+    {
+      "id": "missingness",
+      "caveat": "3 variable(s) carry missing values, the most at `minutes_spent` (7.5%). Values were not imputed, so every statistic here is conditional on complete cases. Listwise deletion removed rows from `minutes_spent` (15 rows, n = 105). The screening test returned undetermined, which is a screening result and not proof of a mechanism -- confirm it against how the data were actually collected.",
+      "limits": "every mean, median, interval and p value in the Results section",
+      "resolved_by": "AUTHOR_INPUT_NEEDED: how the missing values arose"
+    },
+    {
+      "id": "withheld_conversion",
+      "caveat": "A numeric conversion was withheld for `respondent_id`. Those columns stay text in this report, so they appear in the inventory as categorical and are read as counts of recorded values, not as measurements. Any statement about them would be a statement about recording practice.",
+      "limits": "any conclusion about those columns",
+      "resolved_by": "re-run with --force-coerce-numeric once the sentinel is agreed"
+    },
+    {
+      "id": "skew",
+      "caveat": "`age_years` (skew 2.68) is strongly skewed. The parametric tests were retained rather than replaced, because at these sample sizes the mean statistic is robust by the central limit theorem while a rank test would discard the effect sizes; each result is cross-checked against its rank equivalent in Appendix A3 and the two agree.",
+      "limits": "the mean-based summaries; median and IQR are reported alongside",
+      "resolved_by": "cross-checked in Appendix A3"
+    }
+  ],
+  "provenance": [
+    {
+      "kind": "header",
+      "value": 120,
+      "meaning": "rows analysed",
+      "artifact": "cleaning_run.json",
+      "script": "scripts/execute_cleaning.py",
+      "rule_source": ""
+    },
+    {
+      "kind": "headline",
+      "value": "`minutes_spent` is compared across satisfaction: rank epsilon squared = 0.86, 95% CI 0.75 to 0.96, BH-adjusted p = 1.4e-15 across a family of 1 outcomes",
+      "meaning": "strongest group separation",
+      "artifact": "inferential.json",
+      "script": "scripts/stats_inferential.py",
+      "rule_source": ""
+    },
+    {
+      "kind": "method_rejection",
+      "value": "one-way ANOVA",
+      "meaning": "rejected for minutes_spent",
+      "artifact": "inferential.json",
+      "script": "scripts/stats_inferential.py",
+      "rule_source": "scripts/stats_inferential.py#k_group_numeric"
+    },
+    {
+      "kind": "multiplicity",
+      "value": "BH",
+      "meaning": "family correction method",
+      "artifact": "inferential.json",
+      "script": "scripts/stats_inferential.py",
+      "rule_source": "references/nature-statistics-checklist.md#gate-5"
+    }
+  ],
+  "self_audit": {
+    "n_forbidden": 0,
+    "findings": [],
+    "n_lines_scanned": 218
+  }
+}

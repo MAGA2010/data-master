@@ -2,10 +2,20 @@
   "schema_version": "1.0",
   "title": "Iris morphometrics",
   "template": "nature",
-  "generated": "2026-10-18 17:35 中国标准时间",
+  "generated": "2026-10-19 20:05 中国标准时间",
   "report_md": "D:\\数据处理 skill\\examples\\iris\\outputs\\report.md",
-  "report_md_sha256": "e7a0688667a4a6b317657d8c13f8f3708e30fc8b0351bb44a39a495521066c7c",
+  "report_md_sha256": "736046027d1319e3206e35e7bb41653bff6663942ae1402e606d257de3f9d0e3",
   "executive_summary_md": "D:\\数据处理 skill\\examples\\iris\\outputs\\executive_summary.md",
+  "report_html": "D:\\数据处理 skill\\examples\\iris\\outputs\\report.html",
+  "html": {
+    "path": "D:\\数据处理 skill\\examples\\iris\\outputs\\report.html",
+    "bytes": 578949,
+    "source_md": "D:\\数据处理 skill\\examples\\iris\\outputs\\report.md",
+    "source_md_sha256": "7192dd52cdc785a53c476add59c8e9456e0219553c6c3b51f463256fe42132f1",
+    "images_embedded": 3,
+    "images_missing": [],
+    "self_contained": true
+  },
   "report_pdf": "D:\\数据处理 skill\\examples\\iris\\outputs\\report.pdf",
   "pdf": {
     "pdf_written": true,
@@ -13,15 +23,15 @@
     "attempts": [
       {
         "tier": "reportlab",
-        "interpreter": "C:\\Users\\华为\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
-        "in_process": false,
+        "interpreter": "C:\\Users\\华为\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+        "in_process": true,
         "ok": true
       }
     ],
-    "sha256": "77747ea91751e8ac7e45ae673012d1f9a1ad3de3828b94437f80f0f9b887a4b1",
-    "reportlab_version": "4.4.9",
-    "pages": 16,
-    "bytes": 477414,
+    "sha256": "274ecf652f1ee305deecc1f61f185abd4238376228ca058dc7f5a369edae4bc0",
+    "reportlab_version": "5.0.1",
+    "pages": 17,
+    "bytes": 478481,
     "cjk_font_embedded": true,
     "cjk_font_available": true,
     "cjk_text_present": true
@@ -32,25 +42,25 @@
     "attempts": [
       {
         "tier": "reportlab",
-        "interpreter": "C:\\Users\\华为\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
-        "in_process": false,
+        "interpreter": "C:\\Users\\华为\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+        "in_process": true,
         "ok": true
       }
     ],
-    "sha256": "0c5bc3997420bc45a95c82a087ec8d2081b6d73fdb94b63834d06fbc7b481326",
-    "reportlab_version": "4.4.9",
-    "pages": 16,
-    "bytes": 477153,
+    "sha256": "1965e6fdc141279864bdc2da2717d89c80d7dacd27b15fdc781298ec4858af79",
+    "reportlab_version": "5.0.1",
+    "pages": 17,
+    "bytes": 478191,
     "cjk_font_embedded": true,
     "cjk_font_available": true,
     "cjk_text_present": true,
     "probed_from": "throwaway first pass; the delivered PDF is re-rendered"
   },
   "artifact_hashes": {
-    "profile": "3dc825cd3a941c53",
-    "plan": "116e4b77d3b21f93",
+    "profile": "eabfcb61223282ce",
+    "plan": "69492b9bd35c25af",
     "validation": "070ee266feb052fd",
-    "descriptive": "3f23de383020cb3c",
+    "descriptive": "1816f349a61bcfd4",
     "inferential": "f2556c0c1455bda5",
     "decisions": "e0548e975a90e8d1",
     "rendered": "c428ed8bc516c143"
@@ -64,20 +74,20 @@
       "numpy": "2.4.6",
       "scipy": "1.18.1"
     },
-    "assembled_at": "2026-10-18 17:35 中国标准时间",
+    "assembled_at": "2026-10-19 20:05 中国标准时间",
     "pipeline": {
-      "git_commit": "08920c90d402996cc04733db4dcd5b6011f46170",
+      "git_commit": "8749c5ea1ff44b0e8376d75b61b238747708557f",
       "git_branch": "main",
       "git_dirty": true,
-      "git_dirty_files": 33,
-      "git_describe": "08920c9-dirty",
+      "git_dirty_files": 58,
+      "git_describe": "v0.2.0-2-g8749c5e-dirty",
       "note": "working tree was dirty when this run started; the commit alone does not reproduce it"
     }
   },
   "caveats": [
     {
       "id": "missingness",
-      "caveat": "2 variable(s) carry missing values, the most at `sepal_width_cm` (3.8%). Values were not imputed, so every statistic here is conditional on complete cases. Listwise deletion removed rows from `sepal_width_cm` (6 rows, n = 152), `petal_width_cm` (6 rows, n = 152). The screening test returned MCAR-likely, which is a screening result and not proof of a mechanism -- confirm it against how the data were actually collected.",
+      "caveat": "2 variable(s) carry missing values, the most at `sepal_width_cm` (3.8%). Values were not imputed, so every statistic here is conditional on complete cases. Listwise deletion removed rows from `sepal_width_cm` (6 rows, n = 152), `petal_width_cm` (6 rows, n = 152). The screening test returned undetermined, which is a screening result and not proof of a mechanism -- confirm it against how the data were actually collected.",
       "limits": "every mean, median, interval and p value in the Results section",
       "resolved_by": "AUTHOR_INPUT_NEEDED: how the missing values arose"
     },
@@ -123,7 +133,7 @@
     },
     {
       "kind": "headline",
-      "value": "`petal_length_cm` separates species by omega squared = 0.94 out of a possible 1, 95% CI 0.93 to 0.95, BH-adjusted p = 3.7e-69 across a family of 4 outcomes",
+      "value": "`petal_length_cm` is compared across species: omega squared = 0.94, 95% CI 0.93 to 0.95, BH-adjusted p = 3.7e-69 across a family of 4 outcomes",
       "meaning": "strongest group separation",
       "artifact": "inferential.json",
       "script": "scripts/stats_inferential.py",

@@ -1,0 +1,332 @@
+{
+  "schema_version": "1.1",
+  "source": "examples\\survey\\survey_responses.csv",
+  "modality": "tabular",
+  "sampled": false,
+  "read_mode": "text",
+  "shape": {
+    "n_rows": 120,
+    "n_cols": 6
+  },
+  "memory_bytes": 9491,
+  "columns": {
+    "respondent_id": {
+      "dtype": "str",
+      "role": "categorical",
+      "n": 120,
+      "n_missing": 0,
+      "n_unique": 120,
+      "missing_pct": 0.0,
+      "min_len": 4,
+      "max_len": 4,
+      "mean_len": 4.0,
+      "top": {
+        "0001": 1,
+        "0002": 1,
+        "0003": 1,
+        "0004": 1,
+        "0005": 1
+      },
+      "coercion": {
+        "interesting": true,
+        "auto_numeric": false,
+        "auto_date": false,
+        "hold": "leading_zero",
+        "numeric": {
+          "n_non_null": 120,
+          "n_parsed": 120,
+          "n_failed": 0,
+          "all_parse": true,
+          "parse_fraction_of_non_null": 1.0,
+          "sample_failed": [],
+          "failed_are_blank_or_sentinel": false,
+          "has_currency_or_percent": false,
+          "currency_or_percent_samples": [],
+          "would_parse_after_symbol_strip": null,
+          "leading_zero_suspected_id": true,
+          "leading_zero_fraction": 1.0,
+          "leading_zero_samples": [
+            "0001",
+            "0002",
+            "0003",
+            "0004",
+            "0005"
+          ],
+          "parser": "pd.to_numeric(errors='coerce') after removing thousands separators"
+        },
+        "date": {
+          "n_non_null": 120,
+          "n_parsed": 120,
+          "n_failed": 0,
+          "all_parse": true,
+          "parse_fraction_of_non_null": 1.0,
+          "sample_failed": [],
+          "parser": "pd.to_datetime(errors='coerce'), per-element format inference"
+        },
+        "role_hint": "identifier"
+      }
+    },
+    "age_years": {
+      "dtype": "str",
+      "role": "categorical",
+      "n": 120,
+      "n_missing": 0,
+      "n_unique": 55,
+      "missing_pct": 0.0,
+      "min_len": 2,
+      "max_len": 4,
+      "mean_len": 2.2,
+      "top": {
+        "-999": 12,
+        "35": 5,
+        "63": 4,
+        "49": 4,
+        "75": 4
+      },
+      "coercion": {
+        "interesting": true,
+        "auto_numeric": true,
+        "auto_date": false,
+        "hold": null,
+        "numeric": {
+          "n_non_null": 120,
+          "n_parsed": 120,
+          "n_failed": 0,
+          "all_parse": true,
+          "parse_fraction_of_non_null": 1.0,
+          "sample_failed": [],
+          "failed_are_blank_or_sentinel": false,
+          "has_currency_or_percent": false,
+          "currency_or_percent_samples": [],
+          "would_parse_after_symbol_strip": null,
+          "leading_zero_suspected_id": false,
+          "leading_zero_fraction": 0.0,
+          "leading_zero_samples": [],
+          "parser": "pd.to_numeric(errors='coerce') after removing thousands separators"
+        },
+        "date": {
+          "n_non_null": 120,
+          "n_parsed": 0,
+          "n_failed": 120,
+          "all_parse": false,
+          "parse_fraction_of_non_null": 0.0,
+          "sample_failed": [
+            "55",
+            "63",
+            "-999",
+            "78",
+            "19"
+          ],
+          "parser": "pd.to_datetime(errors='coerce'), per-element format inference"
+        },
+        "role_hint": "numeric"
+      },
+      "coercion_numeric_stats": {
+        "min": -999.0,
+        "max": 79.0,
+        "negatives": 12,
+        "zeros": 0,
+        "note": "computed on the numeric view the automatic coercion will produce"
+      }
+    },
+    "satisfaction": {
+      "dtype": "str",
+      "role": "categorical",
+      "n": 120,
+      "n_missing": 7,
+      "n_unique": 5,
+      "missing_pct": 5.83,
+      "min_len": 7,
+      "max_len": 17,
+      "mean_len": 11.982301,
+      "top": {
+        "Very dissatisfied": 29,
+        "Satisfied": 24,
+        "Dissatisfied": 24,
+        "Neutral": 21,
+        "Very satisfied": 15
+      }
+    },
+    "visit_frequency": {
+      "dtype": "str",
+      "role": "categorical",
+      "n": 120,
+      "n_missing": 5,
+      "n_unique": 4,
+      "missing_pct": 4.17,
+      "min_len": 5,
+      "max_len": 9,
+      "mean_len": 6.504348,
+      "top": {
+        "Sometimes": 36,
+        "Often": 29,
+        "Rarely": 29,
+        "Never": 21
+      }
+    },
+    "recommend": {
+      "dtype": "str",
+      "role": "binary",
+      "n": 120,
+      "n_missing": 0,
+      "n_unique": 2,
+      "missing_pct": 0.0,
+      "min_len": 2,
+      "max_len": 3,
+      "mean_len": 2.541667,
+      "top": {
+        "Yes": 65,
+        "No": 55
+      }
+    },
+    "minutes_spent": {
+      "dtype": "str",
+      "role": "categorical",
+      "n": 120,
+      "n_missing": 9,
+      "n_unique": 87,
+      "missing_pct": 7.5,
+      "min_len": 3,
+      "max_len": 4,
+      "mean_len": 3.630631,
+      "top": {
+        "0.5": 6,
+        "14.5": 3,
+        "3.8": 2,
+        "13.5": 2,
+        "17.6": 2
+      },
+      "coercion": {
+        "interesting": true,
+        "auto_numeric": true,
+        "auto_date": false,
+        "hold": null,
+        "numeric": {
+          "n_non_null": 111,
+          "n_parsed": 111,
+          "n_failed": 0,
+          "all_parse": true,
+          "parse_fraction_of_non_null": 1.0,
+          "sample_failed": [],
+          "failed_are_blank_or_sentinel": false,
+          "has_currency_or_percent": false,
+          "currency_or_percent_samples": [],
+          "would_parse_after_symbol_strip": null,
+          "leading_zero_suspected_id": false,
+          "leading_zero_fraction": 0.0,
+          "leading_zero_samples": [],
+          "parser": "pd.to_numeric(errors='coerce') after removing thousands separators"
+        },
+        "date": {
+          "n_non_null": 111,
+          "n_parsed": 0,
+          "n_failed": 111,
+          "all_parse": false,
+          "parse_fraction_of_non_null": 0.0,
+          "sample_failed": [
+            "3.8",
+            "21.7",
+            "13.5",
+            "9.0",
+            "17.6"
+          ],
+          "parser": "pd.to_datetime(errors='coerce'), per-element format inference"
+        },
+        "role_hint": "numeric"
+      },
+      "coercion_numeric_stats": {
+        "min": 0.5,
+        "max": 34.4,
+        "negatives": 0,
+        "zeros": 0,
+        "note": "computed on the numeric view the automatic coercion will produce"
+      }
+    }
+  },
+  "column_roles": {
+    "respondent_id": "categorical",
+    "age_years": "categorical",
+    "satisfaction": "categorical",
+    "visit_frequency": "categorical",
+    "recommend": "binary",
+    "minutes_spent": "categorical"
+  },
+  "anomalies": {
+    "flags": [
+      {
+        "type": "impossible_negative",
+        "column": "age_years",
+        "severity": "P1",
+        "n_negatives": 12,
+        "min": -999.0
+      }
+    ],
+    "n_flags": 1
+  },
+  "target_candidate": {
+    "candidates": [
+      {
+        "column": "recommend",
+        "n_unique": 2,
+        "score": 0.5
+      },
+      {
+        "column": "visit_frequency",
+        "n_unique": 4,
+        "score": 0.25
+      },
+      {
+        "column": "satisfaction",
+        "n_unique": 5,
+        "score": 0.2
+      }
+    ],
+    "note": "integer-coded class label or small-cardinality outcome"
+  },
+  "group_candidate": {
+    "candidates": [
+      {
+        "column": "recommend",
+        "n_unique": 2,
+        "balance_entropy": 0.995,
+        "n_levels_observed": 2,
+        "score": 0.997492
+      },
+      {
+        "column": "visit_frequency",
+        "n_unique": 4,
+        "balance_entropy": 0.9874,
+        "n_levels_observed": 4,
+        "score": 0.496861
+      },
+      {
+        "column": "satisfaction",
+        "n_unique": 5,
+        "balance_entropy": 0.9867,
+        "n_levels_observed": 5,
+        "score": 0.397333
+      },
+      {
+        "column": "age_years",
+        "n_unique": 55,
+        "balance_entropy": 0.9444,
+        "n_levels_observed": 55,
+        "score": 0.035352
+      },
+      {
+        "column": "minutes_spent",
+        "n_unique": 87,
+        "balance_entropy": 0.9787,
+        "n_levels_observed": 87,
+        "score": 0.022743
+      }
+    ],
+    "rejected": [],
+    "note": "low cardinality balanced categorical column; balance is entropy normalised by log(levels), columns with fewer than 2 observed levels are excluded"
+  },
+  "timeseries_candidate": {
+    "is_timeseries": false
+  },
+  "independent_unit_hint": "row",
+  "pandas_version": "3.0.3"
+}

@@ -366,6 +366,18 @@
       }
     },
     {
+      "id": "drop_impossible@sepal_length_cm",
+      "op": "drop_impossible",
+      "columns": [
+        "sepal_length_cm"
+      ],
+      "reason": "`sepal_length_cm` has 1 negative value(s) (min=-1.0) for a physically non-negative quantity",
+      "ask_user": "Choose: flag_only / drop_rows / winsorize / set_to_null",
+      "default_if_silent": "flag_only",
+      "severity": "P1",
+      "rule_source": "references/never-automatic-list.md#conditional-never"
+    },
+    {
       "id": "impute_categorical@petal_width_cm,sepal_width_cm",
       "op": "impute_categorical",
       "columns": [

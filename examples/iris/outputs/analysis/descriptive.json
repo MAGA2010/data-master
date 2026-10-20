@@ -246,23 +246,27 @@
       "column": "sepal_width_cm",
       "n_missing": 6,
       "missing_pct": 3.8,
-      "mechanism": "MCAR-likely",
+      "mechanism": "undetermined",
+      "assumption_status": "AUTHOR_INPUT_NEEDED",
+      "imputation_default": "none",
       "evidence": [
-        "missing rate 3.8% below the 5% threshold commonly treated as ignorable"
+        "missing fraction does not identify MCAR, MAR or MNAR; collection context is required",
+        "exploratory association screens cannot distinguish MAR from MNAR"
       ],
-      "rule_source": "references/nature-statistics-checklist.md#gate-2",
-      "imputation_default": "listwise deletion is usually acceptable; report n before/after"
+      "rule_source": "references/nature-statistics-checklist.md#gate-2"
     },
     {
       "column": "petal_width_cm",
       "n_missing": 6,
       "missing_pct": 3.8,
-      "mechanism": "MCAR-likely",
+      "mechanism": "undetermined",
+      "assumption_status": "AUTHOR_INPUT_NEEDED",
+      "imputation_default": "none",
       "evidence": [
-        "missing rate 3.8% below the 5% threshold commonly treated as ignorable"
+        "missing fraction does not identify MCAR, MAR or MNAR; collection context is required",
+        "exploratory association screens cannot distinguish MAR from MNAR"
       ],
-      "rule_source": "references/nature-statistics-checklist.md#gate-2",
-      "imputation_default": "listwise deletion is usually acceptable; report n before/after"
+      "rule_source": "references/nature-statistics-checklist.md#gate-2"
     }
   ],
   "correlation_pearson": {

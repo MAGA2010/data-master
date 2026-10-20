@@ -138,6 +138,13 @@
           "parser": "pd.to_datetime(errors='coerce'), per-element format inference"
         },
         "role_hint": "numeric"
+      },
+      "coercion_numeric_stats": {
+        "min": 1.0,
+        "max": 3.0,
+        "negatives": 0,
+        "zeros": 0,
+        "note": "computed on the numeric view the automatic coercion will produce"
       }
     },
     "response": {
@@ -194,6 +201,13 @@
           "parser": "pd.to_datetime(errors='coerce'), per-element format inference"
         },
         "role_hint": "numeric"
+      },
+      "coercion_numeric_stats": {
+        "min": 9.7,
+        "max": 12.3,
+        "negatives": 0,
+        "zeros": 0,
+        "note": "computed on the numeric view the automatic coercion will produce"
       }
     }
   },

@@ -1,0 +1,142 @@
+{
+  "schema_version": "1.0",
+  "title": "Date-versus-number ambiguity",
+  "template": "nature",
+  "generated": "2026-10-19 20:07 中国标准时间",
+  "report_md": "D:\\数据处理 skill\\examples\\date_number_ambiguity\\outputs\\report.md",
+  "report_md_sha256": "b69404862045c9bf824739ee6a84275876f4eb0a3bdc88d517e762c731eddbc1",
+  "executive_summary_md": "D:\\数据处理 skill\\examples\\date_number_ambiguity\\outputs\\executive_summary.md",
+  "report_html": "D:\\数据处理 skill\\examples\\date_number_ambiguity\\outputs\\report.html",
+  "html": {
+    "path": "D:\\数据处理 skill\\examples\\date_number_ambiguity\\outputs\\report.html",
+    "bytes": 204747,
+    "source_md": "D:\\数据处理 skill\\examples\\date_number_ambiguity\\outputs\\report.md",
+    "source_md_sha256": "900a8ae4a9bd78d14ce2f959baae887b5d6c8d1e335a6be9e7506ed0722a4454",
+    "images_embedded": 2,
+    "images_missing": [],
+    "self_contained": true
+  },
+  "report_pdf": "D:\\数据处理 skill\\examples\\date_number_ambiguity\\outputs\\report.pdf",
+  "pdf": {
+    "pdf_written": true,
+    "backend": "reportlab",
+    "attempts": [
+      {
+        "tier": "reportlab",
+        "interpreter": "C:\\Users\\华为\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+        "in_process": true,
+        "ok": true
+      }
+    ],
+    "sha256": "ab1757bd7748c3049c3011502f28f65516fa62d071d8adc7ff5d5392c3245b39",
+    "reportlab_version": "5.0.1",
+    "pages": 10,
+    "bytes": 171285,
+    "cjk_font_embedded": true,
+    "cjk_font_available": true,
+    "cjk_text_present": true
+  },
+  "pdf_probe": {
+    "pdf_written": true,
+    "backend": "reportlab",
+    "attempts": [
+      {
+        "tier": "reportlab",
+        "interpreter": "C:\\Users\\华为\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+        "in_process": true,
+        "ok": true
+      }
+    ],
+    "sha256": "faf4a0ea95524d77b12b97d88fd8232ae863a88994ea1fb87cc8cab951662000",
+    "reportlab_version": "5.0.1",
+    "pages": 10,
+    "bytes": 171302,
+    "cjk_font_embedded": true,
+    "cjk_font_available": true,
+    "cjk_text_present": true,
+    "probed_from": "throwaway first pass; the delivered PDF is re-rendered"
+  },
+  "artifact_hashes": {
+    "profile": "8a3321cf3aa5f099",
+    "plan": "42e5605ed9090f9b",
+    "validation": "dab8826b466b2eb9",
+    "descriptive": "3f5ae5fd2893a30b",
+    "inferential": "e9374b5c9e391622",
+    "decisions": "cf7926c752cfd697",
+    "rendered": "55cc00232d60ba09"
+  },
+  "cleaned_sha256": "45480b1e8fbbdd691cb92ee6d335f63cd664a6791f9f578481b114ce8ae9dff6",
+  "environment": {
+    "python": "3.13.15",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "libs": {
+      "pandas": "3.0.3",
+      "numpy": "2.4.6",
+      "scipy": "1.18.1"
+    },
+    "assembled_at": "2026-10-19 20:07 中国标准时间",
+    "pipeline": {
+      "git_commit": "8749c5ea1ff44b0e8376d75b61b238747708557f",
+      "git_branch": "main",
+      "git_dirty": true,
+      "git_dirty_files": 48,
+      "git_describe": "v0.2.0-2-g8749c5e-dirty",
+      "note": "working tree was dirty when this run started; the commit alone does not reproduce it"
+    }
+  },
+  "caveats": [
+    {
+      "id": "design",
+      "caveat": "The independent unit was never declared, so each row was treated as one observation. If a row pools several plants, fields, patients or technical replicates, the effective n is smaller than the row count and every interval below is too narrow -- usually by more than the replication factor. The groups were also not assigned, so differences between them are associations and this data cannot support a reading in which the group label produced the measurement.",
+      "limits": "the causal reading of every group difference, and the width of every interval",
+      "resolved_by": "AUTHOR_INPUT_NEEDED: what one row represents"
+    }
+  ],
+  "provenance": [
+    {
+      "kind": "header",
+      "value": 48,
+      "meaning": "rows analysed",
+      "artifact": "cleaning_run.json",
+      "script": "scripts/execute_cleaning.py",
+      "rule_source": ""
+    },
+    {
+      "kind": "headline",
+      "value": "`latency_s` is compared across subject_id: omega squared = 0.87, 95% CI 0.84 to 0.93, BH-adjusted p = 3.5e-17 across a family of 1 outcomes",
+      "meaning": "strongest group separation",
+      "artifact": "inferential.json",
+      "script": "scripts/stats_inferential.py",
+      "rule_source": ""
+    },
+    {
+      "kind": "method_rejection",
+      "value": "Welch ANOVA",
+      "meaning": "rejected for latency_s",
+      "artifact": "inferential.json",
+      "script": "scripts/stats_inferential.py",
+      "rule_source": "scripts/stats_inferential.py#k_group_numeric"
+    },
+    {
+      "kind": "method_rejection",
+      "value": "Kruskal-Wallis H",
+      "meaning": "rejected for latency_s",
+      "artifact": "inferential.json",
+      "script": "scripts/stats_inferential.py",
+      "rule_source": "scripts/stats_inferential.py#k_group_numeric"
+    },
+    {
+      "kind": "multiplicity",
+      "value": "BH",
+      "meaning": "family correction method",
+      "artifact": "inferential.json",
+      "script": "scripts/stats_inferential.py",
+      "rule_source": "references/nature-statistics-checklist.md#gate-5"
+    }
+  ],
+  "self_audit": {
+    "n_forbidden": 0,
+    "findings": [],
+    "n_lines_scanned": 212
+  }
+}

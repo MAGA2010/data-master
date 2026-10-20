@@ -31,6 +31,7 @@ the CLI alone does not register the skill until `skill install` is run.
   - `analysis/` — `profile.json`, `stats.json`, `validation_report.md`, `chart_decisions.json`, `sensitivity.json`
   - `charts/` — `*.png` figures
   - `report.md` — main report (the citable source text)
+  - `report.html` — self-contained shareable export of report.md (figures embedded; verification hashes it)
   - `report.pdf` — **primary deliverable**; rendered by a three-tier cascade
   - `executive_summary.md` — 1-page TL;DR
   - `report_build.json` — provenance for every number + PDF backend trail + self-audit + pipeline commit

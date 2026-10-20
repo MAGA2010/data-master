@@ -1,0 +1,195 @@
+{
+  "schema_version": "1.1",
+  "source": "examples\\date_number_ambiguity\\session_export.csv",
+  "modality": "tabular",
+  "sampled": false,
+  "read_mode": "text",
+  "shape": {
+    "n_rows": 48,
+    "n_cols": 3
+  },
+  "memory_bytes": 2148,
+  "columns": {
+    "subject_id": {
+      "dtype": "str",
+      "role": "categorical",
+      "n": 48,
+      "n_missing": 0,
+      "n_unique": 8,
+      "missing_pct": 0.0,
+      "min_len": 4,
+      "max_len": 4,
+      "mean_len": 4.0,
+      "top": {
+        "P002": 9,
+        "P005": 9,
+        "P007": 8,
+        "P008": 7,
+        "P004": 6
+      }
+    },
+    "session_stamp": {
+      "dtype": "str",
+      "role": "categorical",
+      "n": 48,
+      "n_missing": 0,
+      "n_unique": 38,
+      "missing_pct": 0.0,
+      "min_len": 8,
+      "max_len": 8,
+      "mean_len": 8.0,
+      "top": {
+        "20240129": 2,
+        "20240118": 2,
+        "20240126": 2,
+        "20240226": 2,
+        "20240224": 2
+      },
+      "coercion": {
+        "interesting": true,
+        "auto_numeric": false,
+        "auto_date": false,
+        "hold": "numeric_or_date",
+        "numeric": {
+          "n_non_null": 48,
+          "n_parsed": 48,
+          "n_failed": 0,
+          "all_parse": true,
+          "parse_fraction_of_non_null": 1.0,
+          "sample_failed": [],
+          "failed_are_blank_or_sentinel": false,
+          "has_currency_or_percent": false,
+          "currency_or_percent_samples": [],
+          "would_parse_after_symbol_strip": null,
+          "leading_zero_suspected_id": false,
+          "leading_zero_fraction": 0.0,
+          "leading_zero_samples": [],
+          "parser": "pd.to_numeric(errors='coerce') after removing thousands separators"
+        },
+        "date": {
+          "n_non_null": 48,
+          "n_parsed": 48,
+          "n_failed": 0,
+          "all_parse": true,
+          "parse_fraction_of_non_null": 1.0,
+          "sample_failed": [],
+          "parser": "pd.to_datetime(errors='coerce'), per-element format inference"
+        }
+      }
+    },
+    "latency_s": {
+      "dtype": "str",
+      "role": "categorical",
+      "n": 48,
+      "n_missing": 0,
+      "n_unique": 48,
+      "missing_pct": 0.0,
+      "min_len": 6,
+      "max_len": 6,
+      "mean_len": 6.0,
+      "top": {
+        "351.20": 1,
+        "319.53": 1,
+        "512.64": 1,
+        "414.55": 1,
+        "437.68": 1
+      },
+      "coercion": {
+        "interesting": true,
+        "auto_numeric": true,
+        "auto_date": false,
+        "hold": null,
+        "numeric": {
+          "n_non_null": 48,
+          "n_parsed": 48,
+          "n_failed": 0,
+          "all_parse": true,
+          "parse_fraction_of_non_null": 1.0,
+          "sample_failed": [],
+          "failed_are_blank_or_sentinel": false,
+          "has_currency_or_percent": false,
+          "currency_or_percent_samples": [],
+          "would_parse_after_symbol_strip": null,
+          "leading_zero_suspected_id": false,
+          "leading_zero_fraction": 0.0,
+          "leading_zero_samples": [],
+          "parser": "pd.to_numeric(errors='coerce') after removing thousands separators"
+        },
+        "date": {
+          "n_non_null": 48,
+          "n_parsed": 0,
+          "n_failed": 48,
+          "all_parse": false,
+          "parse_fraction_of_non_null": 0.0,
+          "sample_failed": [
+            "351.20",
+            "319.53",
+            "512.64",
+            "414.55",
+            "437.68"
+          ],
+          "parser": "pd.to_datetime(errors='coerce'), per-element format inference"
+        },
+        "role_hint": "numeric"
+      },
+      "coercion_numeric_stats": {
+        "min": 276.7,
+        "max": 543.86,
+        "negatives": 0,
+        "zeros": 0,
+        "note": "computed on the numeric view the automatic coercion will produce"
+      }
+    }
+  },
+  "column_roles": {
+    "subject_id": "categorical",
+    "session_stamp": "categorical",
+    "latency_s": "categorical"
+  },
+  "anomalies": {
+    "flags": [],
+    "n_flags": 0
+  },
+  "target_candidate": {
+    "candidates": [
+      {
+        "column": "subject_id",
+        "n_unique": 8,
+        "score": 0.125
+      }
+    ],
+    "note": "integer-coded class label or small-cardinality outcome"
+  },
+  "group_candidate": {
+    "candidates": [
+      {
+        "column": "subject_id",
+        "n_unique": 8,
+        "balance_entropy": 0.9521,
+        "n_levels_observed": 8,
+        "score": 0.244013
+      },
+      {
+        "column": "session_stamp",
+        "n_unique": 38,
+        "balance_entropy": 0.9848,
+        "n_levels_observed": 38,
+        "score": 0.052232
+      },
+      {
+        "column": "latency_s",
+        "n_unique": 48,
+        "balance_entropy": 1.0,
+        "n_levels_observed": 48,
+        "score": 0.041667
+      }
+    ],
+    "rejected": [],
+    "note": "low cardinality balanced categorical column; balance is entropy normalised by log(levels), columns with fewer than 2 observed levels are excluded"
+  },
+  "timeseries_candidate": {
+    "is_timeseries": false
+  },
+  "independent_unit_hint": "row",
+  "pandas_version": "3.0.3"
+}

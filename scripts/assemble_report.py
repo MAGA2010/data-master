@@ -123,6 +123,7 @@ def fmt_ci(ci: Any, d: int = 2) -> str:
 def summarize_effect(es: Dict[str, Any]) -> Tuple[str, Any, str]:
     """Handle both scalar and nested effect estimates without losing intervals."""
     for key, label in (("omega_squared", "omega squared"), ("eta_squared", "eta squared"),
+                       ("epsilon_squared_rank", "rank epsilon squared"),
                        ("cohens_d", "Cohen's d"), ("cohens_dz", "paired Cohen's dz"),
                        ("cramers_v", "Cramer's V"), ("cliffs_delta", "Cliff's delta"),
                        ("odds_ratio", "odds ratio"), ("kendalls_w", "Kendall's W"),
@@ -494,11 +495,17 @@ class ReportBuilder:
         return self.prov.claim(kind, value, meaning, artifact, script, rule)
 
     # -- headline ---------------------------------------------------------
-    def headline(self) -> Tuple[str, str]:
+    def headline(self) -> Tuple[str, str, Optional[bool]]:
+        """(sentence, outcome, survives-correction) for the strongest test.
+
+        The third value drives whether the prose may call the result a
+        separation: a top effect whose corrected p does not clear alpha, or
+        whose interval spans zero, is a null result and must be worded as one.
+        """
         inf = self.ctx["inferential"] or {}
         tests = [t for t in (inf.get("tests") or []) if t.get("estimable")]
         if not tests:
-            return ("no group comparison was estimable from this data", "")
+            return ("no group comparison was estimable from this data", "", None)
 
         def strength(t: Dict[str, Any]) -> float:
             es = t.get("effect_sizes") or {}
@@ -509,11 +516,21 @@ class ReportBuilder:
         eff_name, eff, ci = summarize_effect(es)
         fam = ((inf.get("multiple_comparisons") or {}).get("primary_family") or {})
         tail = (", 95%% CI %s" % ci) if ci else ", effect-size CI unavailable"
+        alpha = float(inf.get("alpha") or 0.05)
+        p_adj = top.get("p_adjusted", top.get("p_raw"))
+        significant = None
+        if top.get("significant_after_correction") is not None:
+            significant = bool(top["significant_after_correction"])
+        elif p_adj is not None:
+            try:
+                significant = float(p_adj) < alpha
+            except (TypeError, ValueError):
+                significant = None
         return ("`%s` is compared across %s: %s = %s%s, BH-adjusted p %s "
                 "across a family of %s outcomes"
                 % (top.get("outcome"), inf.get("group"), eff_name, fmt(eff), tail,
                    fmt_p(top.get("p_adjusted")), fam.get("family_size", "--")),
-                str(top.get("outcome")))
+                str(top.get("outcome")), significant)
 
     # -- header ------------------------------------------------------------
     def header(self) -> None:
@@ -591,13 +608,22 @@ class ReportBuilder:
                    "No defect capable of changing a conclusion was detected in the raw file."
 
         repro = (run.get("reproducibility_check") or {}).get("passed")
-        head, _ = self.headline()
+        head, _, head_sig = self.headline()
+        # the wording must follow the verdict: a null result read as "the
+        # clearest separation" is a claim the data does not support
+        head_claim = ("The clearest separation is that %s." % head
+                      if head_sig else
+                      ("The strongest comparison is that %s -- the interval "
+                       "spans values compatible with no difference, which this "
+                       "report treats as a null result at this size." % head
+                       if head_sig is False else
+                       "No comparison is claimed: %s." % head))
         resolution = ("%d documented operation(s) were applied, %s rows became %s, and the "
-                      "cleaned file %s. The clearest separation is that %s."
+                      "cleaned file %s. %s"
                       % (len(run.get("applied_ops") or []), words(run.get("n_raw")),
                          words(run.get("n_clean")),
                          "reproduces byte for byte" if repro
-                         else "did NOT reproduce byte for byte", head))
+                         else "did NOT reproduce byte for byte", head_claim))
 
         self.w("## Executive summary")
         self.w()
@@ -861,12 +887,14 @@ class ReportBuilder:
             self.w()
         estimable = [t for t in (inf.get("tests") or []) if t.get("estimable")]
         if estimable:
-            head, _ = self.headline()
+            head, _, _ = self.headline()
+            # head starts with a code identifier, which cannot be capitalised;
+            # the sentence is phrased so the identifier can open it as-is
             self.w("Read the effect-size column before the p column. %s. The ordering by "
                    "effect size and the ordering by p value are not the same statement, and "
                    "at this sample size the p values are small enough that their exact "
                    "magnitude carries no information beyond \"smaller than this table can "
-                   "resolve\"." % head[:1].upper() + head[1:])
+                   "resolve\"." % head)
             self.w()
 
         posthoc = []
@@ -913,16 +941,42 @@ class ReportBuilder:
     # -- discussion ---------------------------------------------------------
     def discussion(self) -> None:
         inf = self.ctx["inferential"] or {}
-        head, _ = self.headline()
+        head, _, head_sig = self.headline()
         self.w("## 4. Discussion")
         self.w()
-        self.w("**What the data supports.** The measurements differ across levels of `%s` "
-               "by margins far larger than the sampling noise at this size: %s. The ordering "
-               "of variables by effect size holds under both the parametric and the "
-               "rank-based test (Appendix A3), so the finding is not an artefact of one "
-               "distributional assumption. Two of the measured pairs are strongly associated "
-               "and one is not, which is reported as association only."
-               % (inf.get("group"), head))
+        # every sentence below is derived from the artifacts, never asserted:
+        # the old fixed phrasing claimed differences the data did not show
+        if head_sig:
+            support = ("**What the data supports.** The measurements differ across "
+                       "levels of `%s` by margins larger than the sampling noise at "
+                       "this size: %s." % (inf.get("group"), head))
+        elif head_sig is False:
+            support = ("**What the data supports.** The strongest comparison does not "
+                       "clear the sampling noise at this size: %s. The interval spans "
+                       "values compatible with no difference, and this report claims "
+                       "no separation." % head)
+        else:
+            support = ("**What the data supports.** No group comparison was estimable "
+                       "from this data, so none is claimed.")
+        n_estimable = len([t for t in (inf.get("tests") or []) if t.get("estimable")])
+        if head_sig and n_estimable >= 2:
+            support += (" The ordering of variables by effect size holds under both the "
+                        "parametric and the rank-based test (Appendix A3), so the finding "
+                        "is not an artefact of one distributional assumption.")
+        corr_block = inf.get("correlations") or {}
+        corrs = (corr_block.get("matrix") if isinstance(corr_block, dict)
+                 else corr_block) or []
+        if corrs:
+            strong = 0
+            for c in corrs:
+                rho = (c.get("spearman") or {}).get("spearman_rho")
+                if rho is not None and abs(float(rho)) >= 0.7:
+                    strong += 1
+            support += (" Of the %d measured pairs, %d are strongly associated "
+                        "(|Spearman rho| >= 0.7); all of it is reported as "
+                        "association only, with no direction and no mechanism."
+                        % (len(corrs), strong))
+        self.w(support)
         self.w()
         self.w("**What the data does not support.** Nothing here establishes that the group "
                "label produced the measurement. The design compares existing groups rather "
@@ -1602,7 +1656,7 @@ def build_executive_summary(ctx: Dict[str, Any], builder: ReportBuilder) -> str:
     document that is short.
     """
     b = ReportBuilder(ctx, ctx["template"])
-    head, top_outcome = b.headline()
+    head, top_outcome, _ = b.headline()
     inf = ctx["inferential"] or {}
     run = ctx["cleaning_run"] or {}
     tests = inf.get("tests") or []
@@ -1778,6 +1832,12 @@ def main(argv: Optional[List[str]] = None) -> int:
     md = b2.build()
     md_path.write_text(md, encoding="utf-8")
 
+    # The HTML export is a rendering of the report.md just written -- the same
+    # saved evidence, no recomputation. A PDF-backend failure must not take the
+    # shareable export down with it, so this runs before the render cascade.
+    from export_html import render_report_html
+    html_info = render_report_html(md_path, outdir=outdir, title=ctx["title"])
+
     print("[assemble] rendering deliverable PDF with backend '%s' ..." % prefer)
     final = render_pdf_cascade(md_path, pdf_path, prefer=prefer, verbose=False)
     if not final.get("pdf_written"):
@@ -1800,6 +1860,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         "report_md": str(md_path),
         "report_md_sha256": sha256_of(md_path),
         "executive_summary_md": str(outdir / "executive_summary.md"),
+        "report_html": html_info["path"],
+        "html": html_info,
         "report_pdf": str(pdf_path) if final.get("pdf_written") else None,
         "pdf": final,
         "pdf_probe": probe,
@@ -1822,6 +1884,10 @@ def main(argv: Optional[List[str]] = None) -> int:
     n_forbidden = audit["n_forbidden"]
     print("[assemble] report.md  %s (%d lines)"
           % (words(md_path.stat().st_size), md.count("\n") + 1))
+    print("[assemble] report.html %s (%d figure(s) embedded%s)"
+          % (words(html_info["bytes"]), html_info["images_embedded"],
+             "" if html_info["self_contained"]
+             else "; MISSING: %s" % ", ".join(html_info["images_missing"])))
     print("[assemble] report.pdf %s"
           % (("%s, backend=%s" % (words(final.get("bytes")), final.get("backend")))
              if final.get("pdf_written") else "NOT WRITTEN -- %s" % final.get("blocked_reason")))

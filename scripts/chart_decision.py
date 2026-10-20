@@ -405,7 +405,7 @@ def _ci_bounds(ci: Any) -> tuple:
 
 def _effect_phrase(t: Dict[str, Any]) -> str:
     eff = t.get("effect_sizes") or {}
-    for key in ("omega_squared", "eta_squared", "epsilon_squared", "cohens_d"):
+    for key in ("omega_squared", "eta_squared", "epsilon_squared_rank", "cohens_d"):
         if key in eff:
             val = eff[key]
             lo, hi = _ci_bounds(eff.get(key + "_ci95"))

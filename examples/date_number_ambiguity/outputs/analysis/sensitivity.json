@@ -1,0 +1,174 @@
+{
+  "schema_version": "1.0",
+  "source": "D:\\数据处理 skill\\examples\\date_number_ambiguity\\outputs\\cleaned\\cleaned.csv",
+  "group": "subject_id",
+  "alpha": 0.05,
+  "analysis_level": "row",
+  "jackknife": {
+    "blocks": 10,
+    "seed": 42
+  },
+  "outcomes": [
+    {
+      "outcome": "latency_s",
+      "design": "8-group numeric",
+      "primary": {
+        "method": "one-way ANOVA",
+        "statistic": 46.13288690444746,
+        "p_raw": 3.515051424895195e-17,
+        "p_adjusted": 3.515051424895195e-17,
+        "analysis_level": "row"
+      },
+      "perturbations": [
+        {
+          "name": "leave_one_group_out",
+          "description": "drop one group and refit on the rest",
+          "parameter": "P001",
+          "status": "ran",
+          "method": "one-way ANOVA",
+          "statistic": 47.606112033632165,
+          "p_raw": 1.955623887774862e-16,
+          "effect_key": "omega_squared",
+          "effect_value": 0.858738,
+          "n": 46,
+          "agrees": true
+        },
+        {
+          "name": "leave_one_group_out",
+          "description": "drop one group and refit on the rest",
+          "parameter": "P002",
+          "status": "ran",
+          "method": "one-way ANOVA",
+          "statistic": 39.26701715103142,
+          "p_raw": 2.1065623552035253e-13,
+          "effect_key": "omega_squared",
+          "effect_value": 0.854804,
+          "n": 39,
+          "agrees": true
+        },
+        {
+          "name": "leave_one_group_out",
+          "description": "drop one group and refit on the rest",
+          "parameter": "P003",
+          "status": "ran",
+          "method": "one-way ANOVA",
+          "statistic": 52.04844733653326,
+          "p_raw": 1.4843989217283056e-16,
+          "effect_key": "omega_squared",
+          "effect_value": 0.87439,
+          "n": 44,
+          "agrees": true
+        },
+        {
+          "name": "leave_one_group_out",
+          "description": "drop one group and refit on the rest",
+          "parameter": "P004",
+          "status": "ran",
+          "method": "one-way ANOVA",
+          "statistic": 52.73289686818744,
+          "p_raw": 4.364693415030091e-16,
+          "effect_key": "omega_squared",
+          "effect_value": 0.880816,
+          "n": 42,
+          "agrees": true
+        },
+        {
+          "name": "leave_one_group_out",
+          "description": "drop one group and refit on the rest",
+          "parameter": "P005",
+          "status": "ran",
+          "method": "one-way ANOVA",
+          "statistic": 47.28566039952829,
+          "p_raw": 1.5535486323663938e-14,
+          "effect_key": "omega_squared",
+          "effect_value": 0.87686,
+          "n": 39,
+          "agrees": true
+        },
+        {
+          "name": "leave_one_group_out",
+          "description": "drop one group and refit on the rest",
+          "parameter": "P006",
+          "status": "ran",
+          "method": "one-way ANOVA",
+          "statistic": 49.19070449375029,
+          "p_raw": 2.0346410907347538e-16,
+          "effect_key": "omega_squared",
+          "effect_value": 0.865328,
+          "n": 45,
+          "agrees": true
+        },
+        {
+          "name": "leave_one_group_out",
+          "description": "drop one group and refit on the rest",
+          "parameter": "P007",
+          "status": "ran",
+          "method": "one-way ANOVA",
+          "statistic": 49.711239290259655,
+          "p_raw": 3.9450643211753486e-15,
+          "effect_key": "omega_squared",
+          "effect_value": 0.879615,
+          "n": 40,
+          "agrees": true
+        },
+        {
+          "name": "leave_one_group_out",
+          "description": "drop one group and refit on the rest",
+          "parameter": "P008",
+          "status": "ran",
+          "method": "one-way ANOVA",
+          "statistic": 30.486045479481984,
+          "p_raw": 2.582592870248506e-12,
+          "effect_key": "omega_squared",
+          "effect_value": 0.811854,
+          "n": 41,
+          "agrees": true
+        },
+        {
+          "name": "block_jackknife",
+          "description": "drop 1/10 of the analysis units and refit",
+          "status": "not_applicable",
+          "reason": "only 48 units; block deletion leaves too few per block"
+        },
+        {
+          "name": "exclude_extremes",
+          "description": "exclude values outside the 1.5*IQR fence of their own group (pre-specified, disclosed)",
+          "status": "not_applicable",
+          "reason": "no value fell outside its group's fence"
+        },
+        {
+          "name": "strict_complete_case",
+          "description": "restrict to rows complete across every numeric outcome (listwise)",
+          "status": "not_applicable",
+          "reason": "only one numeric outcome; per-outcome and listwise complete cases are identical"
+        },
+        {
+          "name": "imputation_sensitivity",
+          "description": "complete-case refit on the columns the cleaning plan imputed",
+          "status": "not_applicable",
+          "reason": "nothing was imputed; every analysed value was observed"
+        },
+        {
+          "name": "rank_cross_check",
+          "description": "the rank-based cross-check recorded on the primary test in inferential.json (assumption robustness)",
+          "status": "ran",
+          "method": "Kruskal-Wallis H",
+          "statistic": 42.4871,
+          "p_raw": 4.2e-07,
+          "agrees": true
+        }
+      ],
+      "n_perturbations_ran": 9,
+      "n_agreeing": 9,
+      "n_conflicting": 0
+    }
+  ],
+  "summary": {
+    "n_outcomes": 1,
+    "n_perturbations": 9,
+    "n_agreeing": 9,
+    "n_conflicting": 0,
+    "conflicts": []
+  },
+  "rule_source": "references/nature-statistics-checklist.md#gate-6"
+}

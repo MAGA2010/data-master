@@ -1,6 +1,6 @@
 # Final audit -- Iris morphometrics
 
-_Generated 2026-10-18 17:35 中国标准时间 by scripts/final_audit.py from the artifacts on disk. This audit reads the report; it does not trust it._
+_Generated 2026-10-19 20:05 中国标准时间 by scripts/final_audit.py from the artifacts on disk. This audit reads the report; it does not trust it._
 
 **Verdict: NOT SUBMISSION-READY**
 
@@ -10,7 +10,7 @@ Blocking issues:
 | Gate | Name | Status |
 |---|---|---|
 | 1 | n explicit and unit-defined | **FAIL** |
-| 2 | missing data mechanism declared | **PASS** |
+| 2 | missing data mechanism declared | **WARN** |
 | 3 | effect size accompanies p | **PASS** |
 | 4 | uncertainty visible | **PASS** |
 | 5 | multiple comparisons corrected | **PASS** |
@@ -25,9 +25,12 @@ Blocking issues:
   - independent unit not declared: no --unit-key given; the row is assumed to be the independent unit, and every test below inherits that assumption
 - **Fix**: pass --unit-key with what one row represents, or record it in the run manifest; the report already marks this AUTHOR_INPUT_NEEDED.
 
-## Gate 2 -- missing data mechanism declared   [PASS]
+## Gate 2 -- missing data mechanism declared   [WARN]
 
-- **Evidence**: mechanism declared for every variable with missingness: sepal_width_cm 3.8% (MCAR-likely); petal_width_cm 3.8% (MCAR-likely). 0 variable(s) exceed 5%; nothing was imputed, so every statistic is on complete cases.
+- **Evidence**: 2 variable(s) carry missing values and 2 have no declared mechanism.
+- **Issues**:
+  - AUTHOR_INPUT_NEEDED: missingness mechanism for: sepal_width_cm, petal_width_cm
+- **Fix**: record collection context and a justified assumption; a small missing fraction or an association screen cannot establish it.
 
 ## Gate 3 -- effect size accompanies p   [PASS]
 
@@ -47,7 +50,7 @@ Blocking issues:
 
 ## Gate 7 -- no association-to-mechanism upgrade   [PASS]
 
-- **Evidence**: no forbidden construction appears outside a disclaimer (11 patterns checked across 466 lines).
+- **Evidence**: no forbidden construction appears outside a disclaimer (11 patterns checked across 467 lines).
 
 ## Gate 8 -- unknowns flagged   [PASS]
 
@@ -61,7 +64,7 @@ Blocking issues:
 | at least one caveat | **PASS** | 6 caveat(s) |
 | figure title / caption / body | **PASS** | all 3 figure(s) carry title, caption and a three-part body |
 | number provenance | **PASS** | 11 registered claim(s) in report_build.json |
-| PDF delivered | **PASS** | backend reportlab, 477414 bytes |
+| PDF delivered | **PASS** | backend reportlab, 478481 bytes |
 | writer self-audit | **PASS** | 0 forbidden phrases in the writer's own scan |
 
 ## Journal routing

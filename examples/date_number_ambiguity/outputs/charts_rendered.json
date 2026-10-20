@@ -1,0 +1,51 @@
+{
+ "schema_version": "1.0",
+ "dtype_provenance": {
+  "dtype_source": "cleaning_run.json",
+  "dtype_manifest_path": "D:\\数据处理 skill\\examples\\date_number_ambiguity\\outputs\\cleaned\\cleaning_run.json",
+  "n_columns_typed_from_manifest": 3,
+  "read_mode": "text"
+ },
+ "palette": [
+  "#1f77b4",
+  "#ff7f0e",
+  "#2ca02c",
+  "#d62728",
+  "#9467bd"
+ ],
+ "n_rendered": 2,
+ "n_skipped": 0,
+ "rendered": [
+  {
+   "path": "D:\\数据处理 skill\\examples\\date_number_ambiguity\\outputs\\charts\\fig01_distribution_panel.png",
+   "bytes": 58844,
+   "ink_ratio": 0.34961,
+   "non_blank": true,
+   "pixels": [
+    686,
+    535
+   ],
+   "id": "fig01_distribution_panel",
+   "chart_type": "distribution_panel",
+   "title": "All measured variables are roughly symmetric; means and medians agree",
+   "ok": true
+  },
+  {
+   "path": "D:\\数据处理 skill\\examples\\date_number_ambiguity\\outputs\\charts\\fig02_small_multiples_ci.png",
+   "bytes": 69190,
+   "ink_ratio": 0.20374,
+   "non_blank": true,
+   "pixels": [
+    984,
+    496
+   ],
+   "id": "fig02_small_multiples_ci",
+   "chart_type": "small_multiples_ci",
+   "title": "1 of 1 measured outcomes differ across subject_id after correction for multiple comparisons",
+   "ok": true
+  }
+ ],
+ "skipped": [],
+ "note": "ink_ratio is the fraction of non-white pixels; a figure below ~0.01 is suspect and should be opened before it is trusted",
+ "rule_source": "references/chart-decision-catalog.md#complexity-principles"
+}

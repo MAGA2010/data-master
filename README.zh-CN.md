@@ -13,7 +13,7 @@
 需要 Node.js 20+ 和 Python 3.11+：
 
 ```bash
-npm install -g github:MAGA2010/data-master#v0.2.0
+npm install -g github:MAGA2010/data-master#v0.3.0
 data-master setup
 data-master skill install
 data-master demo --out outputs/first-demo
@@ -21,6 +21,8 @@ data-master demo --out outputs/first-demo
 
 打开 `outputs/first-demo/report.pdf` 阅读报告，再查看
 `outputs/first-demo/audit/final_audit.md` 的审计结论。
+
+如果这个可核验 Demo 对你有帮助，欢迎[为仓库点 Star](https://github.com/MAGA2010/data-master)，让更多研究者和数据分析者发现它。
 
 npm 包没有安装钩子，也没有 JavaScript 依赖。只有显式运行 `setup` 才会下载 Python 依赖并创建隔离环境；`skill install` 会原子化安装 Skill，若目标目录已存在则拒绝覆盖。
 

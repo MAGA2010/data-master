@@ -4,6 +4,7 @@
 
 [![CI](https://github.com/MAGA2010/data-master/actions/workflows/ci.yml/badge.svg)](https://github.com/MAGA2010/data-master/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/MAGA2010/data-master)](https://github.com/MAGA2010/data-master/releases)
+[![GitHub stars](https://img.shields.io/github/stars/MAGA2010/data-master?style=flat)](https://github.com/MAGA2010/data-master/stargazers)
 [![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-3776AB)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-2EA44F)](LICENSE)
 [![Codex Skill](https://img.shields.io/badge/Codex-skill-111827)](SKILL.md)
@@ -22,7 +23,7 @@ standalone cross-platform CLI.
 Requires Node.js 20+ and Python 3.11+.
 
 ```bash
-npm install -g github:MAGA2010/data-master#v0.2.0
+npm install -g github:MAGA2010/data-master#v0.3.0
 data-master setup
 data-master skill install
 data-master demo --out outputs/first-demo
@@ -30,6 +31,8 @@ data-master demo --out outputs/first-demo
 
 Open `outputs/first-demo/report.pdf`, then inspect the verdict in
 `outputs/first-demo/audit/final_audit.md`.
+
+If the verified demo is useful, [star the repository](https://github.com/MAGA2010/data-master) so other researchers and analysts can find it.
 
 The npm package has no install hooks and no JavaScript dependencies. `setup` is
 the only command that downloads Python dependencies; it creates an isolated
@@ -57,6 +60,7 @@ judgment, collection context, peer review or a study protocol.
 outputs/
 |-- report.pdf                     primary human-readable report
 |-- report.md                      citable report source
+|-- report.html                    self-contained shareable export of report.md
 |-- executive_summary.md
 |-- state.json                     stage ledger and provenance
 |-- answers.template.json          decisions that require a human
@@ -113,6 +117,8 @@ backend selection.
 | Case | Failure being tested | Evidence |
 |---|---|---|
 | [Identifier traps](docs/case-studies/identifier-traps.md) | Leading zeros, dates, currency and mixed values are silently retyped | Plan, replay and untouched-column validation |
+| [Date or number?](docs/case-studies/identifier-traps.md#benchmark-date-or-number) | `20240115` is an integer and a date; the file does not say which | `coerce_numeric_or_date` hold with evidence and an answers-file resolution |
+| [Synthetic survey](docs/case-studies/survey-data.md) | Survey labels, -999 missing codes and zero-padded ids are silently retyped or imputed | Three evidenced holds; labels and codes survive cleaning |
 | [Repeated rows](docs/case-studies/unit-aware-comparison.md) | Technical or repeated observations are counted as independent samples | Unit-level primary analysis and labelled row-level secondary |
 | [Audit refusal](docs/case-studies/audit-refusal.md) | A complete-looking report is treated as submission-ready without a defined unit | Report delivered; audit gate remains failed |
 
@@ -168,10 +174,13 @@ PyPI registries.
 - [Journal and EQUATOR routing](references/journal-reporting-standards.md)
 - [Current roadmap](ROADMAP.md)
 
-CI exercises Windows and Linux with Python 3.11, 3.12 and 3.13. Numerical tests
-compare key methods with independent equations or reference implementations.
-Distribution tests build and install the actual wheel and npm tarball outside
-the checkout before running the demo and verifying its evidence.
+CI exercises Windows and Linux with Python 3.11, 3.12 and 3.13, and runs the
+distribution suite on Windows, Linux and macOS with Python 3.13. Numerical
+tests compare key methods with independent equations or reference
+implementations. Distribution tests build and install the actual wheel and npm
+tarball outside the checkout before running the demo and verifying its
+evidence. The skill has also been installed and driven end to end in ZCode
+3.14.4 on Windows (see [Evaluation](EVALUATION.md)).
 
 ## Scope boundaries
 
