@@ -34,6 +34,11 @@ jobs:
       - name: Numerical references and artifact integrity
         run: python tests/test_reliability.py
 
+      - name: String hygiene and SQLite input regressions
+        run: |
+          python tests/test_string_hygiene.py
+          python tests/test_sqlite_input.py
+
       - name: HTML export, date-number ambiguity and survey case suites
         if: matrix.python == '3.13'
         run: |

@@ -10,6 +10,13 @@ All notable changes are recorded here. The project follows semantic versioning.
   audited tabular pipeline. Multi-table databases fail clearly instead of
   silently selecting a table; coverage is pinned by `tests/test_sqlite_input.py`.
 
+### Fixed
+
+- All-missing text columns no longer crash profiling on pandas 3.1. Unicode
+  normalization preserves the nullable string dtype in both the planning
+  preview and cleaning execution. CI covers Python and Arrow string storage,
+  null preservation, and standalone cleaning replay.
+
 ## [0.3.0] - 2026-10-20
 
 ### Added

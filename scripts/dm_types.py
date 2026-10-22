@@ -202,10 +202,10 @@ def hygiene_project(series: pd.Series) -> pd.Series:
     decision record, so folding it in here would hide that decision from the
     reader of the profile.
     """
-    import unicodedata
-
-    s = series.astype("string")
-    s = s.map(lambda v: unicodedata.normalize("NFC", v) if isinstance(v, str) else v)
+    # Series.map re-infers the dtype and can turn an all-missing string column
+    # into a non-string array (pandas 3.1). Keep the nullable string dtype so
+    # missing cells survive and subsequent .str operations remain valid.
+    s = series.astype("string").str.normalize("NFC")
     s = s.str.strip()
     s = s.str.replace(r"\s+", " ", regex=True).str.strip()
     s = s.str.strip('"').str.strip("'").str.strip()
