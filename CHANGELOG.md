@@ -4,6 +4,12 @@ All notable changes are recorded here. The project follows semantic versioning.
 
 ## [Unreleased]
 
+### Added
+
+- Single-table SQLite inputs (`.sqlite`, `.sqlite3`, `.db`) now follow the
+  audited tabular pipeline. Multi-table databases fail clearly instead of
+  silently selecting a table; coverage is pinned by `tests/test_sqlite_input.py`.
+
 ## [0.3.0] - 2026-10-20
 
 ### Added

@@ -129,7 +129,7 @@ reference file that does not exist is a stop, not a suggestion.
 
 | File pattern | Modality | Stage 1 rule | Stage 2 stack (as implemented) |
 |---|---|---|---|
-| `*.csv *.tsv *.xlsx *.json *.jsonl *.parquet` | tabular | `references/cleaning-rule-catalog.md#tabular` | profiler → stats (unit-aware) → sensitivity → charts |
+| `*.csv *.tsv *.xlsx *.json *.jsonl *.parquet *.sqlite *.sqlite3 *.db` | tabular | `references/cleaning-rule-catalog.md#tabular` | profiler → stats (unit-aware) → sensitivity → charts |
 | `*.txt` (free text, no delimiter) | text-corpus | `references/cleaning-rule-catalog.md#text` | profiler (duplicates / empty / encoding) — **profile-only** |
 | timestamped tabular / `*.csv` with date column | time-series | `references/cleaning-rule-catalog.md#timeseries` | profiler (gaps / duplicate stamps / regime change / ADF screen) → **audited descriptive statistics**: Mann-Kendall trend + Theil-Sen slope with CI, ACF/PACF with white-noise bounds, STL strengths, seeded CUSUM changepoint screen (`analysis/timeseries.json`). Descriptive scope: NO forecast, NO ARIMA, NO causal claim |
 | `*.jpg *.png *.webp` | image-set | `references/cleaning-rule-catalog.md#image` | profiler (corrupt / near-duplicate / blank) — **profile-only** |

@@ -25,7 +25,7 @@ Data cleaning is high-stakes. A silently dropped row, an imputed value, or a cro
 | **Publish / upload data** | Privacy + distribution | Disabled unless `--publish` + confirmation |
 | **Change data types silently** (e.g. string → int) | Loses category info | Convert only when every non-null value parses; otherwise hold with the evidence |
 | **Rewrite a column's spelling** (e.g. lower-case) | Destroys "Nord" vs "nord" | Merge case-only variants onto one canonical level, record the full map, keep it reversible |
-| **Guess a column type at read time** | `02134` → `2134`, colliding with a real `2134` | Read text, decide types in a disclosed op; JSON/Parquet exempt (their schemas declare types) |
+| **Guess a column type at read time** | `02134` → `2134`, colliding with a real `2134` | Read text, decide types in a disclosed op; JSON/Parquet/single-table SQLite exempt (their schemas declare types) |
 | **Resolve entity names** (e.g. "NYC" / "New York" / "NY") | Domain knowledge | Flag as `ENTITY_RESOLUTION_NEEDED` |
 | **Treat timezone-naive as UTC** | Off-by-hours errors | Always flag with `AUTHOR_INPUT_NEEDED` |
 

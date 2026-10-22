@@ -16,7 +16,7 @@
 这不是额外的保守选项，而是“Agent 代替人做决定”这一核心前提下的必然结果。四条子契约：
 
 **(a) 读取不是类型推断。** CSV / TSV / Excel 统一以 `dtype=str` 读入
-（`dm_types.read_table(..., read_mode="text")`），JSON / Parquet 因为 schema 已声明类型而豁免。
+（`dm_types.read_table(..., read_mode="text")`），JSON / Parquet / 单表 SQLite 因为 schema 已声明类型而豁免。
 保真的原因：`pd.read_csv` 会把邮编 `02134` 变成 `2134`，与真实存在的 `2134`
 合并。这个错误发生在**任何审计存在之前**，所以引导零对三个对象同时失存：
 前导零本身、“做过决策”的证据、以及从输出回溯可能性的任何位置。

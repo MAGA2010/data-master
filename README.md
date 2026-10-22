@@ -128,7 +128,7 @@ Every case links its raw synthetic input, command and inspectable artifacts.
 
 | Input | Current behavior |
 |---|---|
-| CSV, TSV, Excel, JSON, JSONL, Parquet | Full profile, cleaning, unit-aware analysis, sensitivity, charts, report and audit |
+| CSV, TSV, Excel, JSON, JSONL, Parquet, single-table SQLite (`.sqlite`, `.sqlite3`, `.db`) | Full profile, cleaning, unit-aware analysis, sensitivity, charts, report and audit |
 | Timestamped tabular data | Audited descriptive trend, slope interval, autocorrelation, decomposition and changepoint screen |
 | Text, image, audio or geospatial data | Explicitly labelled integrity profile and profile-only report |
 | Mixed folders | Per-modality profiles and a combined profile-only report |

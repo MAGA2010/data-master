@@ -37,7 +37,8 @@ SCHEMA_VERSION = "1.0"
 SNIFF_ROWS = 40
 
 SUFFIX = {
-    "tabular": {".csv", ".tsv", ".xlsx", ".xls", ".parquet", ".feather", ".jsonl"},
+    "tabular": {".csv", ".tsv", ".xlsx", ".xls", ".parquet", ".feather", ".jsonl",
+                ".sqlite", ".sqlite3", ".db"},
     "text-corpus": {".txt", ".md", ".markdown", ".rst", ".log", ".srt"},
     "image-set": {".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff", ".gif"},
     "audio-set": {".wav", ".mp3", ".flac", ".m4a", ".ogg", ".aac", ".wma"},

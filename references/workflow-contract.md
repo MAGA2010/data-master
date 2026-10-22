@@ -73,7 +73,7 @@ Output: `analysis/profile.json` (per modality) and `analysis/profile_combined.js
 could become and records the evidence, but it does not decide. Type is decided in Step 5
 and applied in Step 6. Reading is not type inference — `pd.read_csv` would turn the postcode
 `02134` into `2134` and merge it with the real postcode `2134`, before any audit exists.
-JSON and Parquet are exempt: their schemas state the types.
+JSON, Parquet, and single-table SQLite are exempt: their schemas state the types.
 
 Gate: every column has `dtype`, `n_missing`, `n_unique` recorded, plus the `coercion`
 block (`auto_numeric` / `auto_date` / `hold` + the numeric and date probes) for every

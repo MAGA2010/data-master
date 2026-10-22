@@ -19,6 +19,7 @@ fall back to tabular.
 | `.json` (nested document) | unknown | not a table and not geometry | `references/research-protocol.md` |
 | `.jsonl` `.ndjson` | tabular | one record per line | `scripts/profile_tabular.py` |
 | `.parquet` `.feather` | tabular | `pyarrow` reads it | `scripts/profile_tabular.py` |
+| `.sqlite` `.sqlite3` `.db` | tabular | exactly one user table is present | `scripts/profile_tabular.py` |
 | `.txt` (delimiter detected) | tabular | `csv.Sniffer` positive with >= 3 columns | `scripts/profile_tabular.py` |
 | `.txt` `.md` `.rst` `.log` | text-corpus | sniffer negative | `scripts/profile_text.py` |
 | a table column holding one document per row | text-corpus | explicit `--text-col` | `scripts/profile_text.py --text-col` |

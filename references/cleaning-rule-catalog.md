@@ -13,7 +13,7 @@ P2  changes encoding / scale, preserves evidence -> may run with explicit opt-in
 P3  cosmetic only                          -> always OK
 ```
 
-## Tabular (CSV / TSV / Excel / JSON / Parquet)
+## Tabular (CSV / TSV / Excel / JSON / Parquet / single-table SQLite)
 
 | id | op | applies_to | auto_default | severity | rationale |
 |---|---|---|---|---|---|
@@ -87,8 +87,10 @@ the profiler read text while the cleaning stage re-read with pandas defaults and
 silently destroyed the column. `tests/test_pipeline_invariants.py` now pins it,
 including a negative control that fails on purpose.
 
-JSON and Parquet are exempt — their schemas state the types, so there is nothing
-to guess. `--read-mode infer` remains available as an explicit escape hatch.
+JSON, Parquet, and single-table SQLite are exempt — their schemas state the
+types, so there is nothing to guess. A multi-table SQLite input is refused
+because choosing a table silently would change the study. `--read-mode infer`
+remains available as an explicit escape hatch for text-based formats.
 
 Downstream stages do not guess either. `cleaning_run.json` records a
 `dtype_manifest`, and `dm_types.load_cleaned` re-applies it instead of inferring

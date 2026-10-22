@@ -11,6 +11,7 @@ behaviour is identical across pandas versions.
 from __future__ import annotations
 
 import pathlib
+import sqlite3
 import warnings
 
 import pandas as pd
@@ -363,7 +364,8 @@ def source_spec(path, read_mode: str = "text") -> dict:
     """The minimum needed to re-read this file the way the run did."""
     p = pathlib.Path(path)
     ext = p.suffix.lower()
-    declared = ext in (".parquet", ".json", ".jsonl", ".ndjson")
+    declared = ext in (".parquet", ".json", ".jsonl", ".ndjson",
+                       ".sqlite", ".sqlite3", ".db")
     return {
         "path": str(p),
         "extension": ext,
@@ -387,6 +389,24 @@ def read_table(path, read_mode: str = "text") -> "pd.DataFrame":
         return pd.read_json(p)
     if ext in (".jsonl", ".ndjson"):
         return pd.read_json(p, lines=True)
+    if ext in (".sqlite", ".sqlite3", ".db"):
+        conn = sqlite3.connect(str(p))
+        try:
+            tables = pd.read_sql_query(
+                "SELECT name FROM sqlite_master WHERE type = 'table' "
+                "AND name NOT LIKE 'sqlite_%' ORDER BY name",
+                conn,
+            )["name"].tolist()
+            if len(tables) != 1:
+                raise ValueError(
+                    "SQLite input must contain exactly one user table; found %d (%s). "
+                    "Export one table to a supported tabular file before analysis."
+                    % (len(tables), ", ".join(str(t) for t in tables[:20]))
+                )
+            table = tables[0].replace('"', '""')
+            return pd.read_sql_query('SELECT * FROM "%s"' % table, conn)
+        finally:
+            conn.close()
     dt = str if read_mode == "text" else None
     if ext == ".csv":
         return pd.read_csv(p, dtype=dt, low_memory=False)
