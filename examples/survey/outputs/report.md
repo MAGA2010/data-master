@@ -1,6 +1,6 @@
 # Synthetic survey responses -- Statistical Report
 
-> **Template**: nature | **Generated**: 2026-10-19 20:07 中国标准时间 | **Pipeline**: data-master
+> **Template**: nature | **Generated**: 2026-10-23 15:01 中国标准时间 | **Pipeline**: data-master
 > **Raw input**: `survey_responses.csv` (sha256 `a023b82a29c35fa8...`) | **Analysed file**: `cleaned.csv`
 > **Rows**: 120 raw -> 120 analysed | **Columns**: 6 | **Modality**: tabular
 > **Independent unit**: 
@@ -121,7 +121,7 @@ Each pairwise family is corrected separately, so these p values answer a narrowe
 
 **What the data supports.** The measurements differ across levels of `satisfaction` by margins larger than the sampling noise at this size: `minutes_spent` is compared across satisfaction: rank epsilon squared = 0.86, 95% CI 0.75 to 0.96, BH-adjusted p = 1.4e-15 across a family of 1 outcomes.
 
-**What the data does not support.** Nothing here establishes that the group label produced the measurement. The design compares existing groups rather than assigning them, and species, batch, site, instrument and operator all travel together with the group label -- this table cannot separate them. A claim of the form "X caused Y" is therefore not available from these data, and none is made in this report.
+**What the data does not support.** Nothing here establishes that the group label produced the measurement. The design compares existing groups rather than assigning them, and variables such as `visit_frequency`, `recommend` may travel together with the group label -- this table cannot separate them. A claim of the form "X caused Y" is therefore not available from these data, and none is made in this report.
 
 **Boundary conditions.** These results describe the rows in this file, at these measurement conditions, with this instrument. The intervals quantify sampling variation inside that set; they say nothing about another lot, another season or another population. The corrected family covers the outcomes tested here, so an outcome that was not tested is not thereby null.
 
@@ -160,7 +160,7 @@ A document cannot contain its own hash, so the hash of `report.md` and `report.p
 
 - **Interpreter**: Python 3.13.15 on Windows-11-10.0.26200-SP0
 - **Libraries**: numpy 2.4.6, pandas 3.0.3, scipy 1.18.1
-- **Pipeline code**: data-master commit `8749c5ea1ff4` (working tree was dirty; the commit alone does not reproduce it) -- this report names the exact code that produced every number in it.
+- **Pipeline code**: data-master commit `e6a572103f1b` (working tree was dirty; the commit alone does not reproduce it) -- this report names the exact code that produced every number in it.
 - **Random seeds**: 42 -- every resampling interval is seeded, so it reproduces exactly.
 - **Columns any operation was permitted to touch**: `age_years`, `minutes_spent`
 
@@ -315,4 +315,4 @@ Of these, 1 are already reflected as caveats in section 5.
 
 ---
 
-*End of report. Generated 2026-10-19 20:07 中国标准时间 by data-master. The raw input was never modified: every value above was read from the cleaned file or from a recorded artifact. Each number is registered in `report_build.json`; the gate verdict, including anything that failed, is in `audit/final_audit.md`.*
+*End of report. Generated 2026-10-23 15:01 中国标准时间 by data-master. The raw input was never modified: every value above was read from the cleaned file or from a recorded artifact. Each number is registered in `report_build.json`; the gate verdict, including anything that failed, is in `audit/final_audit.md`.*

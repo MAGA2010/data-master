@@ -1,6 +1,6 @@
 # Synthetic survey responses -- Executive summary
 
-_Generated 2026-10-19 20:07 中国标准时间 by scripts/assemble_report.py from the artifacts listed in `report_build.json`. Every statement below is a restatement of the full report, not a separate analysis._
+_Generated 2026-10-23 15:01 中国标准时间 by scripts/assemble_report.py from the artifacts listed in `report_build.json`. Every statement below is a restatement of the full report, not a separate analysis._
 
 **Headline.** `minutes_spent` is compared across satisfaction: rank epsilon squared = 0.86, 95% CI 0.75 to 0.96, BH-adjusted p = 1.4e-15 across a family of 1 outcomes.
 

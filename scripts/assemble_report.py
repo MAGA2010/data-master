@@ -978,12 +978,32 @@ class ReportBuilder:
                         % (len(corrs), strong))
         self.w(support)
         self.w()
+        # the confounder list is drawn from the profile, not hardcoded: a
+        # survey report must not claim "species" travel with its group label
+        prof = self.ctx["profile"] or {}
+        inf_grp = inf.get("group")
+        unit_key = ((inf.get("unit_of_analysis") or {}).get("unit_key"))
+        tested = {t.get("outcome") for t in (inf.get("tests") or [])}
+        n_rows = int((prof.get("shape") or {}).get("n_rows") or 0)
+        candidate_confounders = [
+            c for c, e in (prof.get("columns") or {}).items()
+            if c != inf_grp and c != unit_key and (e.get("role") in ("categorical", "binary"))
+            and c not in tested
+            # an identifier near-unique per row describes WHO was measured,
+            # not WHAT travelled with the group; naming it a confounder
+            # would be the same kind of unearned specificity this fixes
+            and 2 <= int(e.get("n_unique") or 0) <= max(12, n_rows // 4)
+        ]
+        confound_phrase = (
+            "variables such as %s" % ", ".join("`%s`" % c for c in candidate_confounders[:5])
+            if candidate_confounders else
+            "any unrecorded grouping in how the data were collected")
         self.w("**What the data does not support.** Nothing here establishes that the group "
                "label produced the measurement. The design compares existing groups rather "
-               "than assigning them, and species, batch, site, instrument and operator all "
-               "travel together with the group label -- this table cannot separate them. A "
-               "claim of the form \"X caused Y\" is therefore not available from these data, "
-               "and none is made in this report.")
+               "than assigning them, and %s may travel together with the group label -- this "
+               "table cannot separate them. A claim of the form \"X caused Y\" is therefore "
+               "not available from these data, and none is made in this report."
+               % confound_phrase)
         self.w()
         self.w("**Boundary conditions.** These results describe the rows in this file, at "
                "these measurement conditions, with this instrument. The intervals quantify "

@@ -16,6 +16,28 @@ All notable changes are recorded here. The project follows semantic versioning.
   normalization preserves the nullable string dtype in both the planning
   preview and cleaning execution. CI covers Python and Arrow string storage,
   null preservation, and standalone cleaning replay.
+- A binary outcome (or any numeric column with exactly two observed values)
+  crashed every analysis with `TypeError: 'numpy.int64' object is not
+  iterable`: `odds_ratio` applied `np.sum` to boolean masks backed by pandas
+  nullable extension dtypes, which raises through pyarrow. Counts are now
+  computed on materialised numpy masks; pinned by
+  `tests/test_reliability.py::test_odds_ratio_accepts_pandas_nullable_dtypes`.
+- The rank-path epsilon-squared bootstrap called `scipy.stats.kruskal` once
+  per resample, making a five-group survey run take ~13 minutes (one rank
+  test cost ~27 s at 10,000 resamples). H is now computed by a formula
+  verified equal to scipy to 10 decimal places with and without ties
+  (`test_manual_kruskal_h_matches_scipy_with_and_without_ties`); the same
+  run now completes in under a minute.
+- Every report's discussion section claimed that "species, batch, site,
+  instrument and operator" travel with the group label -- iris-specific
+  wording shipped for all datasets. The confounder list is now derived from
+  the profile's own categorical columns (excluding the unit key, the tested
+  outcomes and near-unique identifiers), or a generic phrase when the file
+  has none.
+- The HTML export passed `javascript:` (and any other non-http/https/mailto)
+  link targets through as clickable hrefs. Schemes outside the allowlist are
+  now rendered as plain text with the URL visible; relative artifact paths,
+  http(s) and mailto links are unaffected.
 
 ## [0.3.0] - 2026-10-20
 

@@ -1,6 +1,6 @@
 # Final audit -- Synthetic survey responses
 
-_Generated 2026-10-19 20:07 中国标准时间 by scripts/final_audit.py from the artifacts on disk. This audit reads the report; it does not trust it._
+_Generated 2026-10-23 15:01 中国标准时间 by scripts/final_audit.py from the artifacts on disk. This audit reads the report; it does not trust it._
 
 **Verdict: SUBMISSION-READY**
 
@@ -60,7 +60,7 @@ No mandatory gate failed. Warnings below are disclosed limits, not hidden failur
 | at least one caveat | **PASS** | 3 caveat(s) |
 | figure title / caption / body | **PASS** | all 2 figure(s) carry title, caption and a three-part body |
 | number provenance | **PASS** | 4 registered claim(s) in report_build.json |
-| PDF delivered | **PASS** | backend reportlab, 195956 bytes |
+| PDF delivered | **PASS** | backend reportlab, 195991 bytes |
 | writer self-audit | **PASS** | 0 forbidden phrases in the writer's own scan |
 
 ## Journal routing

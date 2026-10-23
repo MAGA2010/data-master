@@ -226,6 +226,43 @@ def variance_effects(groups: List[np.ndarray], n_boot: int = BOOTSTRAP) -> Dict[
     }
 
 
+def _kruskal_h_manual(vals: List[np.ndarray]) -> float:
+    """Kruskal-Wallis H without scipy, tie-corrected.
+
+    Matches stats.kruskal to machine precision (verified on tied and untied
+    data in tests/test_reliability.py). Exists because the epsilon^2
+    bootstrap re-computes H thousands of times; scipy's per-call overhead
+    turned one rank test into ~27 seconds and a five-group survey run into
+    ~13 minutes. rankdata (C) does the average-tie ranking; np.unique (C)
+    provides the tie counts.
+    """
+    from scipy.stats import rankdata
+    allv = np.concatenate(vals)
+    n = len(allv)
+    if n < 2:
+        return float("nan")
+    ranks = rankdata(allv)
+    _, cnt = np.unique(allv, return_counts=True)
+    tie = 1.0 - ((cnt.astype(np.float64) ** 3 - cnt).sum()) / (n ** 3 - n)
+    rank_sums, pos = [], 0
+    sizes = []
+    for v in vals:
+        rank_sums.append(ranks[pos:pos + len(v)].sum())
+        sizes.append(len(v))
+        pos += len(v)
+    h = (12.0 / (n * (n + 1))) * sum(r ** 2 / nn for r, nn in zip(rank_sums, sizes)) \
+        - 3.0 * (n + 1)
+    return h / (tie if tie > 0 else 1.0)
+
+
+def _epsilon_squared(h: float, group_sizes: List[int]) -> float:
+    n = sum(group_sizes)
+    n_eff = n - sum(nn ** 2 for nn in group_sizes) / n
+    if n_eff <= 0:
+        return float("nan")
+    return (h - len(group_sizes) + 1) / n_eff
+
+
 def rank_effects(groups: List[np.ndarray], n_boot: int = BOOTSTRAP) -> Dict[str, Any]:
     """epsilon^2 for Kruskal-Wallis plus Cliff's delta for every pair.
 
@@ -236,35 +273,20 @@ def rank_effects(groups: List[np.ndarray], n_boot: int = BOOTSTRAP) -> Dict[str,
     """
     k = len(groups)
     h, _ = stats.kruskal(*groups)
-    allv = np.concatenate(groups)
-    n = len(allv)
-    n_eff = n - sum(len(g) ** 2 for g in groups) / n
-    eps2 = (h - k + 1) / n_eff if n_eff > 0 else float("nan")
+    sizes = [len(g) for g in groups]
+    eps2 = _epsilon_squared(float(h), sizes)
 
-    def _eps(res: List[np.ndarray]) -> float:
-        try:
-            hh, _ = stats.kruskal(*res)
-        except ValueError:
-            return float("nan")
-        all_r = np.concatenate(res)
-        nn = len(all_r)
-        ne = nn - sum(len(g) ** 2 for g in res) / nn
-        return (hh - len(res) + 1) / ne if ne > 0 else float("nan")
-
-    ci = {"low": None, "high": None}
     rng = np.random.default_rng(SEED)
-    boot: List[float] = []
-    for _ in range(n_boot):
-        res = []
-        for g in groups:
-            idx = rng.integers(0, len(g), len(g))
-            res.append(g[idx])
-        boot.append(_eps(res))
-    boot = [b for b in boot if np.isfinite(b)]
-    if boot:
-        arr = np.asarray(boot)
-        ci = {"low": round(float(np.percentile(arr, 2.5)), 6),
-              "high": round(float(np.percentile(arr, 97.5)), 6),
+    boot = np.empty(n_boot)
+    for b in range(n_boot):
+        res = [g[rng.integers(0, len(g), len(g))] for g in groups]
+        boot[b] = _epsilon_squared(_kruskal_h_manual(res),
+                                   [len(g) for g in res])
+    finite = boot[np.isfinite(boot)]
+    ci = {"low": None, "high": None}
+    if len(finite):
+        ci = {"low": round(float(np.percentile(finite, 2.5)), 6),
+              "high": round(float(np.percentile(finite, 97.5)), 6),
               "method": f"bootstrap percentile, {n_boot} resamples, seed={SEED}"}
     pairs = {}
     for a, b in itertools.combinations(range(k), 2):
@@ -272,7 +294,7 @@ def rank_effects(groups: List[np.ndarray], n_boot: int = BOOTSTRAP) -> Dict[str,
         pairs[f"g{a + 1}_vs_g{b + 1}"] = d
     return {"epsilon_squared_rank": round(float(eps2), 6),
             "epsilon_squared_rank_ci95": ci,
-            "n_effective": round(float(n_eff), 3),
+            "n_effective": round(float(sum(sizes) - sum(nn ** 2 for nn in sizes) / sum(sizes)), 3),
             "cliffs_delta_by_pair": pairs}
 
 

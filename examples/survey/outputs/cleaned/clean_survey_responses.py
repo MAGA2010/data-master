@@ -8,7 +8,7 @@
 #   python clean_survey_responses.py [output.csv]
 from __future__ import annotations
 
-import json, os, pathlib, sys, unicodedata, warnings
+import json, os, pathlib, sqlite3, sys, unicodedata, warnings
 import numpy as np
 import pandas as pd
 
@@ -34,6 +34,24 @@ def read_table(path, read_mode: str = "text") -> "pd.DataFrame":
         return pd.read_json(p)
     if ext in (".jsonl", ".ndjson"):
         return pd.read_json(p, lines=True)
+    if ext in (".sqlite", ".sqlite3", ".db"):
+        conn = sqlite3.connect(str(p))
+        try:
+            tables = pd.read_sql_query(
+                "SELECT name FROM sqlite_master WHERE type = 'table' "
+                "AND name NOT LIKE 'sqlite_%' ORDER BY name",
+                conn,
+            )["name"].tolist()
+            if len(tables) != 1:
+                raise ValueError(
+                    "SQLite input must contain exactly one user table; found %d (%s). "
+                    "Export one table to a supported tabular file before analysis."
+                    % (len(tables), ", ".join(str(t) for t in tables[:20]))
+                )
+            table = tables[0].replace('"', '""')
+            return pd.read_sql_query('SELECT * FROM "%s"' % table, conn)
+        finally:
+            conn.close()
     dt = str if read_mode == "text" else None
     if ext == ".csv":
         return pd.read_csv(p, dtype=dt, low_memory=False)
@@ -60,9 +78,7 @@ def _str_ops(s: pd.Series) -> pd.Series:
 def op_fix_unicode(df: pd.DataFrame, cols: List[str]) -> pd.DataFrame:
     for c in cols:
         if c in df.columns and is_string_like(df[c].dtype):
-            df[c] = _str_ops(df[c]).map(
-                lambda v: unicodedata.normalize("NFC", v) if isinstance(v, str) else v
-            )
+            df[c] = _str_ops(df[c]).str.normalize("NFC")
     return df
 def op_strip_whitespace(df: pd.DataFrame, cols: List[str]) -> pd.DataFrame:
     for c in cols:

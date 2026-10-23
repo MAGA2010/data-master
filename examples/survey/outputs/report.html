@@ -62,9 +62,9 @@ footer {
 </head>
 <body>
 <main>
-<!-- data-master HTML export: generated from report.md (sha256 7f4194553bac5c126dab763c84ca142713adcde86ae5b93f152ac8346a2b63b6) by scripts/export_html.py; every number is that of the saved report, nothing was recalculated -->
+<!-- data-master HTML export: generated from report.md (sha256 c15c72d77d544f77df99fde4d6fe3b621198ea3fa2ac654ec8539dee5064bafa) by scripts/export_html.py; every number is that of the saved report, nothing was recalculated -->
 <h1>Synthetic survey responses -- Statistical Report</h1>
-<blockquote><p><strong>Template</strong>: nature | <strong>Generated</strong>: 2026-10-19 20:07 中国标准时间 | <strong>Pipeline</strong>: data-master <strong>Raw input</strong>: <code>survey_responses.csv</code> (sha256 <code>a023b82a29c35fa8...</code>) | <strong>Analysed file</strong>: <code>cleaned.csv</code> <strong>Rows</strong>: 120 raw -&gt; 120 analysed | <strong>Columns</strong>: 6 | <strong>Modality</strong>: tabular <strong>Independent unit</strong>: <strong>Types</strong>: <code>cleaning_run.json</code> (6 columns replayed from the cleaning manifest, never re-guessed)</p></blockquote>
+<blockquote><p><strong>Template</strong>: nature | <strong>Generated</strong>: 2026-10-23 15:01 中国标准时间 | <strong>Pipeline</strong>: data-master <strong>Raw input</strong>: <code>survey_responses.csv</code> (sha256 <code>a023b82a29c35fa8...</code>) | <strong>Analysed file</strong>: <code>cleaned.csv</code> <strong>Rows</strong>: 120 raw -&gt; 120 analysed | <strong>Columns</strong>: 6 | <strong>Modality</strong>: tabular <strong>Independent unit</strong>: <strong>Types</strong>: <code>cleaning_run.json</code> (6 columns replayed from the cleaning manifest, never re-guessed)</p></blockquote>
 <h2>Executive summary</h2>
 <p><strong>Setup.</strong> 120 rows and 6 columns reached the analysis, of which 2 are numeric measurements, compared across 5 levels of <code>satisfaction</code> (Dissatisfied, Neutral, Satisfied, Very dissatisfied, Very satisfied).</p>
 <p><strong>The conflict.</strong> The raw file was not safe to analyse as it stood: 3 conversion(s) were withheld rather than guessed at; <code>minutes_spent</code> was 7.5% missing and was not imputed.</p>
@@ -108,7 +108,7 @@ footer {
 <p>Each pairwise family is corrected separately, so these p values answer a narrower question than the omnibus values in 3.4 and should not be compared with them.</p>
 <h2>4. Discussion</h2>
 <p><strong>What the data supports.</strong> The measurements differ across levels of <code>satisfaction</code> by margins larger than the sampling noise at this size: <code>minutes_spent</code> is compared across satisfaction: rank epsilon squared = 0.86, 95% CI 0.75 to 0.96, BH-adjusted p = 1.4e-15 across a family of 1 outcomes.</p>
-<p><strong>What the data does not support.</strong> Nothing here establishes that the group label produced the measurement. The design compares existing groups rather than assigning them, and species, batch, site, instrument and operator all travel together with the group label -- this table cannot separate them. A claim of the form "X caused Y" is therefore not available from these data, and none is made in this report.</p>
+<p><strong>What the data does not support.</strong> Nothing here establishes that the group label produced the measurement. The design compares existing groups rather than assigning them, and variables such as <code>visit_frequency</code>, <code>recommend</code> may travel together with the group label -- this table cannot separate them. A claim of the form "X caused Y" is therefore not available from these data, and none is made in this report.</p>
 <p><strong>Boundary conditions.</strong> These results describe the rows in this file, at these measurement conditions, with this instrument. The intervals quantify sampling variation inside that set; they say nothing about another lot, another season or another population. The corrected family covers the outcomes tested here, so an outcome that was not tested is not thereby null.</p>
 <h2>5. Caveats and limitations</h2>
 <p><strong>C1. missingness.</strong> 3 variable(s) carry missing values, the most at <code>minutes_spent</code> (7.5%). Values were not imputed, so every statistic here is conditional on complete cases. Listwise deletion removed rows from <code>minutes_spent</code> (15 rows, n = 105). The screening test returned undetermined, which is a screening result and not proof of a mechanism -- confirm it against how the data were actually collected.</p>
@@ -133,7 +133,7 @@ footer {
 <ul>
 <li><strong>Interpreter</strong>: Python 3.13.15 on Windows-11-10.0.26200-SP0</li>
 <li><strong>Libraries</strong>: numpy 2.4.6, pandas 3.0.3, scipy 1.18.1</li>
-<li><strong>Pipeline code</strong>: data-master commit <code>8749c5ea1ff4</code> (working tree was dirty; the commit alone does not reproduce it) -- this report names the exact code that produced every number in it.</li>
+<li><strong>Pipeline code</strong>: data-master commit <code>e6a572103f1b</code> (working tree was dirty; the commit alone does not reproduce it) -- this report names the exact code that produced every number in it.</li>
 <li><strong>Random seeds</strong>: 42 -- every resampling interval is seeded, so it reproduces exactly.</li>
 <li><strong>Columns any operation was permitted to touch</strong>: <code>age_years</code>, <code>minutes_spent</code></li>
 </ul>
@@ -207,7 +207,7 @@ footer {
 <li>It does not claim any mechanism for the missingness it reports; the screening test in 2.3 is a description, not a diagnosis.</li>
 </ul>
 <hr>
-<p>*End of report. Generated 2026-10-19 20:07 中国标准时间 by data-master. The raw input was never modified: every value above was read from the cleaned file or from a recorded artifact. Each number is registered in <code>report_build.json</code>; the gate verdict, including anything that failed, is in <code>audit/final_audit.md</code>.*</p>
+<p>*End of report. Generated 2026-10-23 15:01 中国标准时间 by data-master. The raw input was never modified: every value above was read from the cleaned file or from a recorded artifact. Each number is registered in <code>report_build.json</code>; the gate verdict, including anything that failed, is in <code>audit/final_audit.md</code>.*</p>
 </main>
 <footer>This file is an export of <code>report.md</code> from a data-master run. The Markdown, the PDF and the machine-readable evidence in the run directory remain the records of account.</footer>
 </body>

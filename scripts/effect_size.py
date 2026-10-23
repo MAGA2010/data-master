@@ -144,7 +144,18 @@ def _delta_magnitude(d: float) -> str:
 
 
 def odds_ratio(binary_outcome: np.ndarray, group: np.ndarray) -> Dict[str, Any]:
-    """2x2 odds ratio (group1 vs group0) with Woolf 95% CI."""
+    """2x2 odds ratio (group1 vs group0) with Woolf 95% CI.
+
+    Inputs arrive with pandas nullable dtypes (string / Float64) whose
+    ExtensionArray `.values` propagates into np.sum through pyarrow and
+    raises on the boolean mask. Materialise to plain numpy first; pd.isna
+    already excluded missing cells upstream.
+    """
+    def _plain(values):
+        return np.asarray(values)
+
+    group = _plain(group)
+    binary_outcome = _plain(binary_outcome)
     levels = sorted(pd.unique(group))
     if len(levels) != 2:
         return {"estimable": False, "reason": f"need exactly 2 group levels, got {len(levels)}"}
@@ -153,10 +164,12 @@ def odds_ratio(binary_outcome: np.ndarray, group: np.ndarray) -> Dict[str, Any]:
     if len(pos_vals) != 2:
         return {"estimable": False, "reason": f"need binary outcome, got {len(pos_vals)} levels"}
     p1, p0 = pos_vals[1], pos_vals[0]
-    a = int(np.sum((group == g1) & (binary_outcome == p1)))
-    b = int(np.sum((group == g1) & (binary_outcome == p0)))
-    c = int(np.sum((group == g0) & (binary_outcome == p1)))
-    d_ = int(np.sum((group == g0) & (binary_outcome == p0)))
+    def _count(mask_a, mask_b):
+        return int(np.count_nonzero(np.asarray(mask_a) & np.asarray(mask_b)))
+    a = _count(group == g1, binary_outcome == p1)
+    b = _count(group == g1, binary_outcome == p0)
+    c = _count(group == g0, binary_outcome == p1)
+    d_ = _count(group == g0, binary_outcome == p0)
     if min(a, b, c, d_) == 0:
         # Haldane-Anscombe 0.5 correction
         a, b, c, d_ = a + 0.5, b + 0.5, c + 0.5, d_ + 0.5

@@ -79,9 +79,7 @@ def _str_ops(s: pd.Series) -> pd.Series:
 def op_fix_unicode(df: pd.DataFrame, cols: List[str]) -> pd.DataFrame:
     for c in cols:
         if c in df.columns and is_string_like(df[c].dtype):
-            df[c] = _str_ops(df[c]).map(
-                lambda v: unicodedata.normalize("NFC", v) if isinstance(v, str) else v
-            )
+            df[c] = _str_ops(df[c]).str.normalize("NFC")
     return df
 def op_strip_whitespace(df: pd.DataFrame, cols: List[str]) -> pd.DataFrame:
     for c in cols:

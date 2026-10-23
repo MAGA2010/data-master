@@ -132,6 +132,22 @@ class _Renderer:
         self.images_embedded = 0
         self.images_missing: List[str] = []
 
+    @staticmethod
+    def _safe_href(url: str) -> Optional[str]:
+        """Allow only relative artifact paths, http(s) and mailto.
+
+        The export renders markdown the reports generated, but it also renders
+        whatever a modified report.md holds, and a shareable HTML file travels
+        further than the run directory. A javascript:/data: URL becomes a
+        script the moment someone opens the export, so an unrecognised scheme
+        is emitted as plain text instead of a link.
+        """
+        colon = url.find(":")
+        if colon == -1:
+            return url                       # relative path, no scheme
+        scheme = url[:colon].strip().lower()
+        return url if scheme in ("http", "https", "mailto") else None
+
     # ---------------- inline ----------------
     def _inline(self, text: str) -> str:
         out: List[str] = []
@@ -151,9 +167,13 @@ class _Renderer:
             else:
                 link = self._LINK.match(token)
                 if link:
-                    out.append('<a href="%s">%s</a>' % (
-                        _escape_attr(link.group(2)),
-                        self._emphasis(escape(link.group(1)))))
+                    href = self._safe_href(link.group(2))
+                    label = self._emphasis(escape(link.group(1)))
+                    if href is not None:
+                        out.append('<a href="%s">%s</a>'
+                                   % (_escape_attr(href), label))
+                    else:  # hostile scheme: keep the label, drop the href
+                        out.append("%s (%s)" % (label, escape(link.group(2))))
                 else:  # unreachable; keep the raw text rather than drop it
                     out.append(escape(token))
             pos = match.end()

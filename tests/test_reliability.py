@@ -127,6 +127,44 @@ class StatisticalReferences(unittest.TestCase):
         self.assertAlmostEqual(result["statistic"], expected_t, places=4)
         self.assertAlmostEqual(result["p_raw"], 2 * stats.t.sf(abs(expected_t), 39), places=7)
 
+    def test_manual_kruskal_h_matches_scipy_with_and_without_ties(self):
+        # The bootstrap for rank epsilon^2 computes H by hand; if that formula
+        # ever drifted from scipy, every rank-path interval would silently
+        # describe a different statistic than the one reported.
+        rng = np.random.default_rng(41)
+        for tie_density in (0, 1, 2):           # decimal places kept: more = more ties
+            groups = [rng.normal(i, 1, 23).round(tie_density) for i in range(4)]
+            h_scipy, _ = stats.kruskal(*groups)
+            h_manual = si._kruskal_h_manual(groups)
+            self.assertAlmostEqual(h_manual, float(h_scipy), places=10,
+                                   msg="tie_density=%d diverged" % tie_density)
+        # the epsilon^2 CI must also agree with a scipy-based bootstrap
+        groups = [rng.normal(i, 1, 24).round(1) for i in range(5)]
+        fast = si.rank_effects(groups, n_boot=400)["epsilon_squared_rank_ci95"]
+        rng_b = np.random.default_rng(si.SEED)
+        reference = []
+        for _ in range(400):
+            res = [g[rng_b.integers(0, len(g), len(g))] for g in groups]
+            h, _ = stats.kruskal(*res)
+            n = sum(len(v) for v in res)
+            n_eff = n - sum(len(v) ** 2 for v in res) / n
+            reference.append((h - len(res) + 1) / n_eff)
+        lo, hi = np.percentile(reference, [2.5, 97.5])
+        self.assertAlmostEqual(fast["low"], float(lo), places=6)
+        self.assertAlmostEqual(fast["high"], float(hi), places=6)
+
+    def test_odds_ratio_accepts_pandas_nullable_dtypes(self):
+        # cleaned columns arrive as string / Float64 extension arrays; np.sum
+        # on their boolean masks used to raise through pyarrow and crash any
+        # binary-outcome analysis
+        import effect_size as es
+        group = pd.Series(["a"] * 12 + ["b"] * 12, dtype="string")
+        outcome = pd.Series([1.0, 2.0] * 12, dtype="Float64")
+        result = es.odds_ratio(outcome.values, group.values)
+        self.assertTrue(result["estimable"], result)
+        self.assertEqual(result["odds_ratio"], 1.0)   # balanced 2x2 table
+        self.assertEqual(result["table"]["g_pos"], 6)
+
     def test_ancova_matches_matrix_partial_f_and_t_interval(self):
         rng = np.random.default_rng(292)
         group = np.repeat(["a", "b", "c"], 40)

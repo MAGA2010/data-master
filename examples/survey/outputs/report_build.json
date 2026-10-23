@@ -2,16 +2,16 @@
   "schema_version": "1.0",
   "title": "Synthetic survey responses",
   "template": "nature",
-  "generated": "2026-10-19 20:07 中国标准时间",
+  "generated": "2026-10-23 15:01 中国标准时间",
   "report_md": "D:\\数据处理 skill\\examples\\survey\\outputs\\report.md",
-  "report_md_sha256": "c185dbbcff4c958836dea658049575cb2b42f670cf0a4a9c38c3f0bd4e609cbe",
+  "report_md_sha256": "c437eec41046d9af65a6e538c58308aa086ade8117c8f06657561ad9e61eb35c",
   "executive_summary_md": "D:\\数据处理 skill\\examples\\survey\\outputs\\executive_summary.md",
   "report_html": "D:\\数据处理 skill\\examples\\survey\\outputs\\report.html",
   "html": {
     "path": "D:\\数据处理 skill\\examples\\survey\\outputs\\report.html",
-    "bytes": 229575,
+    "bytes": 229600,
     "source_md": "D:\\数据处理 skill\\examples\\survey\\outputs\\report.md",
-    "source_md_sha256": "7f4194553bac5c126dab763c84ca142713adcde86ae5b93f152ac8346a2b63b6",
+    "source_md_sha256": "c15c72d77d544f77df99fde4d6fe3b621198ea3fa2ac654ec8539dee5064bafa",
     "images_embedded": 2,
     "images_missing": [],
     "self_contained": true
@@ -28,10 +28,10 @@
         "ok": true
       }
     ],
-    "sha256": "010129ad3265b1b16c970d920d9822df243542b5748127369b673a8c2a9758cf",
+    "sha256": "33ff6a730b0a5229d1c2918bca0b2174af3e719cc3f40685553295b218839627",
     "reportlab_version": "5.0.1",
     "pages": 11,
-    "bytes": 195956,
+    "bytes": 195991,
     "cjk_font_embedded": true,
     "cjk_font_available": true,
     "cjk_text_present": true
@@ -47,10 +47,10 @@
         "ok": true
       }
     ],
-    "sha256": "39c4aa08d8c1c7f74feeaa91219c9c1bfaec5b32b15ac8b4b2c28ef7b25c82fb",
+    "sha256": "49e939ecb6b29dbc5fa6b4dd40b6dad6404b981021f2cfeda5b2323f11e3022c",
     "reportlab_version": "5.0.1",
     "pages": 11,
-    "bytes": 196123,
+    "bytes": 196158,
     "cjk_font_embedded": true,
     "cjk_font_available": true,
     "cjk_text_present": true,
@@ -74,13 +74,13 @@
       "numpy": "2.4.6",
       "scipy": "1.18.1"
     },
-    "assembled_at": "2026-10-19 20:07 中国标准时间",
+    "assembled_at": "2026-10-23 15:01 中国标准时间",
     "pipeline": {
-      "git_commit": "8749c5ea1ff44b0e8376d75b61b238747708557f",
+      "git_commit": "e6a572103f1bf908864d3f59ac35ba0da1d395bf",
       "git_branch": "main",
       "git_dirty": true,
-      "git_dirty_files": 48,
-      "git_describe": "v0.2.0-2-g8749c5e-dirty",
+      "git_dirty_files": 15,
+      "git_describe": "v0.3.0-2-ge6a5721-dirty",
       "note": "working tree was dirty when this run started; the commit alone does not reproduce it"
     }
   },
