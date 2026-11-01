@@ -1,6 +1,6 @@
 # Synthetic survey responses -- Statistical Report
 
-> **Template**: nature | **Generated**: 2026-10-23 15:01 中国标准时间 | **Pipeline**: data-master
+> **Template**: nature | **Generated**: 2026-11-01 18:29 中国标准时间 | **Pipeline**: data-master
 > **Raw input**: `survey_responses.csv` (sha256 `a023b82a29c35fa8...`) | **Analysed file**: `cleaned.csv`
 > **Rows**: 120 raw -> 120 analysed | **Columns**: 6 | **Modality**: tabular
 > **Independent unit**: 
@@ -150,7 +150,7 @@ Every number above is traceable to a script. Nothing in this report was typed by
 | Clean | scripts/execute_cleaning.py | cleaned/cleaned.csv | a023b82a29c35fa8 |
 | Validate | scripts/validate_clean.py | cleaned/validation.json | a21d5a6adff9c3a8 |
 | Describe | scripts/stats_descriptive.py | analysis/descriptive.json | 6258fc3c41de7f74 |
-| Infer | scripts/stats_inferential.py | analysis/inferential.json | 7e403b9156c093a7 |
+| Infer | scripts/stats_inferential.py | analysis/inferential.json | 1f3f7a363a80c4a7 |
 | Decide figures | scripts/chart_decision.py | analysis/chart_decisions.json | 2887f493ce9cfac3 |
 | Render figures | scripts/render_chart.py | charts/*.png | 4f3ae11be2a4b262 |
 | Assemble | scripts/assemble_report.py | report.md / report.pdf | self-referential -- see report_build.json |
@@ -160,7 +160,7 @@ A document cannot contain its own hash, so the hash of `report.md` and `report.p
 
 - **Interpreter**: Python 3.13.15 on Windows-11-10.0.26200-SP0
 - **Libraries**: numpy 2.4.6, pandas 3.0.3, scipy 1.18.1
-- **Pipeline code**: data-master commit `e6a572103f1b` (working tree was dirty; the commit alone does not reproduce it) -- this report names the exact code that produced every number in it.
+- **Pipeline code**: data-master commit `289135cf7a90` (working tree was dirty; the commit alone does not reproduce it) -- this report names the exact code that produced every number in it.
 - **Random seeds**: 42 -- every resampling interval is seeded, so it reproduces exactly.
 - **Columns any operation was permitted to touch**: `age_years`, `minutes_spent`
 
@@ -315,4 +315,4 @@ Of these, 1 are already reflected as caveats in section 5.
 
 ---
 
-*End of report. Generated 2026-10-23 15:01 中国标准时间 by data-master. The raw input was never modified: every value above was read from the cleaned file or from a recorded artifact. Each number is registered in `report_build.json`; the gate verdict, including anything that failed, is in `audit/final_audit.md`.*
+*End of report. Generated 2026-11-01 18:29 中国标准时间 by data-master. The raw input was never modified: every value above was read from the cleaned file or from a recorded artifact. Each number is registered in `report_build.json`; the gate verdict, including anything that failed, is in `audit/final_audit.md`.*

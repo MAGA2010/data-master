@@ -1,6 +1,6 @@
 # Iris morphometrics -- Executive summary
 
-_Generated 2026-10-19 20:05 中国标准时间 by scripts/assemble_report.py from the artifacts listed in `report_build.json`. Every statement below is a restatement of the full report, not a separate analysis._
+_Generated 2026-11-01 18:27 中国标准时间 by scripts/assemble_report.py from the artifacts listed in `report_build.json`. Every statement below is a restatement of the full report, not a separate analysis._
 
 **Headline.** `petal_length_cm` is compared across species: omega squared = 0.94, 95% CI 0.93 to 0.95, BH-adjusted p = 3.7e-69 across a family of 4 outcomes.
 

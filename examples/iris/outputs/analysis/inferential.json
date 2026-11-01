@@ -146,7 +146,7 @@
               -0.9478,
               -0.7671
             ],
-            "ci_method": "bootstrap, 10000 resamples, seed=42",
+            "ci_method": "bootstrap, 2000 resamples, seed=42",
             "n1": 52,
             "n2": 53,
             "magnitude": "large"
@@ -178,7 +178,7 @@
               -0.9989,
               -0.9075
             ],
-            "ci_method": "bootstrap, 10000 resamples, seed=42",
+            "ci_method": "bootstrap, 2000 resamples, seed=42",
             "n1": 52,
             "n2": 53,
             "magnitude": "large"
@@ -210,7 +210,7 @@
               -0.7287,
               -0.3852
             ],
-            "ci_method": "bootstrap, 10000 resamples, seed=42",
+            "ci_method": "bootstrap, 2000 resamples, seed=42",
             "n1": 53,
             "n2": 53,
             "magnitude": "large"
@@ -351,7 +351,7 @@
               0.7495,
               0.9424
             ],
-            "ci_method": "bootstrap, 10000 resamples, seed=42",
+            "ci_method": "bootstrap, 2000 resamples, seed=42",
             "n1": 51,
             "n2": 49,
             "magnitude": "large"
@@ -383,7 +383,7 @@
               0.5358,
               0.8382
             ],
-            "ci_method": "bootstrap, 10000 resamples, seed=42",
+            "ci_method": "bootstrap, 2000 resamples, seed=42",
             "n1": 51,
             "n2": 52,
             "magnitude": "large"
@@ -415,7 +415,7 @@
               -0.5593,
               -0.1299
             ],
-            "ci_method": "bootstrap, 10000 resamples, seed=42",
+            "ci_method": "bootstrap, 2000 resamples, seed=42",
             "n1": 49,
             "n2": 52,
             "magnitude": "medium"
@@ -556,7 +556,7 @@
               -1.0,
               -1.0
             ],
-            "ci_method": "bootstrap, 10000 resamples, seed=42",
+            "ci_method": "bootstrap, 2000 resamples, seed=42",
             "n1": 52,
             "n2": 53,
             "magnitude": "large"
@@ -588,7 +588,7 @@
               -1.0,
               -1.0
             ],
-            "ci_method": "bootstrap, 10000 resamples, seed=42",
+            "ci_method": "bootstrap, 2000 resamples, seed=42",
             "n1": 52,
             "n2": 53,
             "magnitude": "large"
@@ -620,7 +620,7 @@
               -0.9907,
               -0.9106
             ],
-            "ci_method": "bootstrap, 10000 resamples, seed=42",
+            "ci_method": "bootstrap, 2000 resamples, seed=42",
             "n1": 53,
             "n2": 53,
             "magnitude": "large"
@@ -761,7 +761,7 @@
               -1.0,
               -1.0
             ],
-            "ci_method": "bootstrap, 10000 resamples, seed=42",
+            "ci_method": "bootstrap, 2000 resamples, seed=42",
             "n1": 50,
             "n2": 51,
             "magnitude": "large"
@@ -793,7 +793,7 @@
               -1.0,
               -1.0
             ],
-            "ci_method": "bootstrap, 10000 resamples, seed=42",
+            "ci_method": "bootstrap, 2000 resamples, seed=42",
             "n1": 50,
             "n2": 51,
             "magnitude": "large"
@@ -825,7 +825,7 @@
               -0.9935,
               -0.9135
             ],
-            "ci_method": "bootstrap, 10000 resamples, seed=42",
+            "ci_method": "bootstrap, 2000 resamples, seed=42",
             "n1": 51,
             "n2": 51,
             "magnitude": "large"

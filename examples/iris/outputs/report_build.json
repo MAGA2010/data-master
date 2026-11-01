@@ -2,16 +2,16 @@
   "schema_version": "1.0",
   "title": "Iris morphometrics",
   "template": "nature",
-  "generated": "2026-10-19 20:05 中国标准时间",
+  "generated": "2026-11-01 18:27 中国标准时间",
   "report_md": "D:\\数据处理 skill\\examples\\iris\\outputs\\report.md",
-  "report_md_sha256": "736046027d1319e3206e35e7bb41653bff6663942ae1402e606d257de3f9d0e3",
+  "report_md_sha256": "99a259d8d2c1ebea014d4ca59bfba32f0d641406435bbbd3dd36eb2a87b4546c",
   "executive_summary_md": "D:\\数据处理 skill\\examples\\iris\\outputs\\executive_summary.md",
   "report_html": "D:\\数据处理 skill\\examples\\iris\\outputs\\report.html",
   "html": {
     "path": "D:\\数据处理 skill\\examples\\iris\\outputs\\report.html",
-    "bytes": 578949,
+    "bytes": 578943,
     "source_md": "D:\\数据处理 skill\\examples\\iris\\outputs\\report.md",
-    "source_md_sha256": "7192dd52cdc785a53c476add59c8e9456e0219553c6c3b51f463256fe42132f1",
+    "source_md_sha256": "e0ebfd2ed17d5089a6c22320a4e62e6a7b830b1cc320ad55408ed887e19345dd",
     "images_embedded": 3,
     "images_missing": [],
     "self_contained": true
@@ -28,10 +28,10 @@
         "ok": true
       }
     ],
-    "sha256": "274ecf652f1ee305deecc1f61f185abd4238376228ca058dc7f5a369edae4bc0",
+    "sha256": "ba3088106aabd389086255df3756776a9c13e8ac710991d4819e17053add8b5e",
     "reportlab_version": "5.0.1",
     "pages": 17,
-    "bytes": 478481,
+    "bytes": 478485,
     "cjk_font_embedded": true,
     "cjk_font_available": true,
     "cjk_text_present": true
@@ -47,10 +47,10 @@
         "ok": true
       }
     ],
-    "sha256": "1965e6fdc141279864bdc2da2717d89c80d7dacd27b15fdc781298ec4858af79",
+    "sha256": "7e206b513a7f68ca41c86d2cc5e865699cbec21f2d7907183a75d427ae5cf363",
     "reportlab_version": "5.0.1",
     "pages": 17,
-    "bytes": 478191,
+    "bytes": 478197,
     "cjk_font_embedded": true,
     "cjk_font_available": true,
     "cjk_text_present": true,
@@ -61,7 +61,7 @@
     "plan": "69492b9bd35c25af",
     "validation": "070ee266feb052fd",
     "descriptive": "1816f349a61bcfd4",
-    "inferential": "f2556c0c1455bda5",
+    "inferential": "2b59e20cae1b60b7",
     "decisions": "e0548e975a90e8d1",
     "rendered": "c428ed8bc516c143"
   },
@@ -74,13 +74,13 @@
       "numpy": "2.4.6",
       "scipy": "1.18.1"
     },
-    "assembled_at": "2026-10-19 20:05 中国标准时间",
+    "assembled_at": "2026-11-01 18:27 中国标准时间",
     "pipeline": {
-      "git_commit": "8749c5ea1ff44b0e8376d75b61b238747708557f",
+      "git_commit": "289135cf7a90ee7c4122f0901d7276cc5a8e8618",
       "git_branch": "main",
       "git_dirty": true,
-      "git_dirty_files": 58,
-      "git_describe": "v0.2.0-2-g8749c5e-dirty",
+      "git_dirty_files": 85,
+      "git_describe": "v0.3.0-3-g289135c-dirty",
       "note": "working tree was dirty when this run started; the commit alone does not reproduce it"
     }
   },

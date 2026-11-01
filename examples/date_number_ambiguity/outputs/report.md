@@ -1,6 +1,6 @@
 # Date-versus-number ambiguity -- Statistical Report
 
-> **Template**: nature | **Generated**: 2026-10-19 20:07 中国标准时间 | **Pipeline**: data-master
+> **Template**: nature | **Generated**: 2026-11-01 18:30 中国标准时间 | **Pipeline**: data-master
 > **Raw input**: `session_export.csv` (sha256 `62619a7e5b45c756...`) | **Analysed file**: `cleaned.csv`
 > **Rows**: 48 raw -> 48 analysed | **Columns**: 3 | **Modality**: tabular
 > **Independent unit**: no --unit-key given; the row is assumed to be the independent unit, and every test below inherits that assumption
@@ -127,7 +127,7 @@ Each pairwise family is corrected separately, so these p values answer a narrowe
 
 **What the data supports.** The measurements differ across levels of `subject_id` by margins larger than the sampling noise at this size: `latency_s` is compared across subject_id: omega squared = 0.87, 95% CI 0.84 to 0.93, BH-adjusted p = 3.5e-17 across a family of 1 outcomes.
 
-**What the data does not support.** Nothing here establishes that the group label produced the measurement. The design compares existing groups rather than assigning them, and species, batch, site, instrument and operator all travel together with the group label -- this table cannot separate them. A claim of the form "X caused Y" is therefore not available from these data, and none is made in this report.
+**What the data does not support.** Nothing here establishes that the group label produced the measurement. The design compares existing groups rather than assigning them, and any unrecorded grouping in how the data were collected may travel together with the group label -- this table cannot separate them. A claim of the form "X caused Y" is therefore not available from these data, and none is made in this report.
 
 **Boundary conditions.** These results describe the rows in this file, at these measurement conditions, with this instrument. The intervals quantify sampling variation inside that set; they say nothing about another lot, another season or another population. The corrected family covers the outcomes tested here, so an outcome that was not tested is not thereby null.
 
@@ -148,7 +148,7 @@ Every number above is traceable to a script. Nothing in this report was typed by
 | Clean | scripts/execute_cleaning.py | cleaned/cleaned.csv | 45480b1e8fbbdd69 |
 | Validate | scripts/validate_clean.py | cleaned/validation.json | dab8826b466b2eb9 |
 | Describe | scripts/stats_descriptive.py | analysis/descriptive.json | 3f5ae5fd2893a30b |
-| Infer | scripts/stats_inferential.py | analysis/inferential.json | e9374b5c9e391622 |
+| Infer | scripts/stats_inferential.py | analysis/inferential.json | 8534bb3195811648 |
 | Decide figures | scripts/chart_decision.py | analysis/chart_decisions.json | cf7926c752cfd697 |
 | Render figures | scripts/render_chart.py | charts/*.png | 55cc00232d60ba09 |
 | Assemble | scripts/assemble_report.py | report.md / report.pdf | self-referential -- see report_build.json |
@@ -158,7 +158,7 @@ A document cannot contain its own hash, so the hash of `report.md` and `report.p
 
 - **Interpreter**: Python 3.13.15 on Windows-11-10.0.26200-SP0
 - **Libraries**: numpy 2.4.6, pandas 3.0.3, scipy 1.18.1
-- **Pipeline code**: data-master commit `8749c5ea1ff4` (working tree was dirty; the commit alone does not reproduce it) -- this report names the exact code that produced every number in it.
+- **Pipeline code**: data-master commit `289135cf7a90` (working tree was dirty; the commit alone does not reproduce it) -- this report names the exact code that produced every number in it.
 - **Random seeds**: 42 -- every resampling interval is seeded, so it reproduces exactly.
 - **Columns any operation was permitted to touch**: `latency_s`
 
@@ -312,4 +312,4 @@ Of these, 1 are already reflected as caveats in section 5.
 
 ---
 
-*End of report. Generated 2026-10-19 20:07 中国标准时间 by data-master. The raw input was never modified: every value above was read from the cleaned file or from a recorded artifact. Each number is registered in `report_build.json`; the gate verdict, including anything that failed, is in `audit/final_audit.md`.*
+*End of report. Generated 2026-11-01 18:30 中国标准时间 by data-master. The raw input was never modified: every value above was read from the cleaned file or from a recorded artifact. Each number is registered in `report_build.json`; the gate verdict, including anything that failed, is in `audit/final_audit.md`.*

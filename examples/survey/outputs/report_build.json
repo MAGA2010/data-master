@@ -2,16 +2,16 @@
   "schema_version": "1.0",
   "title": "Synthetic survey responses",
   "template": "nature",
-  "generated": "2026-10-23 15:01 中国标准时间",
+  "generated": "2026-11-01 18:29 中国标准时间",
   "report_md": "D:\\数据处理 skill\\examples\\survey\\outputs\\report.md",
-  "report_md_sha256": "c437eec41046d9af65a6e538c58308aa086ade8117c8f06657561ad9e61eb35c",
+  "report_md_sha256": "2846fbe1aa15e42512de20d30fba7ee5f4f8783254db3d1275c949996432d2c0",
   "executive_summary_md": "D:\\数据处理 skill\\examples\\survey\\outputs\\executive_summary.md",
   "report_html": "D:\\数据处理 skill\\examples\\survey\\outputs\\report.html",
   "html": {
     "path": "D:\\数据处理 skill\\examples\\survey\\outputs\\report.html",
     "bytes": 229600,
     "source_md": "D:\\数据处理 skill\\examples\\survey\\outputs\\report.md",
-    "source_md_sha256": "c15c72d77d544f77df99fde4d6fe3b621198ea3fa2ac654ec8539dee5064bafa",
+    "source_md_sha256": "16dd6bdb5a253b916554d5b0a336feb543071c00997eac2b401c61c73873e60c",
     "images_embedded": 2,
     "images_missing": [],
     "self_contained": true
@@ -28,10 +28,10 @@
         "ok": true
       }
     ],
-    "sha256": "33ff6a730b0a5229d1c2918bca0b2174af3e719cc3f40685553295b218839627",
+    "sha256": "289e450caa4e1f9e36996fb977bbdb1879b677a643e27599f04bd83607f4a049",
     "reportlab_version": "5.0.1",
     "pages": 11,
-    "bytes": 195991,
+    "bytes": 195990,
     "cjk_font_embedded": true,
     "cjk_font_available": true,
     "cjk_text_present": true
@@ -47,10 +47,10 @@
         "ok": true
       }
     ],
-    "sha256": "49e939ecb6b29dbc5fa6b4dd40b6dad6404b981021f2cfeda5b2323f11e3022c",
+    "sha256": "1a0a315c8693ffb69620c4aba00c8cf0f578d9f7e27ca61b8fb68724cfd32e4b",
     "reportlab_version": "5.0.1",
     "pages": 11,
-    "bytes": 196158,
+    "bytes": 196157,
     "cjk_font_embedded": true,
     "cjk_font_available": true,
     "cjk_text_present": true,
@@ -61,7 +61,7 @@
     "plan": "7176bc9d669e8010",
     "validation": "a21d5a6adff9c3a8",
     "descriptive": "6258fc3c41de7f74",
-    "inferential": "7e403b9156c093a7",
+    "inferential": "1f3f7a363a80c4a7",
     "decisions": "2887f493ce9cfac3",
     "rendered": "4f3ae11be2a4b262"
   },
@@ -74,13 +74,13 @@
       "numpy": "2.4.6",
       "scipy": "1.18.1"
     },
-    "assembled_at": "2026-10-23 15:01 中国标准时间",
+    "assembled_at": "2026-11-01 18:29 中国标准时间",
     "pipeline": {
-      "git_commit": "e6a572103f1bf908864d3f59ac35ba0da1d395bf",
+      "git_commit": "289135cf7a90ee7c4122f0901d7276cc5a8e8618",
       "git_branch": "main",
       "git_dirty": true,
-      "git_dirty_files": 15,
-      "git_describe": "v0.3.0-2-ge6a5721-dirty",
+      "git_dirty_files": 59,
+      "git_describe": "v0.3.0-3-g289135c-dirty",
       "note": "working tree was dirty when this run started; the commit alone does not reproduce it"
     }
   },

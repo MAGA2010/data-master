@@ -81,19 +81,39 @@ def find_time_column(df: pd.DataFrame, forced: Optional[str]) -> Tuple[Optional[
                              % (forced, ", ".join(df.columns)))
         return forced, {"origin": "user", "rule_source": "argument --time-col"}
     best = None
+    rejected: List[Dict[str, Any]] = []
     for col in df.columns:
         parsed, ev = parse_time(df[col])
         if not ev["converted"]:
             continue
         uniq = parsed.nunique(dropna=True)
-        # A time index needs more than one instant, and should not be a constant.
         if uniq < 2:
+            # A column of one repeated instant still parses completely as
+            # timestamps. Skipping it silently used to make the router say
+            # "time-series" while this profiler said "no time column", and the
+            # run died on a generic error instead of reporting the stuck
+            # clock. Record the rejection so the evidence can say what happened.
+            rejected.append({
+                "column": col,
+                "reason": ("all %d non-null value(s) parse as timestamps but hold "
+                           "one repeated instant, so no interval exists"
+                           % ev["n_non_null"]) if uniq == 1 else
+                          "fewer than two non-null timestamps",
+            })
             continue
         score = ev["parse_rate"] * math.log1p(uniq)
         if best is None or score > best[0]:
             best = (score, col, ev)
     if best is None:
-        return None, {"origin": "auto", "reason": "no column parses completely as timestamps"}
+        return None, {
+            "origin": "auto",
+            "reason": ("no column parses completely as timestamps"
+                       if not rejected else
+                       "timestamp column(s) %s parse fully but do not span two "
+                       "instants; this file holds no interval to analyse"
+                       % ", ".join(r["column"] for r in rejected)),
+            "rejected_columns": rejected,
+        }
     return best[1], {"origin": "auto", "score": round(best[0], 6),
                      "rule_source": "profile_timeseries.py#find_time_column",
                      "evidence": best[2]}

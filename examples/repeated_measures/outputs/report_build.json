@@ -2,16 +2,16 @@
   "schema_version": "1.0",
   "title": "Repeated-measures treatment comparison",
   "template": "nature",
-  "generated": "2026-10-19 20:06 中国标准时间",
+  "generated": "2026-11-01 18:29 中国标准时间",
   "report_md": "D:\\数据处理 skill\\examples\\repeated_measures\\outputs\\report.md",
-  "report_md_sha256": "f7d29edce892ff8cb9f3dfcb6475b7203475de7d12de0f36f4cc93a51047be55",
+  "report_md_sha256": "f8c0266565ecc0ed7d79d71109061d7f6ba5de04f7140da30467dd198ca33e1b",
   "executive_summary_md": "D:\\数据处理 skill\\examples\\repeated_measures\\outputs\\executive_summary.md",
   "report_html": "D:\\数据处理 skill\\examples\\repeated_measures\\outputs\\report.html",
   "html": {
     "path": "D:\\数据处理 skill\\examples\\repeated_measures\\outputs\\report.html",
-    "bytes": 144553,
+    "bytes": 144544,
     "source_md": "D:\\数据处理 skill\\examples\\repeated_measures\\outputs\\report.md",
-    "source_md_sha256": "8d99a482cd01e9d6f50e0871723a86480625b3464047cd01e8dc8b4e6a42bb57",
+    "source_md_sha256": "5e85c70aa4e09715e99c19c0b67132b86234a3f2dd6259313e3d9f0a379c712e",
     "images_embedded": 1,
     "images_missing": [],
     "self_contained": true
@@ -28,10 +28,10 @@
         "ok": true
       }
     ],
-    "sha256": "80387305c48f42000d4df9929bdb791076cb4203a5092ce1344b264ba4dd6790",
+    "sha256": "83be1770ff3bb53eafa858a33887f8a47e21ef20def2e4ac08a1d7b4598eff4a",
     "reportlab_version": "5.0.1",
     "pages": 8,
-    "bytes": 127059,
+    "bytes": 127063,
     "cjk_font_embedded": true,
     "cjk_font_available": true,
     "cjk_text_present": true
@@ -47,10 +47,10 @@
         "ok": true
       }
     ],
-    "sha256": "926c3283b2387d5af6c6302f4a14b473c323d757dba69b21e4d57c7e35219cf7",
+    "sha256": "1f296090224b1c6bd503e987b07c89d161267a80227306b84d43ea766112e036",
     "reportlab_version": "5.0.1",
     "pages": 8,
-    "bytes": 126770,
+    "bytes": 126775,
     "cjk_font_embedded": true,
     "cjk_font_available": true,
     "cjk_text_present": true,
@@ -74,13 +74,13 @@
       "numpy": "2.4.6",
       "scipy": "1.18.1"
     },
-    "assembled_at": "2026-10-19 20:06 中国标准时间",
+    "assembled_at": "2026-11-01 18:29 中国标准时间",
     "pipeline": {
-      "git_commit": "8749c5ea1ff44b0e8376d75b61b238747708557f",
+      "git_commit": "289135cf7a90ee7c4122f0901d7276cc5a8e8618",
       "git_branch": "main",
       "git_dirty": true,
-      "git_dirty_files": 47,
-      "git_describe": "v0.2.0-2-g8749c5e-dirty",
+      "git_dirty_files": 73,
+      "git_describe": "v0.3.0-3-g289135c-dirty",
       "note": "working tree was dirty when this run started; the commit alone does not reproduce it"
     }
   },

@@ -153,6 +153,37 @@ class StatisticalReferences(unittest.TestCase):
         self.assertAlmostEqual(fast["low"], float(lo), places=6)
         self.assertAlmostEqual(fast["high"], float(hi), places=6)
 
+    def test_bootstraps_reproduce_reference_intervals_exactly(self):
+        # variance_effects and cliffs_delta are vectorised, but the resample
+        # draws must consume the Generator in the original order so published
+        # intervals stay reproducible; these captured values pin that.
+        rng = np.random.default_rng(8)
+        vals = [rng.normal(0, 1, 12), rng.normal(.4, 1, 15), rng.normal(1., 1, 9)]
+        r = si.variance_effects(vals, n_boot=2000)
+        self.assertEqual(r["eta_squared"], 0.180315)
+        self.assertEqual(r["omega_squared"], 0.127471)
+        self.assertEqual(r["omega_squared_ci95"]["low"], -0.029933)
+        self.assertEqual(r["omega_squared_ci95"]["high"], 0.44598)
+        # unequal group sizes and heavy ties
+        vals2 = [np.array([1., 1., 2.]), np.array([2., 3., 3., 3.])]
+        r2 = si.variance_effects(vals2, n_boot=1000)
+        self.assertTrue(np.isfinite(r2["omega_squared_ci95"]["low"]))
+
+    def test_sensitivity_fast_path_is_omnibus_identical(self):
+        # k_group_numeric(post_hoc=False) powers every sensitivity refit. It
+        # must return the same verdict, statistic and effect sizes as the full
+        # dispatch, and drop only the pairwise tables nothing downstream of a
+        # refit reads.
+        rng = np.random.default_rng(4)
+        groups = {f"g{i}": rng.normal(i * .2, 1, 15).round(2) for i in range(6)}
+        full = si.k_group_numeric(dict(groups), n_boot=500)
+        fast = si.k_group_numeric(dict(groups), n_boot=500, post_hoc=False)
+        for key in ("method", "statistic", "p_raw", "n_total", "n_groups"):
+            self.assertEqual(full[key], fast[key], key)
+        self.assertEqual(full["effect_sizes"], fast["effect_sizes"])
+        self.assertGreater(len(full["post_hoc"]), 0)
+        self.assertEqual(fast["post_hoc"], [])
+
     def test_odds_ratio_accepts_pandas_nullable_dtypes(self):
         # cleaned columns arrive as string / Float64 extension arrays; np.sum
         # on their boolean masks used to raise through pyarrow and crash any
@@ -164,6 +195,30 @@ class StatisticalReferences(unittest.TestCase):
         self.assertTrue(result["estimable"], result)
         self.assertEqual(result["odds_ratio"], 1.0)   # balanced 2x2 table
         self.assertEqual(result["table"]["g_pos"], 6)
+
+    def test_cliffs_delta_bootstrap_matches_reference_and_labels_n_boot(self):
+        # the vectorised average-tie ranking must reproduce the original
+        # per-row implementation exactly (captured values, same seed), and the
+        # ci_method label must name the resample count actually requested
+        import effect_size as es
+        rng = np.random.default_rng(5)
+        cases = [
+            (rng.normal(0, 1, 10), rng.normal(.5, 1, 14), (-0.1, [-0.6, 0.4])),
+            (rng.integers(0, 5, 20).astype(float),
+             rng.integers(0, 5, 24).astype(float), (0.1583, [-0.1896, 0.4834])),
+            (np.array([1., 1., 2.]), np.array([2., 3., 3., 3.]),
+             (-0.9167, [-1.0, -0.6667])),
+        ]
+        for x, y, (want_d, want_ci) in cases:
+            got = es.cliffs_delta(x, y, n_boot=3000)
+            self.assertEqual(got["cliffs_delta"], want_d)
+            self.assertEqual(got["ci95"], want_ci)
+            self.assertEqual(got["ci_method"], "bootstrap, 3000 resamples, seed=42")
+        # a heavy-tie pair must still return finite percentiles
+        same = es.cliffs_delta(np.ones(15), np.full(15, 2.0), n_boot=500)
+        self.assertTrue(same["estimable"])
+        self.assertEqual(same["cliffs_delta"], -1.0)
+        self.assertEqual(same["ci95"], [-1.0, -1.0])
 
     def test_ancova_matches_matrix_partial_f_and_t_interval(self):
         rng = np.random.default_rng(292)

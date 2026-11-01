@@ -306,16 +306,26 @@ def main() -> int:
         return 1
     ts = pd.to_datetime(df[time_col], errors="coerce")
     value_col = args.value
+    numeric_cols: list = []
     if value_col is None:
         for c in df.columns:
             if c == time_col:
                 continue
             v = pd.to_numeric(df[c], errors="coerce")
+            if v.notna().any():
+                numeric_cols.append(c)
             if v.notna().sum() >= MIN_N:
                 value_col = c
                 break
     if value_col is None:
-        print("ERROR: no numeric value column found", file=sys.stderr)
+        # say which failure it actually is: a file with no numeric column is a
+        # routing problem, a file with one too short is a sample-size fact
+        if numeric_cols:
+            print("ERROR: numeric column(s) %s hold fewer than %d usable rows; "
+                  "descriptive time-series statistics are not estimable at this n"
+                  % (", ".join(numeric_cols), MIN_N), file=sys.stderr)
+        else:
+            print("ERROR: no numeric value column found", file=sys.stderr)
         return 1
 
     frame = pd.DataFrame({"t": ts, "v": pd.to_numeric(df[value_col],

@@ -175,7 +175,9 @@ def variance_effects(groups: List[np.ndarray], n_boot: int = BOOTSTRAP) -> Dict[
 
     eta^2 is upward-biased; omega^2 corrects for the number of groups and is the
     value a reviewer will ask for. The CI is bootstrap because omega^2 has no
-    closed-form interval.
+    closed-form interval. The bootstrap is computed on the whole (B, n) matrix
+    at once: the old per-resample Python loop cost one small numpy call per
+    group per draw, which dominated many-group runs.
     """
     def _omega(ss_b: float, ss_w: float, n: int, k: int) -> float:
         """omega^2 = (SS_b - (k-1)*MS_w) / (SS_t + MS_w)
@@ -197,25 +199,41 @@ def variance_effects(groups: List[np.ndarray], n_boot: int = BOOTSTRAP) -> Dict[
         return ((ss_b - (k - 1) * ms_w) / denom) if denom > 0 else 0.0
 
     k = len(groups)
+    sizes = [len(g) for g in groups]
     ss_b, ss_w, _ = _omega2_from(groups)
     ss_t = ss_b + ss_w
     eta2 = ss_b / ss_t if ss_t > 0 else 0.0
-    omega2 = _omega(ss_b, ss_w, len(np.concatenate(groups)), k)
+    n_total = int(np.concatenate(groups).size)
+    omega2 = _omega(ss_b, ss_w, n_total, k)
 
-    ci = {"low": None, "high": None}
     rng = np.random.default_rng(SEED)
-    boot: List[float] = []
-    for _ in range(n_boot):
-        res = []
-        for g in groups:
-            idx = rng.integers(0, len(g), len(g))
-            res.append(g[idx])
-        b_b, b_w, _ = _omega2_from(res)
-        boot.append(_omega(b_b, b_w, len(np.concatenate(res)), k))
-    if boot:
-        arr = np.asarray(boot)
-        ci = {"low": round(float(np.percentile(arr, 2.5)), 6),
-              "high": round(float(np.percentile(arr, 97.5)), 6),
+    # The resample draws must consume the Generator in exactly the order the
+    # original per-resample loop did (one integers() call per group per
+    # resample), so published intervals stay reproducible bit for bit; only
+    # the SS arithmetic below is vectorised.
+    parts = [[g[rng.integers(0, len(g), len(g))] for g in groups]
+             for _ in range(n_boot)]
+    stacked = [np.stack([parts[b][j] for b in range(n_boot)], axis=0)
+               for j in range(k)]
+    sizes_arr = np.asarray(sizes, dtype=float)
+    gmeans = np.concatenate([p.mean(axis=1, keepdims=True) for p in stacked], axis=1)
+    grand = (np.concatenate(stacked, axis=1).mean(axis=1, keepdims=True)
+             if n_total else np.zeros((n_boot, 1)))
+    ss_b_b = (sizes_arr * (gmeans - grand) ** 2).sum(axis=1)
+    ss_w_b = np.zeros(n_boot)
+    for p, gm in zip(stacked, gmeans.T):
+        ss_w_b += ((p - gm[:, None]) ** 2).sum(axis=1)
+    ms_w_b = ss_w_b / (n_total - k) if n_total > k else np.zeros(n_boot)
+    denom_b = ss_b_b + ss_w_b + ms_w_b
+    with np.errstate(divide="ignore", invalid="ignore"):
+        boot = np.where(denom_b > 0,
+                        (ss_b_b - (k - 1) * ms_w_b) / np.where(denom_b > 0, denom_b, 1.0),
+                        0.0)
+    boot = boot[np.isfinite(boot)]
+    ci = {"low": None, "high": None}
+    if len(boot):
+        ci = {"low": round(float(np.percentile(boot, 2.5)), 6),
+              "high": round(float(np.percentile(boot, 97.5)), 6),
               "method": f"bootstrap percentile, {n_boot} resamples, seed={SEED}"}
     return {
         "eta_squared": round(float(eta2), 6),
@@ -263,13 +281,19 @@ def _epsilon_squared(h: float, group_sizes: List[int]) -> float:
     return (h - len(group_sizes) + 1) / n_eff
 
 
-def rank_effects(groups: List[np.ndarray], n_boot: int = BOOTSTRAP) -> Dict[str, Any]:
+def rank_effects(groups: List[np.ndarray], n_boot: int = BOOTSTRAP,
+                 pairwise: bool = True) -> Dict[str, Any]:
     """epsilon^2 for Kruskal-Wallis plus Cliff's delta for every pair.
 
     epsilon^2 gets the same bootstrap percentile interval omega^2 has: without
     one, a rank-path report can quote p next to an effect size but no
     uncertainty, and the uncertainty-visible gate fails for datasets whose
     only defensible test is rank-based.
+
+    pairwise=False skips the per-pair Cliff's deltas: sensitivity refits read
+    only the omnibus effect, and at 30 groups the 435 pairwise bootstraps
+    outweigh the omnibus itself by an order of magnitude. Nothing outside
+    stats_inferential reads cliffs_delta_by_pair.
     """
     k = len(groups)
     h, _ = stats.kruskal(*groups)
@@ -288,10 +312,11 @@ def rank_effects(groups: List[np.ndarray], n_boot: int = BOOTSTRAP) -> Dict[str,
         ci = {"low": round(float(np.percentile(finite, 2.5)), 6),
               "high": round(float(np.percentile(finite, 97.5)), 6),
               "method": f"bootstrap percentile, {n_boot} resamples, seed={SEED}"}
-    pairs = {}
-    for a, b in itertools.combinations(range(k), 2):
-        d = cliffs_delta(groups[a], groups[b], n_boot=n_boot)
-        pairs[f"g{a + 1}_vs_g{b + 1}"] = d
+    pairs: Dict[str, Any] = {}
+    if pairwise:
+        for a, b in itertools.combinations(range(k), 2):
+            d = cliffs_delta(groups[a], groups[b], n_boot=n_boot)
+            pairs[f"g{a + 1}_vs_g{b + 1}"] = d
     return {"epsilon_squared_rank": round(float(eps2), 6),
             "epsilon_squared_rank_ci95": ci,
             "n_effective": round(float(sum(sizes) - sum(nn ** 2 for nn in sizes) / sum(sizes)), 3),
@@ -430,7 +455,8 @@ def _degeneracy(vals: List[np.ndarray]) -> Optional[str]:
 
 
 def k_group_numeric(groups: Dict[str, np.ndarray], alpha: float = ALPHA,
-                    n_boot: int = BOOTSTRAP) -> Dict[str, Any]:
+                    n_boot: int = BOOTSTRAP,
+                    post_hoc: bool = True) -> Dict[str, Any]:
     names = list(groups.keys())
     vals = [groups[n] for n in names]
     degenerate = _degeneracy(vals)
@@ -464,7 +490,7 @@ def k_group_numeric(groups: Dict[str, np.ndarray], alpha: float = ALPHA,
         stat_name, dof, dof_denom = "H", k - 1, None
         rejected.append({"test": "one-way ANOVA",
                          "reason": f"min n={n_min} < {NORMALITY_GATE} and normality rejected"})
-        effects = rank_effects(vals, n_boot=n_boot)
+        effects = rank_effects(vals, n_boot=n_boot, pairwise=post_hoc)
         cross = None
     elif equal_var is True:
         f, p = stats.f_oneway(*vals)
@@ -500,25 +526,29 @@ def k_group_numeric(groups: Dict[str, np.ndarray], alpha: float = ALPHA,
         effects["omnibus_note"] = ("epsilon^2 is reported for the rank test; "
                                    "omega^2 does not apply to Kruskal-Wallis")
 
-    # post-hoc: every pairwise comparison, corrected within this outcome's family
-    post_hoc: List[Dict[str, Any]] = []
-    for i, j in itertools.combinations(range(k), 2):
-        u, pu = stats.mannwhitneyu(vals[i], vals[j], alternative="two-sided")
-        t_, pt = stats.ttest_ind(vals[i], vals[j], equal_var=False)
-        post_hoc.append({
-            "group_a": names[i], "group_b": names[j],
-            "n_a": len(vals[i]), "n_b": len(vals[j]),
-            "mean_difference_ci95": mean_difference_ci(vals[i], vals[j], alpha),
-            "welch_t_p_raw": float(pt),
-            "mannwhitney_p_raw": float(pu),
-            "cliffs_delta": cliffs_delta(vals[i], vals[j], n_boot=n_boot),
-        })
-    post_family = correct_pvalues([h_["welch_t_p_raw"] for h_ in post_hoc], "BH", alpha)
-    mw_family = correct_pvalues([h_["mannwhitney_p_raw"] for h_ in post_hoc], "BH", alpha)
-    for h_, wf, mf in zip(post_hoc, post_family.get("adjusted", []), mw_family.get("adjusted", [])):
-        h_["p_adjusted_welch_BH"] = float(wf)
-        h_["p_adjusted_mannwhitney_BH"] = float(mf)
-        h_["significant_adjusted"] = bool(wf < alpha)
+    # post-hoc: every pairwise comparison, corrected within this outcome's family.
+    # Skipped when post_hoc=False: sensitivity refits read only the omnibus
+    # verdict and effect, and at k=30 the 435 pairwise bootstraps cost an order
+    # of magnitude more than the refit itself.
+    post_hoc_rows: List[Dict[str, Any]] = []
+    if post_hoc:
+        for i, j in itertools.combinations(range(k), 2):
+            u, pu = stats.mannwhitneyu(vals[i], vals[j], alternative="two-sided")
+            t_, pt = stats.ttest_ind(vals[i], vals[j], equal_var=False)
+            post_hoc_rows.append({
+                "group_a": names[i], "group_b": names[j],
+                "n_a": len(vals[i]), "n_b": len(vals[j]),
+                "mean_difference_ci95": mean_difference_ci(vals[i], vals[j], alpha),
+                "welch_t_p_raw": float(pt),
+                "mannwhitney_p_raw": float(pu),
+                "cliffs_delta": cliffs_delta(vals[i], vals[j], n_boot=n_boot),
+            })
+        post_family = correct_pvalues([h_["welch_t_p_raw"] for h_ in post_hoc_rows], "BH", alpha)
+        mw_family = correct_pvalues([h_["mannwhitney_p_raw"] for h_ in post_hoc_rows], "BH", alpha)
+        for h_, wf, mf in zip(post_hoc_rows, post_family.get("adjusted", []), mw_family.get("adjusted", [])):
+            h_["p_adjusted_welch_BH"] = float(wf)
+            h_["p_adjusted_mannwhitney_BH"] = float(mf)
+            h_["significant_adjusted"] = bool(wf < alpha)
 
     return {
         "method": method,
@@ -538,7 +568,7 @@ def k_group_numeric(groups: Dict[str, np.ndarray], alpha: float = ALPHA,
         "rejected_alternatives": rejected,
         "effect_sizes": effects,
         "robustness_cross_check": cross,
-        "post_hoc": post_hoc,
+        "post_hoc": post_hoc_rows,
         "post_hoc_note": ("both parametric and rank p-values are BH-corrected within this "
                           "outcome's pairwise family; report the one matching the omnibus test"),
         "rule_source": "scripts/stats_inferential.py#k_group_numeric",
@@ -1202,7 +1232,8 @@ def _outcome_tests(frame: pd.DataFrame, group: str, levels: List[Any],
                    outcome_cols: List[str], alpha: float,
                    analysis_level: str,
                    covariates: Optional[List[str]] = None,
-                   n_boot: int = BOOTSTRAP) -> List[Dict[str, Any]]:
+                   n_boot: int = BOOTSTRAP,
+                   post_hoc: bool = True) -> List[Dict[str, Any]]:
     """Run the row-level dispatch for every outcome column on `frame`.
 
     Shared by the primary analysis (whatever level the unit structure makes
@@ -1291,7 +1322,7 @@ def _outcome_tests(frame: pd.DataFrame, group: str, levels: List[Any],
         else:
             g = {str(lv): sub.loc[sub[group] == lv, oc].astype(float).values for lv in levels}
             rec.update({"design": f"{len(levels)}-group numeric",
-                        **k_group_numeric(g, alpha, n_boot=n_boot)})
+                        **k_group_numeric(g, alpha, n_boot=n_boot, post_hoc=post_hoc)})
         rec["analysis_level"] = analysis_level
         tests.append(rec)
     return tests
@@ -1307,7 +1338,7 @@ def _unadjusted_numeric(sub: pd.DataFrame, group: str, oc: str,
             str(levels[0]), str(levels[1]), alpha)
     return k_group_numeric(
         {str(lv): sub.loc[sub[group] == lv, oc].astype(float).values
-         for lv in levels}, alpha, n_boot=n_boot)
+         for lv in levels}, alpha, n_boot=n_boot, post_hoc=post_hoc)
 
 
 def _paired_outcome_tests(df: pd.DataFrame, group: str, levels: List[Any],

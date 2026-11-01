@@ -1,6 +1,6 @@
 # Final audit -- Date-versus-number ambiguity
 
-_Generated 2026-10-19 20:08 中国标准时间 by scripts/final_audit.py from the artifacts on disk. This audit reads the report; it does not trust it._
+_Generated 2026-11-01 18:30 中国标准时间 by scripts/final_audit.py from the artifacts on disk. This audit reads the report; it does not trust it._
 
 **Verdict: NOT SUBMISSION-READY**
 

@@ -98,28 +98,30 @@ def cliffs_delta(x: np.ndarray, y: np.ndarray,
     rx = ranks[:nx].sum()
     u = rx - nx * (nx + 1) / 2
     delta = 2 * u / (nx * ny) - 1
-    # bootstrap CI, fully vectorised across resamples
+    # bootstrap CI. Ties are guaranteed, not rare: resampling with replacement
+    # from a finite group duplicates values in almost every row, so the old
+    # per-row np.unique correction ran thousands of times per call and made a
+    # many-group analysis take minutes. The average-tie ranking is computed
+    # for the whole (B, nx+ny) matrix in one vectorised pass instead.
     rng = np.random.default_rng(SEED)
     B = int(n_boot) if n_boot else BOOT_N
     bx = x[rng.integers(0, nx, size=(B, nx))]
     by = y[rng.integers(0, ny, size=(B, ny))]
     allv = np.concatenate([bx, by], axis=1)          # (B, nx+ny)
+    Bn, n_tot = allv.shape
     order = np.argsort(allv, axis=1, kind="stable")
+    sv = np.take_along_axis(allv, order, axis=1)
+    plain = np.broadcast_to(np.arange(1, n_tot + 1, dtype=float), (Bn, n_tot))
+    # run id per sorted position: increments where the value changes
+    starts = np.concatenate([np.zeros((Bn, 1), int),
+                             (sv[:, 1:] != sv[:, :-1]).astype(int)], axis=1)
+    rid = np.cumsum(starts, axis=1)
+    flat = rid + np.arange(Bn)[:, None] * n_tot      # unique id per (row, run)
+    rsum = np.bincount(flat.ravel(), weights=plain.ravel(), minlength=Bn * n_tot)
+    rcnt = np.bincount(flat.ravel(), minlength=Bn * n_tot)
+    avg = (rsum / np.maximum(rcnt, 1))[flat]
     ranks = np.empty_like(allv, dtype=float)
-    np.put_along_axis(ranks, order,
-                      np.broadcast_to(np.arange(1, nx + ny + 1, dtype=float), (B, nx + ny)), axis=1)
-    # average ranks for ties. Ties are rare in continuous data, and a
-    # per-row np.unique over thousands of bootstrap rows used to dominate the
-    # whole suite, so rows are screened once (one vectorised sort) and only
-    # rows that actually hold ties pay the correction
-    sv = np.sort(allv, axis=1)
-    tie_rows = np.nonzero(np.any(np.diff(sv, axis=1) == 0, axis=1))[0]
-    for b in tie_rows:
-        vals, inv, cnt = np.unique(allv[b], return_inverse=True, return_counts=True)
-        if np.any(cnt > 1):
-            sums = np.zeros(len(cnt))
-            np.add.at(sums, inv, ranks[b])
-            ranks[b] = (sums / cnt)[inv]
+    np.put_along_axis(ranks, order, avg, axis=1)
     u = ranks[:, :nx].sum(axis=1) - nx * (nx + 1) / 2
     deltas = 2 * u / (nx * ny) - 1
     lo, hi = np.percentile(deltas, [2.5, 97.5])
@@ -127,7 +129,7 @@ def cliffs_delta(x: np.ndarray, y: np.ndarray,
         "estimable": True,
         "cliffs_delta": round(float(delta), 4),
         "ci95": [round(float(lo), 4), round(float(hi), 4)],
-        "ci_method": f"bootstrap, {BOOT_N} resamples, seed={SEED}",
+        "ci_method": f"bootstrap, {B} resamples, seed={SEED}",
         "n1": nx, "n2": ny,
         "magnitude": _delta_magnitude(abs(delta)),
     }

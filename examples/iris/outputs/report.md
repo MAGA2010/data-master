@@ -1,6 +1,6 @@
 # Iris morphometrics -- Statistical Report
 
-> **Template**: nature | **Generated**: 2026-10-19 20:05 中国标准时间 | **Pipeline**: data-master
+> **Template**: nature | **Generated**: 2026-11-01 18:27 中国标准时间 | **Pipeline**: data-master
 > **Raw input**: `iris_dirty.csv` (sha256 `d5e5668ecd92e4d3...`) | **Analysed file**: `cleaned.csv`
 > **Rows**: 158 raw -> 158 analysed | **Columns**: 7 | **Modality**: tabular
 > **Independent unit**: no --unit-key given; the row is assumed to be the independent unit, and every test below inherits that assumption
@@ -154,7 +154,7 @@ These are associations among measurements taken on the same rows. Nothing here f
 
 **What the data supports.** The measurements differ across levels of `species` by margins larger than the sampling noise at this size: `petal_length_cm` is compared across species: omega squared = 0.94, 95% CI 0.93 to 0.95, BH-adjusted p = 3.7e-69 across a family of 4 outcomes. The ordering of variables by effect size holds under both the parametric and the rank-based test (Appendix A3), so the finding is not an artefact of one distributional assumption. Of the 10 measured pairs, 6 are strongly associated (|Spearman rho| >= 0.7); all of it is reported as association only, with no direction and no mechanism.
 
-**What the data does not support.** Nothing here establishes that the group label produced the measurement. The design compares existing groups rather than assigning them, and species, batch, site, instrument and operator all travel together with the group label -- this table cannot separate them. A claim of the form "X caused Y" is therefore not available from these data, and none is made in this report.
+**What the data does not support.** Nothing here establishes that the group label produced the measurement. The design compares existing groups rather than assigning them, and variables such as `height_m` may travel together with the group label -- this table cannot separate them. A claim of the form "X caused Y" is therefore not available from these data, and none is made in this report.
 
 **Boundary conditions.** These results describe the rows in this file, at these measurement conditions, with this instrument. The intervals quantify sampling variation inside that set; they say nothing about another lot, another season or another population. The corrected family covers the outcomes tested here, so an outcome that was not tested is not thereby null.
 
@@ -195,7 +195,7 @@ Every number above is traceable to a script. Nothing in this report was typed by
 | Clean | scripts/execute_cleaning.py | cleaned/cleaned.csv | 7c1b8a3004c28c85 |
 | Validate | scripts/validate_clean.py | cleaned/validation.json | 070ee266feb052fd |
 | Describe | scripts/stats_descriptive.py | analysis/descriptive.json | 1816f349a61bcfd4 |
-| Infer | scripts/stats_inferential.py | analysis/inferential.json | f2556c0c1455bda5 |
+| Infer | scripts/stats_inferential.py | analysis/inferential.json | 2b59e20cae1b60b7 |
 | Decide figures | scripts/chart_decision.py | analysis/chart_decisions.json | e0548e975a90e8d1 |
 | Render figures | scripts/render_chart.py | charts/*.png | c428ed8bc516c143 |
 | Assemble | scripts/assemble_report.py | report.md / report.pdf | self-referential -- see report_build.json |
@@ -205,7 +205,7 @@ A document cannot contain its own hash, so the hash of `report.md` and `report.p
 
 - **Interpreter**: Python 3.13.15 on Windows-11-10.0.26200-SP0
 - **Libraries**: numpy 2.4.6, pandas 3.0.3, scipy 1.18.1
-- **Pipeline code**: data-master commit `8749c5ea1ff4` (working tree was dirty; the commit alone does not reproduce it) -- this report names the exact code that produced every number in it.
+- **Pipeline code**: data-master commit `289135cf7a90` (working tree was dirty; the commit alone does not reproduce it) -- this report names the exact code that produced every number in it.
 - **Random seeds**: 42 -- every resampling interval is seeded, so it reproduces exactly.
 - **Columns any operation was permitted to touch**: `petal_length_cm`, `petal_width_cm`, `sepal_length_cm`, `sepal_width_cm`, `species`, `species_code`
 
@@ -464,4 +464,4 @@ Of these, 3 are already reflected as caveats in section 5.
 
 ---
 
-*End of report. Generated 2026-10-19 20:05 中国标准时间 by data-master. The raw input was never modified: every value above was read from the cleaned file or from a recorded artifact. Each number is registered in `report_build.json`; the gate verdict, including anything that failed, is in `audit/final_audit.md`.*
+*End of report. Generated 2026-11-01 18:27 中国标准时间 by data-master. The raw input was never modified: every value above was read from the cleaned file or from a recorded artifact. Each number is registered in `report_build.json`; the gate verdict, including anything that failed, is in `audit/final_audit.md`.*

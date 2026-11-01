@@ -64,7 +64,12 @@ def run_primary(frame: pd.DataFrame, group: str, oc: str, levels: List[Any],
                 alpha: float, structure: str, unit_key: Optional[str],
                 level: str, covariates: Optional[List[str]] = None
                 ) -> Dict[str, Any]:
-    """Re-run the primary dispatch for one outcome on (possibly filtered) data."""
+    """Re-run the primary dispatch for one outcome on (possibly filtered) data.
+
+    Refits are omnibus-only (post_hoc=False): a perturbation record reads the
+    verdict, the statistic and the effect size, never the 435 pairwise
+    comparisons a 30-group refit would otherwise recompute per perturbation.
+    """
     if structure == "paired":
         return si.paired_two_group(frame, group, oc, str(levels[0]),
                                    str(levels[1]), unit_key, alpha)
@@ -83,7 +88,7 @@ def run_primary(frame: pd.DataFrame, group: str, oc: str, levels: List[Any],
                                      "reason": "no record for this outcome"}
     return si._outcome_tests(frame, group, levels, [oc], alpha, level,
                              covariates=covariates,
-                             n_boot=SENSITIVITY_N_BOOT)[0]
+                             n_boot=SENSITIVITY_N_BOOT, post_hoc=False)[0]
 
 
 def frame_at_level(df: pd.DataFrame, group: str, numeric_cols: List[str],

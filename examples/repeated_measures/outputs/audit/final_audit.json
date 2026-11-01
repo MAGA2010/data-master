@@ -1,6 +1,6 @@
 {
   "title": "Repeated-measures treatment comparison",
-  "generated": "2026-10-19 20:06 中国标准时间",
+  "generated": "2026-11-01 18:29 中国标准时间",
   "template": "nature",
   "verdict": "SUBMISSION-READY",
   "gates": [
@@ -93,7 +93,7 @@
     {
       "check": "PDF delivered",
       "status": "PASS",
-      "detail": "backend reportlab, 127059 bytes"
+      "detail": "backend reportlab, 127063 bytes"
     },
     {
       "check": "writer self-audit",

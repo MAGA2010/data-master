@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "source": "D:\\数据处理 skill\\examples\\column_traps\\traps_dirty.csv",
+  "source": "examples\\column_traps\\traps_dirty.csv",
   "modality": "tabular",
   "sampled": false,
   "read_mode": "text",

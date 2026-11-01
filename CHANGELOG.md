@@ -16,18 +16,31 @@ All notable changes are recorded here. The project follows semantic versioning.
   normalization preserves the nullable string dtype in both the planning
   preview and cleaning execution. CI covers Python and Arrow string storage,
   null preservation, and standalone cleaning replay.
-- A binary outcome (or any numeric column with exactly two observed values)
-  crashed every analysis with `TypeError: 'numpy.int64' object is not
-  iterable`: `odds_ratio` applied `np.sum` to boolean masks backed by pandas
-  nullable extension dtypes, which raises through pyarrow. Counts are now
-  computed on materialised numpy masks; pinned by
-  `tests/test_reliability.py::test_odds_ratio_accepts_pandas_nullable_dtypes`.
-- The rank-path epsilon-squared bootstrap called `scipy.stats.kruskal` once
-  per resample, making a five-group survey run take ~13 minutes (one rank
-  test cost ~27 s at 10,000 resamples). H is now computed by a formula
-  verified equal to scipy to 10 decimal places with and without ties
-  (`test_manual_kruskal_h_matches_scipy_with_and_without_ties`); the same
-  run now completes in under a minute.
+- A timestamp column that parses completely but holds one repeated instant (a
+  stuck instrument clock) used to fall between two contracts: the router
+  called the file time-series, the profiler refused it as "no time column",
+  and the run died on a generic error. The refusal now names the column and
+  says no interval exists, and the one-command runner passes that reason
+  through (`tests/test_timeseries_holds.py`).
+- A time-series file whose numeric column is real but shorter than the 20-row
+  estimability floor was rejected with the false claim "no numeric value
+  column found"; the message now states the actual sample-size fact, and the
+  no-column case keeps its own distinct message.
+- Binary outcomes crashed every analysis: `odds_ratio` applied `np.sum` to
+  boolean masks backed by pandas nullable extension dtypes, which raises
+  through pyarrow. Counts are now computed on materialised numpy masks
+  (`tests/test_reliability.py` pins nullable-dtype inputs).
+- Multi-group runs became minutes-long under the pairwise bootstrap load:
+  `cliffs_delta` recomputed tie ranks with a per-row `np.unique` loop that
+  resampling-with-replacement guarantees will fire on every row (now one
+  vectorised pass, 40x faster per pair and bit-identical intervals);
+  `variance_effects` computed SS per resample in Python (now vectorised,
+  same draw order, bit-identical); and sensitivity refits recomputed the
+  full pairwise post-hoc they never read (now omnibus-only, verdict-
+  identical). A 30-group analysis that previously exceeded five minutes now
+  completes in about seventy seconds. The bootstrap `ci_method` label now
+  names the resample count actually requested instead of always claiming
+  10,000.
 - Every report's discussion section claimed that "species, batch, site,
   instrument and operator" travel with the group label -- iris-specific
   wording shipped for all datasets. The confounder list is now derived from

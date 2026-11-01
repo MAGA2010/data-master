@@ -62,9 +62,9 @@ footer {
 </head>
 <body>
 <main>
-<!-- data-master HTML export: generated from report.md (sha256 c15c72d77d544f77df99fde4d6fe3b621198ea3fa2ac654ec8539dee5064bafa) by scripts/export_html.py; every number is that of the saved report, nothing was recalculated -->
+<!-- data-master HTML export: generated from report.md (sha256 16dd6bdb5a253b916554d5b0a336feb543071c00997eac2b401c61c73873e60c) by scripts/export_html.py; every number is that of the saved report, nothing was recalculated -->
 <h1>Synthetic survey responses -- Statistical Report</h1>
-<blockquote><p><strong>Template</strong>: nature | <strong>Generated</strong>: 2026-10-23 15:01 中国标准时间 | <strong>Pipeline</strong>: data-master <strong>Raw input</strong>: <code>survey_responses.csv</code> (sha256 <code>a023b82a29c35fa8...</code>) | <strong>Analysed file</strong>: <code>cleaned.csv</code> <strong>Rows</strong>: 120 raw -&gt; 120 analysed | <strong>Columns</strong>: 6 | <strong>Modality</strong>: tabular <strong>Independent unit</strong>: <strong>Types</strong>: <code>cleaning_run.json</code> (6 columns replayed from the cleaning manifest, never re-guessed)</p></blockquote>
+<blockquote><p><strong>Template</strong>: nature | <strong>Generated</strong>: 2026-11-01 18:29 中国标准时间 | <strong>Pipeline</strong>: data-master <strong>Raw input</strong>: <code>survey_responses.csv</code> (sha256 <code>a023b82a29c35fa8...</code>) | <strong>Analysed file</strong>: <code>cleaned.csv</code> <strong>Rows</strong>: 120 raw -&gt; 120 analysed | <strong>Columns</strong>: 6 | <strong>Modality</strong>: tabular <strong>Independent unit</strong>: <strong>Types</strong>: <code>cleaning_run.json</code> (6 columns replayed from the cleaning manifest, never re-guessed)</p></blockquote>
 <h2>Executive summary</h2>
 <p><strong>Setup.</strong> 120 rows and 6 columns reached the analysis, of which 2 are numeric measurements, compared across 5 levels of <code>satisfaction</code> (Dissatisfied, Neutral, Satisfied, Very dissatisfied, Very satisfied).</p>
 <p><strong>The conflict.</strong> The raw file was not safe to analyse as it stood: 3 conversion(s) were withheld rather than guessed at; <code>minutes_spent</code> was 7.5% missing and was not imputed.</p>
@@ -128,12 +128,12 @@ footer {
 </ul>
 <h2>6. Reproducibility</h2>
 <p>Every number above is traceable to a script. Nothing in this report was typed by hand.</p>
-<table><thead><tr><th>Stage</th><th>Script</th><th>Artifact</th><th>sha256 (first 16)</th></tr></thead><tbody><tr><td>Profile</td><td>scripts/profile_tabular.py</td><td>analysis/profile.json</td><td>7cf1ef05d05552d2</td></tr><tr><td>Plan</td><td>scripts/cleaning_plan.py</td><td>cleaning_plan.json</td><td>7176bc9d669e8010</td></tr><tr><td>Clean</td><td>scripts/execute_cleaning.py</td><td>cleaned/cleaned.csv</td><td>a023b82a29c35fa8</td></tr><tr><td>Validate</td><td>scripts/validate_clean.py</td><td>cleaned/validation.json</td><td>a21d5a6adff9c3a8</td></tr><tr><td>Describe</td><td>scripts/stats_descriptive.py</td><td>analysis/descriptive.json</td><td>6258fc3c41de7f74</td></tr><tr><td>Infer</td><td>scripts/stats_inferential.py</td><td>analysis/inferential.json</td><td>7e403b9156c093a7</td></tr><tr><td>Decide figures</td><td>scripts/chart_decision.py</td><td>analysis/chart_decisions.json</td><td>2887f493ce9cfac3</td></tr><tr><td>Render figures</td><td>scripts/render_chart.py</td><td>charts/*.png</td><td>4f3ae11be2a4b262</td></tr><tr><td>Assemble</td><td>scripts/assemble_report.py</td><td>report.md / report.pdf</td><td>self-referential -- see report_build.json</td></tr></tbody></table>
+<table><thead><tr><th>Stage</th><th>Script</th><th>Artifact</th><th>sha256 (first 16)</th></tr></thead><tbody><tr><td>Profile</td><td>scripts/profile_tabular.py</td><td>analysis/profile.json</td><td>7cf1ef05d05552d2</td></tr><tr><td>Plan</td><td>scripts/cleaning_plan.py</td><td>cleaning_plan.json</td><td>7176bc9d669e8010</td></tr><tr><td>Clean</td><td>scripts/execute_cleaning.py</td><td>cleaned/cleaned.csv</td><td>a023b82a29c35fa8</td></tr><tr><td>Validate</td><td>scripts/validate_clean.py</td><td>cleaned/validation.json</td><td>a21d5a6adff9c3a8</td></tr><tr><td>Describe</td><td>scripts/stats_descriptive.py</td><td>analysis/descriptive.json</td><td>6258fc3c41de7f74</td></tr><tr><td>Infer</td><td>scripts/stats_inferential.py</td><td>analysis/inferential.json</td><td>1f3f7a363a80c4a7</td></tr><tr><td>Decide figures</td><td>scripts/chart_decision.py</td><td>analysis/chart_decisions.json</td><td>2887f493ce9cfac3</td></tr><tr><td>Render figures</td><td>scripts/render_chart.py</td><td>charts/*.png</td><td>4f3ae11be2a4b262</td></tr><tr><td>Assemble</td><td>scripts/assemble_report.py</td><td>report.md / report.pdf</td><td>self-referential -- see report_build.json</td></tr></tbody></table>
 <p>A document cannot contain its own hash, so the hash of <code>report.md</code> and <code>report.pdf</code> is recorded in <code>report_build.json</code> rather than on this page. Every other hash above was computed from the artifact as it exists now.</p>
 <ul>
 <li><strong>Interpreter</strong>: Python 3.13.15 on Windows-11-10.0.26200-SP0</li>
 <li><strong>Libraries</strong>: numpy 2.4.6, pandas 3.0.3, scipy 1.18.1</li>
-<li><strong>Pipeline code</strong>: data-master commit <code>e6a572103f1b</code> (working tree was dirty; the commit alone does not reproduce it) -- this report names the exact code that produced every number in it.</li>
+<li><strong>Pipeline code</strong>: data-master commit <code>289135cf7a90</code> (working tree was dirty; the commit alone does not reproduce it) -- this report names the exact code that produced every number in it.</li>
 <li><strong>Random seeds</strong>: 42 -- every resampling interval is seeded, so it reproduces exactly.</li>
 <li><strong>Columns any operation was permitted to touch</strong>: <code>age_years</code>, <code>minutes_spent</code></li>
 </ul>
@@ -207,7 +207,7 @@ footer {
 <li>It does not claim any mechanism for the missingness it reports; the screening test in 2.3 is a description, not a diagnosis.</li>
 </ul>
 <hr>
-<p>*End of report. Generated 2026-10-23 15:01 中国标准时间 by data-master. The raw input was never modified: every value above was read from the cleaned file or from a recorded artifact. Each number is registered in <code>report_build.json</code>; the gate verdict, including anything that failed, is in <code>audit/final_audit.md</code>.*</p>
+<p>*End of report. Generated 2026-11-01 18:29 中国标准时间 by data-master. The raw input was never modified: every value above was read from the cleaned file or from a recorded artifact. Each number is registered in <code>report_build.json</code>; the gate verdict, including anything that failed, is in <code>audit/final_audit.md</code>.*</p>
 </main>
 <footer>This file is an export of <code>report.md</code> from a data-master run. The Markdown, the PDF and the machine-readable evidence in the run directory remain the records of account.</footer>
 </body>

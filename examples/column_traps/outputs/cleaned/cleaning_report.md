@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Source | `D:\数据处理 skill\examples\column_traps\traps_dirty.csv` |
+| Source | `examples\column_traps\traps_dirty.csv` |
 | Rows | 240 → **240** (+0) |
 | Columns | 10 → **10** |
 | Raw sha256 | `70406770bbcdfea3f73ac47227876651621765ef09e9208ed781b2eb42acddee` |

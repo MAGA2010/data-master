@@ -622,7 +622,18 @@ def profile_all(pipe: Pipeline, route: Dict[str, Any], outdir: Path,
             )
             mark_run(pipe.state, "failed", message="profile failed")
             pipe.save()
-            raise RuntimeError("profile failed for %s" % source)
+            # surface the profiler's own verdict: the profile json often holds
+            # the exact reason (e.g. a timestamp column that never spans two
+            # instants), and losing it behind a generic error makes a data
+            # defect look like a pipeline bug
+            detail = ""
+            if out.exists():
+                try:
+                    ev = (read_json(out).get("time_evidence") or {})
+                    detail = ": %s" % ev.get("reason") if ev.get("reason") else ""
+                except Exception:
+                    pass
+            raise RuntimeError("profile failed for %s%s" % (source, detail))
         evidence.append(str(out))
         branch_profile = read_json(out)
         branch_records.append({

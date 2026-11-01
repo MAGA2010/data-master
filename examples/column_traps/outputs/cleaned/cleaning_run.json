@@ -6,7 +6,7 @@
     "expected_hash": "b28632ff5d33b58fd3d2f26304e306bdfaec13273bc23c1ff4f01b204c808b5d",
     "regenerated_hash": "b28632ff5d33b58fd3d2f26304e306bdfaec13273bc23c1ff4f01b204c808b5d"
   },
-  "source": "D:\\数据处理 skill\\examples\\column_traps\\traps_dirty.csv",
+  "source": "examples\\column_traps\\traps_dirty.csv",
   "n_raw": 240,
   "n_clean": 240,
   "columns_before": [
@@ -37,7 +37,7 @@
   "raw_hash": "70406770bbcdfea3f73ac47227876651621765ef09e9208ed781b2eb42acddee",
   "cleaned_hash": "b28632ff5d33b58fd3d2f26304e306bdfaec13273bc23c1ff4f01b204c808b5d",
   "source_spec": {
-    "path": "D:\\数据处理 skill\\examples\\column_traps\\traps_dirty.csv",
+    "path": "examples\\column_traps\\traps_dirty.csv",
     "extension": ".csv",
     "read_mode": "text",
     "schema_declares_types": false

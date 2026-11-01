@@ -1,6 +1,6 @@
 # Date-versus-number ambiguity -- Executive summary
 
-_Generated 2026-10-19 20:07 中国标准时间 by scripts/assemble_report.py from the artifacts listed in `report_build.json`. Every statement below is a restatement of the full report, not a separate analysis._
+_Generated 2026-11-01 18:30 中国标准时间 by scripts/assemble_report.py from the artifacts listed in `report_build.json`. Every statement below is a restatement of the full report, not a separate analysis._
 
 **Headline.** `latency_s` is compared across subject_id: omega squared = 0.87, 95% CI 0.84 to 0.93, BH-adjusted p = 3.5e-17 across a family of 1 outcomes.
 
