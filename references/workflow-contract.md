@@ -6,12 +6,23 @@ The agent follows this contract step by step. Each step lists: goal, inputs, out
 
 Goal: pick a working Python and install only the libs we need.
 
+When using the npm launcher, check the managed runtime with `data-master doctor --json`
+and run analyses through `data-master analyze` / `data-master resume`. From a source
+checkout, the commands below inspect the active interpreter; they do not authorize
+installing into it.
+
 ```bash
 python -V                       # record to outputs/env.txt
 python scripts/check_deps.py --modalities <comma-list> --json
 ```
 
-For each missing package: tell the user the install command from the JSON, then run it. Never silent-install. Never use `pip install -r requirements.txt` blindly.
+Never execute a raw `pip install` command from a dependency report. The checker does
+not provide a system-interpreter install command. If a package is needed and the user
+approves installation, install it in the data-master managed environment with
+`data-master setup` (declared dependencies) or `data-master setup --extra <package>`
+(an additional parser). Do not install packages into the system or ambient Python.
+If the managed launcher is unavailable, report the missing dependency and stop that
+branch rather than changing another Python environment.
 
 Fallback: if a lib cannot be installed (e.g. binary wheel fails), record `SKIPPED (lib unavailable: X)` in the report and proceed without it.
 
@@ -19,7 +30,8 @@ Fallback: if a lib cannot be installed (e.g. binary wheel fails), record `SKIPPE
 
 Goal: turn `$ARGUMENTS` into a concrete file list.
 
-- Empty → list data-looking files in cwd; ask the user. This is the only allowed clarification.
+- Empty → list data-looking files in cwd; ask the user. Cleaning holds and
+  confirmatory-analysis declarations are gathered through `answers.template.json`.
 - Single file → dataset = that file; `dataset_dir = parent`.
 - Folder → enumerate supported extensions, skip any `outputs/` or `cleaned/` already present.
 - Glob → expand and group by modality.
@@ -193,6 +205,12 @@ Run inferential when:
 - At least 1 categorical column (group) AND
 - At least 1 numeric column (outcome) AND
 - n >= 5 per group.
+
+An automatically selected group or outcome is an exploratory screen. Label a
+comparison confirmatory only when `--unit-key`, `--group`, and `--outcomes` were all
+explicitly supplied (directly or in the validated answers run block). Put any missing
+declarations in `answers.template.json` and mark the report exploratory until they are
+provided.
 
 ```bash
 python scripts/stats_inferential.py --clean <cleaned> --modality <m> --out analysis/stats_inferential.json

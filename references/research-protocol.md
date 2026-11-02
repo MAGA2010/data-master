@@ -8,21 +8,28 @@ When a file extension / format does not match any entry in the master routing ta
 
 Triggered when:
 
-1. Extension is unknown (e.g. `.fasta`, `.hdf5`, `.avro`, `.pkl`, `.msg`).
+1. Extension is unknown (e.g. `.fasta`, `.hdf5`, `.avro`, `.msg`).
 2. Sniffer fails (file magic mismatch, binary inside a `.txt`, corrupted header).
 3. JSON is nested > 3 levels deep (tabular flattening breaks structure).
 4. User explicitly says `--research <format>`.
 
 ## Protocol
 
-### R1 — Identify the format
+### R1 — Identify the format without disclosing file contents
 
-1. Read first 256 bytes; compute magic bytes.
-2. Search WebSearch with the magic bytes + common interpretations: `"<hex>" file format specification`.
-3. Search WebSearch: `<extension> python library parser`.
-4. Capture candidate libraries: at least 2 to allow fallback.
+1. Inspect a bounded prefix locally, if format identification requires it. Keep the
+   observed bytes and any decoded header in the local process; do not copy them into
+   run artifacts.
+2. Search only public format names, extensions, and library names, for example:
+   `HDF5 file format specification` or `FASTA Python parser documentation`.
+3. Never send or paste observed magic bytes, file headers, metadata, records, paths,
+   or user values to WebSearch, WebFetch, or another external service. If the public
+   format name is unknown, ask the user to identify it or continue with profile-only
+   handling; do not share file-derived detail.
+4. Capture candidate libraries and their official documentation sources. A second
+   candidate is useful only when the format has genuine parser alternatives.
 
-### R2 — Pick a working library
+### R2 — Pick an available library
 
 For each candidate:
 
@@ -30,7 +37,13 @@ For each candidate:
 python -c "import <lib>; print(<lib>.__version__)"
 ```
 
-Pick the first that imports. If none, record the failure and try `pip install <lib>` for each candidate in order.
+Use an already installed library when available. If no suitable parser is installed,
+record the missing dependency and stop at a local profile-only result. Do not run
+`pip install` directly and do not install into the system or ambient Python. If the
+user wants the format parser, ask before installing it into the data-master managed
+environment with the **npm launcher** command `data-master setup --extra <package>`;
+then run the analysis through that launcher. If it is unavailable, keep the branch
+profile-only. Use only a package name selected from the parser's official documentation.
 
 ### R3 — Document provenance
 
@@ -39,7 +52,7 @@ Write `analysis/research_track.json`:
 ```json
 {
   "format": "FASTA",
-  "magic_bytes": "3C3E...",
+  "format_signature": "FASTA text marker (standard signature; no observed file bytes)",
   "extension": ".fasta",
   "candidate_libraries": [
     {"name": "Bio", "installed": true, "version": "1.81", "source": "https://biopython.org/"},
@@ -105,7 +118,6 @@ The same 8 Nature gates apply. The audit will FAIL gate 1 if the independent uni
 | Parquet | `PAR1` | pyarrow | row (but should re-route to tabular) |
 | Arrow IPC | `ARROW1` | pyarrow | row |
 | Avro | `Obj\x01` | fastavro | record |
-| Pickle | `\x80\x04` or `\x80\x05` | pickle | varies |
 | MATLAB .mat | MATL | scipy.io | variable |
 | TSV / delimited variant | Sniffer | pandas | row |
 | LaTeX / Typst | document char class | textract | document |
@@ -117,18 +129,34 @@ The same 8 Nature gates apply. The audit will FAIL gate 1 if the independent uni
 
 For each format, the agent must find at least one public specification page and cite it.
 
+### Unsafe Python object serialization
+
+Python Pickle and formats implemented on top of Pickle (including `.pkl`, `.pickle`,
+`.joblib`, and `.dill`) are **not supported for automatic loading**. Deserializing one
+can execute code from the file. Route these files to `unknown`, report that loading was
+refused, and do not call `pickle`, `joblib.load`, `dill`, or a wrapper that may unpickle
+the input. This refusal applies even when the file is labelled as a dataset. A trusted
+user may convert it outside this pipeline and provide a non-executable interchange
+format such as CSV or Parquet.
+
 ## Fallback hierarchy
 
-1. Magic-byte lookup (fastest).
-2. Sniffer (csv / json).
-3. WebSearch magic + extension.
-4. Ask user (only after exhausting 1-3).
+1. Bounded, local signature lookup against known public format signatures.
+2. Local sniffer (CSV / JSON).
+3. WebSearch using only a public extension or format name.
+4. Ask the user when identification remains uncertain. Never disclose file-derived
+   content to exhaust the lookup steps.
 
 ## Risk control
 
 Research-track is the most failure-prone branch. Mitigation:
 
 - Always write `analysis/research_track.json` before doing any data work.
+- Keep all observed file content local. Store only the public format signature or a
+  short local identification result in the report; never store or transmit a raw prefix.
+- Refuse Pickle-based deserialization as described above.
+- Never install a parser automatically. User-approved optional parsers go only into
+  the data-master managed environment.
 - Never let the research-track reader infer types; see R4. An unknown format is exactly
   where a confident-looking automatic conversion does the most damage.
 - Limit processing to n = 1000 records for the profile (full set for cleaning).

@@ -31,6 +31,7 @@ fall back to tabular.
 | `.pdf` `.docx` `.html` | **not in v1** | no profiler ships | `references/research-protocol.md` |
 | `.mp4` `.mov` `.avi` | **not in v1** | no video profiler ships | `references/research-protocol.md` |
 | `.gpkg` `.kml` `.gpx` | **not in v1** | no reader ships | `references/research-protocol.md` |
+| `.pkl` `.pickle` `.joblib` `.dill` `.pck` `.pckl` `.pt` `.pth` | unknown / blocked | Pickle-based deserialization can execute code; never load by default | refuse; explain the block |
 | anything else / no extension | unknown | no rule matched | `references/research-protocol.md` |
 
 ### Running the router

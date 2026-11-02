@@ -27,7 +27,7 @@ variable is worse than reporting none.
 
 - `analysis/inferential.json`:
   `group, group_levels, group_sizes, alpha, n_rows, unit_of_analysis, tests,
-  multiple_comparisons, correlations, rule_source`
+  analysis_question, multiple_comparisons, correlations, rule_source`
 - each test: `outcome, estimable, method, statistic_name, statistic, dof, dof_denom,
   p_raw, p_adjusted, effect_sizes, rejected_alternatives, robustness_cross_check,
   post_hoc`
@@ -35,13 +35,19 @@ variable is worse than reporting none.
 ## Commands
 
 ```powershell
-python scripts/stats_inferential.py --clean outputs/cleaned/cleaned.csv --group <column> --out outputs/analysis/inferential.json
+python scripts/stats_inferential.py --clean outputs/cleaned/cleaned.csv --group <column> --unit-key <column> --outcomes <a,b> --out outputs/analysis/inferential.json
 ```
+
+For confirmatory scope, also pass `--unit-key <column>` and `--outcomes <a,b>`.
+Omitting either declaration, or using an automatically selected group, marks the
+comparison exploratory. Preserve that scope in the report and the audit.
 
 ## Gate (default FAIL)
 
 - more than one test implies a declared multiplicity family with finite adjusted
   values (a single NaN poisons a whole BH family);
+- `analysis_question.confirmatory_ready` is true only when unit, group, and outcomes
+  were explicitly named by the user; automatic selections remain exploratory;
 - every estimable test carries an effect size and a 95%% CI;
 - a non-estimable outcome returns `estimable: false` with a reason and **no p-value**;
 - Welch ANOVA records both numerator and denominator df.

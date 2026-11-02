@@ -1456,6 +1456,10 @@ def main() -> int:
     p.add_argument("--group", required=True)
     p.add_argument("--outcomes", default=None,
                    help="comma-list of outcome columns (default: all numeric)")
+    p.add_argument("--group-source", choices=["user", "automatic"], default="user",
+                   help="whether the grouping column was named by the user")
+    p.add_argument("--outcomes-source", choices=["user", "automatic"], default=None,
+                   help="whether the outcome columns were named by the user")
     p.add_argument("--correction", default="BH", choices=["BH", "bonferroni", "holm"])
     p.add_argument("--alpha", type=float, default=ALPHA)
     p.add_argument("--unit-key", default=None,
@@ -1473,6 +1477,9 @@ def main() -> int:
     if args.group not in df.columns:
         print(f"ERROR: group column {args.group!r} not found; available={list(df.columns)}")
         return 1
+    if args.unit_key and args.unit_key not in df.columns:
+        print(f"ERROR: unit key {args.unit_key!r} not found; available={list(df.columns)}")
+        return 1
     if args.unit_key and args.unit_key == args.group:
         # every unit would be its own group: the comparison is of units with
         # themselves and no test is defined, so say so instead of aggregating
@@ -1485,6 +1492,14 @@ def main() -> int:
                     if args.outcomes else
                     [c for c in df.select_dtypes(include=[np.number]).columns
                      if c != args.group and c != args.unit_key])
+    if args.outcomes is not None and not outcome_cols:
+        print("ERROR: --outcomes must name at least one outcome column")
+        return 1
+    bad_outcomes = [c for c in outcome_cols if c not in df.columns]
+    if bad_outcomes:
+        print(f"ERROR: outcome column(s) not found: {bad_outcomes}; "
+              f"available={list(df.columns)}")
+        return 1
     covariates = ([c.strip() for c in args.covariates.split(",") if c.strip()]
                   if args.covariates else [])
     bad_cov = [c for c in covariates if c not in df.columns]
@@ -1627,6 +1642,24 @@ def main() -> int:
         if c["p_used"] is None:
             c["p_adjusted"] = None
 
+    outcomes_source = args.outcomes_source or (
+        "user" if args.outcomes and outcome_cols else "automatic")
+    selections = {
+        "group": "user" if args.group_source == "user" else "automatic",
+        "outcomes": outcomes_source,
+        "independent_unit": "user" if args.unit_key else "missing",
+    }
+    missing_declarations = [
+        name for name, source in selections.items()
+        if source != "user"
+    ]
+    question = {
+        "scope": "confirmatory" if not missing_declarations else "exploratory",
+        "confirmatory_ready": not missing_declarations,
+        "selection": selections,
+        "missing_declarations": missing_declarations,
+    }
+
     result = {
         "schema_version": "1.2",
         "source": str(args.clean),
@@ -1638,6 +1671,7 @@ def main() -> int:
         "primary_level": primary_level,
         "covariates": covariates,
         "unit_of_analysis": unit_info,
+        "analysis_question": question,
         "tests": tests,
         "secondary_row_level": secondary,
         "multiple_comparisons": {
@@ -1661,6 +1695,9 @@ def main() -> int:
 
     n_ok = sum(1 for t in tests if t.get("estimable"))
     print(f"stats_inferential written: {out}")
+    if question["scope"] == "exploratory":
+        print("  analysis scope : EXPLORATORY, not confirmatory; missing declarations: "
+              + (", ".join(missing_declarations) or "review the question definition"))
     print(f"  unit structure : {structure}  primary level: {primary_level}")
     if structure not in ("undeclared", "independent_rows"):
         print(f"  units          : {structure_info.get('n_units')} units across "

@@ -100,9 +100,18 @@ function installSkill(args, env = process.env) {
 }
 
 function setup(args, env = process.env, run = spawnSync) {
-  if (args.length) {
-    console.error('Usage: data-master setup (set DATA_MASTER_PYTHON to select Python)');
-    return 2;
+  const extras = [];
+  for (let i = 0; i < args.length; i += 1) {
+    if (args[i] !== '--extra' || !args[i + 1]) {
+      console.error('Usage: data-master setup [--extra PACKAGE]... (set DATA_MASTER_PYTHON to select Python)');
+      return 2;
+    }
+    const name = args[++i];
+    if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(name)) {
+      console.error('Invalid extra package name: ' + name + '. Use a package name only; versions and pip options are not accepted.');
+      return 2;
+    }
+    if (!extras.includes(name)) extras.push(name);
   }
   const python = findPython(env, run);
   if (!python) {
@@ -122,9 +131,11 @@ function setup(args, env = process.env, run = spawnSync) {
     console.log('Creating isolated Python environment: ' + managed.directory);
     let code = child(python, ['-m', 'venv', managed.directory], options, run);
     if (code) return code;
-    console.log('Installing the declared Python dependencies (network access may be needed).');
-    code = child(managed.python, ['-m', 'pip', 'install', '-r', path.join(root, 'requirements.txt')], options, run);
+    console.log('Installing the declared Python dependencies in the managed environment (network access may be needed).');
+    const installArgs = ['-m', 'pip', 'install', '-r', path.join(root, 'requirements.txt'), ...extras];
+    code = child(managed.python, installArgs, options, run);
     if (code) return code;
+    if (extras.length) console.log('Installed optional packages in the managed environment: ' + extras.join(', '));
     console.log('Setup complete. Run data-master doctor, then data-master demo --out outputs/demo.');
     return 0;
   } finally { fs.rmdirSync(lock); }
@@ -138,7 +149,7 @@ function main(args = process.argv.slice(2), env = process.env, run = spawnSync) 
   if (!args.length || ['--help', '-h'].includes(args[0])) {
     console.log(`data-master ${metadata.version}
 Usage: data-master <setup|skill|doctor|demo|analyze|resume|verify> [arguments]
-  setup             Create an isolated Python environment and install dependencies
+  setup             Create an isolated Python environment; optionally install --extra PACKAGE
   skill install     Install the bundled Codex skill (supports --target DIR)
   doctor --json     Check runtime resources and Python dependencies
   demo --out DIR    Analyze the bundled synthetic dataset

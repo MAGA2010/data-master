@@ -88,7 +88,12 @@ def check(modalities: List[str]) -> Dict:
             "installed": installed,
             "version": v,
             "pip_name": pip_name,
-            "install_cmd": "pip install %s" % pip_name,
+            "install_cmd": None,
+            "install_guidance": (
+                "With the npm launcher, install through the data-master managed environment with "
+                "`data-master setup`; do not run pip against the system or "
+                "ambient interpreter. For an undeclared parser, use "
+                "`data-master setup --extra %s` after user approval." % pip_name),
             "required": required,
             "why": why,
             "used_by": used_by,

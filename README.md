@@ -29,6 +29,15 @@ data-master skill install
 data-master demo --out outputs/first-demo
 ```
 
+For an additional format parser, install it only into the managed environment:
+
+```bash
+data-master setup --extra h5py
+```
+
+Optional format parsers are never installed automatically. This option accepts a
+package name only; use a parser named in its official format documentation.
+
 Open `outputs/first-demo/report.pdf`, then inspect the verdict in
 `outputs/first-demo/audit/final_audit.md`.
 
@@ -108,9 +117,19 @@ If a conversion or study decision is unsafe to infer, the run writes
 data-master resume outputs/study/state.json --answers outputs/study/answers.json
 ```
 
+Comparisons are labelled **exploratory** unless the run explicitly declares
+`--unit-key`, `--group`, and `--outcomes`. The report and `answers.template.json`
+show which declarations are missing. Supply all three to treat the comparison as
+confirmatory.
+
 Use `data-master analyze --help` for all pipeline options, including declared
 covariates, journal/checklist routing, input-size limits, lockfile export and PDF
 backend selection.
+
+Unknown binary formats are profiled locally. File bytes, headers, metadata and records
+are never sent to web search. Pickle-based files (`.pkl`, `.pickle`, `.joblib`, `.dill`,
+`.pck`, `.pckl`, `.pt`, `.pth`) are refused by default because loading them can execute
+code.
 
 ## Reproducible case studies
 
@@ -144,10 +163,19 @@ Install the Python package from a clone:
 ```bash
 git clone https://github.com/MAGA2010/data-master.git
 cd data-master
-python -m pip install .
-data-master doctor
-data-master skill install
+python -m venv .venv
+# Windows: .venv\Scripts\python.exe -m pip install .
+# macOS/Linux: .venv/bin/python -m pip install .
+# Windows: .venv\Scripts\data-master.exe doctor
+# macOS/Linux: .venv/bin/data-master doctor
+# Windows: .venv\Scripts\data-master.exe skill install
+# macOS/Linux: .venv/bin/data-master skill install
 ```
+
+The Python package path uses the activated project virtual environment. The
+`data-master setup --extra <package>` helper is provided by the npm launcher; when it
+is unavailable, an unknown-format branch stays profile-only instead of installing a
+parser into another interpreter.
 
 Run directly from a checkout:
 

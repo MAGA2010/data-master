@@ -14,7 +14,17 @@ The 8 Nature-grade gates that every audit must pass when `--report nature` (defa
 - `n_repeated_measures` — number of repeated measures per independent unit (if any)
 - `hierarchy` — when nested (e.g. cells within patients), explicit
 
-**How the skill enforces it**: `scripts/stats_descriptive.py` reads the user-provided `experimental_unit_hint` (default: `row`). If unknown, it auto-detects repeated measures from `*_rep` / `*_replicate` columns and surfaces `AUTHOR_INPUT_NEEDED` to ask.
+For a comparison to be labelled **confirmatory**, the user must explicitly declare
+the independent-unit key (`--unit-key`), grouping column (`--group`), and outcome
+columns (`--outcomes`). Automatically selected group or outcome columns are exploratory
+screens only. Missing declarations are listed in the report and
+`answers.template.json`; Gate 1 fails for an estimable comparison until they are supplied.
+
+**How the skill enforces it**: `scripts/stats_descriptive.py` reads the declared unit
+key and flags a missing key as `AUTHOR_INPUT_NEEDED`. The inferential artifact records
+whether the group and outcomes were explicitly named. Automatic selections remain
+exploratory, and the final audit fails Gate 1 when an estimable comparison lacks any
+required declaration.
 
 **Failure example**:
 > "n = 120"  (no unit specified) → FAIL

@@ -1,7 +1,7 @@
 ---
 name: data-master
 description: "Analyze datasets with preserved raw inputs, explicit cleaning decisions, reproducible figures and PDF reports. Full statistics for one tabular file; descriptive time-series analysis; integrity profiling for text, image, audio, geographic and mixed inputs. Use for data cleaning, EDA, group comparisons, statistical reports, 跑数据 or 数据分析 with a traceable evidence trail."
-allowed-tools: Bash(python *), Bash(py *), PowerShell(python *), PowerShell(py *), WebSearch, WebFetch
+allowed-tools: Bash(python *), Bash(py *), PowerShell(python *), PowerShell(py *), Bash(data-master *), PowerShell(data-master *), WebSearch, WebFetch
 ---
 
 # data-master — universal data processing pipeline
@@ -24,6 +24,7 @@ the CLI alone does not register the skill until `skill install` is run.
   - `--out <dir>` — overrides the output root.
   - `--answers <file>` — answers `answers.template.json` decisions by id; every id and action is validated, and changing the file invalidates the stale cleaning stages on resume. The file may also carry a `run` block declaring `unit_key` / `group` / `outcomes` / `design` / `journal` / `covariates` (validated against the profile; explicit CLI values always win). A decision may name a single `column` of a multi-column flag.
   - `--covariates <a,b>` — declare numeric covariates; the adjusted (ANCOVA) comparison becomes primary, unadjusted stays as cross-check, and the homogeneity-of-slopes assumption is tested and reported.
+  - `--unit-key <column>`, `--group <column>`, and `--outcomes <a,b>` — all three must be explicitly declared before the analysis is labelled confirmatory. Automatic group/outcome selection is exploratory.
   - `--max-input-mb <n>` — override the 300 MB in-memory input gate (readers hold files whole, as text).
   - `--export-lockfile` — writes `lockfile.txt` with the exact dependency versions that ran.
 - **Output** (all under `<dataset_dir>\outputs\`):
@@ -135,6 +136,7 @@ reference file that does not exist is a stop, not a suggestion.
 | `*.jpg *.png *.webp` | image-set | `references/cleaning-rule-catalog.md#image` | profiler (corrupt / near-duplicate / blank) — **profile-only** |
 | `*.wav *.mp3 *.flac` | audio-set | `references/cleaning-rule-catalog.md#audio` | profiler (duration / clipping / silence) — **profile-only** |
 | `*.tif` with geo tag | geospatial | `references/cleaning-rule-catalog.md#geo` | profiler (CRS / bounds / null island / coincidence) — **profile-only** |
+| `*.pkl *.pickle *.joblib *.dill *.pck *.pckl *.pt *.pth` | unknown | `references/research-protocol.md#unsafe-python-object-serialization` | refuse deserialization; report why and stop |
 | anything else / no extension | research-track | `references/research-protocol.md` | ad-hoc via WebSearch / WebFetch |
 
 Full table in [references/modality-routing.md](references/modality-routing.md).
@@ -143,26 +145,34 @@ Full table in [references/modality-routing.md](references/modality-routing.md).
 
 The agent executing this skill should follow this loop. Each step has full instructions in the linked reference.
 
-0. **Prefer the one-command runner** (`scripts/run_pipeline.py`). It wraps every
-   deterministic stage, records `state.json`, auto-selects the highest-ranked
-   grouping column for a single tabular file, and resumes without repeating
+0. **Prefer the installed CLI** (`data-master analyze` / `data-master resume`). The
+   npm launcher runs inside its managed Python environment. Use the source runner
+   (`python scripts/run_pipeline.py`) only when working from a checkout with the
+   required dependencies already available in that interpreter. The runner wraps every
+   deterministic stage, records `state.json`, can select the highest-ranked
+   grouping column for an exploratory screen, and resumes without repeating
    stages whose evidence still exists:
    ```powershell
-   python scripts/run_pipeline.py --in <file|folder|glob> --out outputs --title "<title>"
-   python scripts/run_pipeline.py --resume outputs/state.json
+   data-master analyze <file|folder|glob> --out outputs --title "<title>"
+   data-master resume outputs/state.json
    ```
    Use the step-by-step commands below only when debugging or overriding a stage.
    Non-tabular and multi-file inputs take the documented profile-only path: they
    receive a PDF report and integrity audit, but no inferential claim.
 1. **Resolve input** (`references/workflow-contract.md#step-1`). If $ARGUMENTS is empty, list data-looking files in cwd and ask the user which to process. This is the only allowed clarification.
 2. **Route modality** (`references/modality-routing.md`). Read file extensions, sniff a small sample, pick one of the 7 modalities. Mixed folder → run one branch per modality and merge reports.
-3. **Check dependencies** (`scripts/check_deps.py --modalities <list>`). Install missing libs one at a time, never silent-install.
+3. **Check dependencies** (`scripts/check_deps.py --modalities <list>`). Do not run
+   raw `pip install` commands or modify the system Python. After user approval, use
+   `data-master setup` for declared dependencies or
+   `data-master setup --extra <package>` for a format parser so installation stays in
+   the data-master managed environment. If that launcher is unavailable, report the
+   missing dependency and stop the affected branch.
 4. **Profile** (`scripts/profile_<modality>.py`). Produce `profile.json`. Always do this; it grounds every later decision.
 5. **Plan cleaning** (`scripts/cleaning_plan.py`). Read `references/cleaning-rule-catalog.md` and `references/never-automatic-list.md`. Produce `cleaning_plan.json`. Any never-automatic item becomes a USER_INPUT_NEEDED flag — and `answers.template.json` is written beside the plan so the user can answer every flag by id and re-run with `--answers <file>`. Every answer is validated against the flag it names and recorded with who/when/why.
 6. **Execute cleaning** (`scripts/execute_cleaning.py`). Run only the safe subset automatically. Write `clean_<slug>.py` so the user can re-run. Write `cleaning_report.md`.
 7. **Validate** (`scripts/validate_clean.py`). Gate: row loss < 30% (else fail), no NaN inflation, target/label cardinality preserved, no column dropped without a plan entry, and every dtype matches the recorded manifest. Note what `dtype_stable` compares: the cleaned types against **what the run decided and recorded**, not against what pandas guessed about the raw file. Comparing against the guess condemns the run for refusing to repeat the guess.
 8. **Re-derive, do not re-read.** Every analysis stage opens the cleaned data through `dm_types.load_cleaned`, which applies the manifest. Never call `read_csv` on a cleaned file directly — that is the same type-guessing mistake one stage earlier.
-9. **Stats** (`scripts/stats_descriptive.py` + `scripts/stats_inferential.py` + `scripts/effect_size.py`). Always run descriptive; run inferential only when the data has a comparison structure. When `--unit-key` shows rows repeating within units, the inferential stage classifies the structure (clustered / paired / complete blocks / incomplete repeated) and runs the primary analysis at the level the structure supports — per-unit means, paired tests, Friedman, or a unit random-intercept mixed model fitted by maximum likelihood with convergence checks; failed fits remain unresolved. Declared `--covariates` make the ANCOVA comparison primary with the slopes assumption tested. Cite every p-value with test name, n, df, CI, effect size.
+9. **Stats** (`scripts/stats_descriptive.py` + `scripts/stats_inferential.py` + `scripts/effect_size.py`). Always run descriptive; run inferential only when the data has a comparison structure. A comparison is confirmatory only when the user explicitly declares `--unit-key`, `--group`, and `--outcomes`; otherwise record and label it as exploratory, and list the missing declarations in the report and `answers.template.json`. When `--unit-key` shows rows repeating within units, the inferential stage classifies the structure (clustered / paired / complete blocks / incomplete repeated) and runs the primary analysis at the level the structure supports — per-unit means, paired tests, Friedman, or a unit random-intercept mixed model fitted by maximum likelihood with convergence checks; failed fits remain unresolved. Declared `--covariates` make the ANCOVA comparison primary with the slopes assumption tested. Cite every p-value with test name, n, df, CI, effect size.
 9b. **Time-series inputs** take their own mode: after profiling, `scripts/timeseries_analysis.py` computes Mann-Kendall + Theil-Sen slope with CI, ACF/PACF with white-noise bounds, STL strengths, and a seeded CUSUM changepoint screen into `analysis/timeseries.json`, rendered into the report with an overview figure and a phrase-scanned audit. Descriptive scope only.
 10. **Sensitivity** (`scripts/sensitivity_analysis.py`). Perturb the primary analysis — leave-one-group-out, block jackknife, pre-specified extreme-value fence, strict complete cases, imputation sensitivity — and write `analysis/sensitivity.json`. Gate 6 reads this artifact; the rank cross-check alone no longer satisfies it.
 11. **Charts** (`scripts/chart_decision.py` + `scripts/render_chart.py`). 1 chart per argument task. 2D preferred; 3D only when it changes the ranking. Title = conclusion, caption = definition, body = fact → interpretation → implication. Scatter panels carry a bootstrap band on the smoother and a CI on r.
@@ -186,6 +196,12 @@ The agent executing this skill should follow this loop. Each step has full instr
 
 Agent meta-rules:
 - If a step is missing a reference, stop and read the linked file — do NOT improvise on methods.
+- For unknown formats, follow `references/research-protocol.md`: inspect file details
+  locally, search only public format names, and never send file-derived bytes, headers,
+  metadata, paths, or values to WebSearch or WebFetch.
+- Never deserialize Pickle-based files (`.pkl`, `.pickle`, `.joblib`, `.dill`, `.pck`,
+  `.pckl`, `.pt`, `.pth`) by default. Keep them on the unknown route and report that
+  loading was refused because deserialization can execute code.
 - If a Python script fails with ImportError, fall back per workflow-contract step 0 (use py -3.12).
 - If the user explicitly asks for a non-default method (e.g. Welch t-test), record the override in `cleaning_plan.json` and proceed.
 
@@ -193,7 +209,7 @@ Agent meta-rules:
 
 Drawn from `nature-statistics` and applied as a gate, not decoration:
 
-1. **n is explicit and unit-defined.** Independent experimental unit ≠ technical replicate ≠ repeated measure. Always distinguished — and when rows repeat within the declared unit, the primary analysis runs at the level the structure supports (unit means / paired / blocks), with the row-level results demoted to a labelled secondary.
+1. **n and the question are explicit.** The user declares the independent unit (`--unit-key`), grouping column (`--group`), and outcomes (`--outcomes`) before a comparison is labelled confirmatory. Automatic selections stay exploratory. Independent experimental unit ≠ technical replicate ≠ repeated measure. When rows repeat within the declared unit, the primary analysis runs at the level the structure supports (unit means / paired / blocks), with the row-level results demoted to a labelled secondary.
 2. **Missingness assumptions are explicit.** The mechanism stays undetermined without collection context; missing fractions never establish MCAR. Any imputation is labelled.
 3. **Effect size > p-value.** Cohen d / Cliff delta / odds ratio + 95% CI always reported.
 4. **Uncertainty is visible.** Every number has a CI / SE / IQR; every chart has error bars, a band, or a stated smoother interval.

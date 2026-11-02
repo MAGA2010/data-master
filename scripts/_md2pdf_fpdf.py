@@ -90,7 +90,8 @@ def render(md_path: Path, pdf_path: Path) -> Dict[str, Any]:
         from fpdf import FPDF
     except ImportError as exc:
         raise RuntimeError(
-            "fpdf2 is not installed: pip install fpdf2. This tier is optional; the "
+            "fpdf2 is not installed in this interpreter. Run data-master setup in "
+            "the managed environment after approval. This tier is optional; the "
             "report cascade falls through to the browser backend without it."
         ) from exc
 
@@ -101,7 +102,7 @@ def render(md_path: Path, pdf_path: Path) -> Dict[str, Any]:
         raise RuntimeError(
             "the report contains CJK characters and no CJK-capable system font was "
             "found. This tier cannot render them without black boxes; install "
-            "reportlab (pip install reportlab) or use the browser tier."
+            "reportlab from the data-master managed environment or use the browser tier."
         )
 
     class Doc(FPDF):

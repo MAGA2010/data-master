@@ -31,6 +31,7 @@ sys.path.insert(0, str(SCRIPTS))
 import dm_types                     # noqa: E402
 import execute_cleaning as ec        # noqa: E402
 import stats_inferential as si       # noqa: E402
+import route_input as ri              # noqa: E402
 import assemble_profile_report as apr  # noqa: E402
 import pipeline_state as ps          # noqa: E402
 import run_pipeline as rp            # noqa: E402
@@ -559,6 +560,18 @@ def test_router_json_records():
            "a list of records was not routed to tabular")
 
 
+@check("the router refuses Pickle-based object serialization without opening it")
+def test_router_refuses_pickle_serialization():
+    with tempfile.TemporaryDirectory() as td:
+        p = Path(td) / "payload.pkl"
+        p.write_bytes(b"\x80\x04not a dataset")
+        rec = ri.classify(p, deep=True)
+        eq(rec["modality"], "unknown", "Pickle was assigned a data-reading branch")
+        eq(rec.get("blocked_reason"), "unsafe_deserialization",
+           "the route does not explain why loading is blocked")
+        assert "refused" in rec["evidence"].lower(), rec["evidence"]
+
+
 @check("the time-series profiler sees gaps, repeats and a regime change")
 def test_timeseries_profile():
     with tempfile.TemporaryDirectory() as td:
@@ -676,6 +689,8 @@ def test_check_deps_truthful():
     for lib in ("wordcloud", "langdetect", "librosa", "rasterio"):
         assert lib not in d["deps"], \
             "%s is listed as a dependency but no script imports it" % lib
+    assert all(info.get("install_cmd") is None for info in d["deps"].values()), \
+        "dependency guidance still exposes a raw pip command"
 
 
 # --------------------------------------------- unit-of-analysis structure
@@ -759,6 +774,10 @@ def test_gate1_blocks_row_level_under_clustering():
     import final_audit as fa
     base_inf = {
         "tests": [{"outcome": "y", "estimable": True, "n_total": 90}],
+        "analysis_question": {"scope": "confirmatory", "confirmatory_ready": True,
+                              "selection": {"group": "user", "outcomes": "user",
+                                            "independent_unit": "user"},
+                              "missing_declarations": []},
         "unit_of_analysis": {"unit_key": "pid", "n_rows": 360, "n_units": 90,
                              "rows_per_unit": 4.0},
     }
@@ -772,6 +791,37 @@ def test_gate1_blocks_row_level_under_clustering():
                                                "structure": "clustered"}}
     g = fa.gate_1_n_unit(ctx)
     eq(g["status"], "PASS", "a correct unit-level analysis failed gate 1: %s" % g["evidence"])
+    ctx["inferential"]["analysis_question"] = {
+        "scope": "exploratory", "confirmatory_ready": False,
+        "selection": {"group": "automatic", "outcomes": "automatic",
+                      "independent_unit": "user"},
+        "missing_declarations": ["group", "outcomes"],
+    }
+    eq(fa.gate_1_n_unit(ctx)["status"], "FAIL",
+       "automatic group/outcome selection passed the confirmatory gate")
+
+
+@check("inferential output records whether the question was explicitly declared")
+def test_inferential_question_scope():
+    with tempfile.TemporaryDirectory() as td:
+        csv = Path(td) / "study.csv"
+        _clustered_frame().to_csv(csv, index=False)
+        explicit = Path(td) / "explicit.json"
+        p = _run("stats_inferential.py", "--clean", csv, "--out", explicit,
+                 "--group", "arm", "--unit-key", "pid", "--outcomes", "y")
+        eq(p.returncode, 0, p.stderr)
+        q = json.loads(explicit.read_text(encoding="utf-8"))["analysis_question"]
+        eq(q["scope"], "confirmatory", "explicit question declarations were not recorded")
+        eq(q["confirmatory_ready"], True, "complete declarations did not unlock scope")
+
+        exploratory = Path(td) / "exploratory.json"
+        p = _run("stats_inferential.py", "--clean", csv, "--out", exploratory,
+                 "--group", "arm", "--group-source", "automatic", "--unit-key", "pid")
+        eq(p.returncode, 0, p.stderr)
+        q = json.loads(exploratory.read_text(encoding="utf-8"))["analysis_question"]
+        eq(q["scope"], "exploratory", "automatic selection was presented as confirmatory")
+        eq(q["missing_declarations"], ["group", "outcomes"],
+           "the missing question declarations were not surfaced")
 
 
 # ------------------------------------------------------- sensitivity suite
@@ -1077,7 +1127,8 @@ def test_answers_run_block():
     with tempfile.TemporaryDirectory() as td:
         ans = Path(td) / "b.json"
         ans.write_text(json.dumps(
-            {"run": {"journal": "nejm", "unit_key": "species"}}), encoding="utf-8")
+            {"run": {"journal": "nejm", "unit_key": "species",
+                     "group": None, "outcomes": None}}), encoding="utf-8")
         options2 = {"journal": "auto", "design": "auto"}
         applied = rp.apply_answers_run_block(str(ans), options2, iris_profile)
         eq(applied, {"journal": "nejm", "unit_key": "species"},
@@ -1089,6 +1140,18 @@ def test_answers_run_block():
         eq(applied3, {"unit_key": "species"},
            "the run block must still fill blanks beside explicit values")
         eq(options3["journal"], "nature", "an explicit journal was clobbered")
+
+
+@check("the answers template asks for unit, group and outcomes before confirmatory use")
+def test_answers_template_requires_question_declarations():
+    with tempfile.TemporaryDirectory() as td:
+        out = Path(td)
+        (out / "answers.template.json").write_text(
+            json.dumps({"decisions": []}), encoding="utf-8")
+        rp.augment_answers_template(out, {}, "arm")
+        run = json.loads((out / "answers.template.json").read_text(encoding="utf-8"))["run"]
+        for field in ("unit_key", "group", "outcomes"):
+            assert run[field]["required"] is True, "%s was not marked required" % field
 
 
 @check("a decision can answer one column of a multi-column flag")

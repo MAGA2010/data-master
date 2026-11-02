@@ -45,6 +45,11 @@ Get-Content references/modality-routing.md
 A file with `modality: unknown` routes to `references/research-protocol.md` and stops the
 automatic branch -- it does not silently fall back to tabular.
 
+Pickle-based serialization (`.pkl`, `.pickle`, `.joblib`, `.dill`, `.pck`, `.pckl`,
+`.pt`, `.pth`) is explicitly blocked with `blocked_reason: unsafe_deserialization`.
+Never load it. For every unknown format, search only public format names; keep observed
+bytes, headers, metadata, paths, and records out of WebSearch and WebFetch.
+
 ## Failure modes seen in real runs
 
 - **A `.csv` of free text** is routed to tabular, then every column is reported as

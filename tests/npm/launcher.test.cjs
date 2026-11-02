@@ -65,6 +65,31 @@ test('setup creates a venv, propagates pip failure, releases lock, and retries',
   } finally { fs.rmSync(cache, { recursive: true, force: true }); }
 });
 
+test('setup installs explicitly requested extras only in its managed environment', () => {
+  const cache = fs.mkdtempSync(path.join(os.tmpdir(), 'dm-extra-'));
+  const env = { ...process.env, DATA_MASTER_CACHE: cache, DATA_MASTER_PYTHON: 'test python' };
+  const calls = [];
+  const run = (cmd, args) => {
+    calls.push({ cmd, args });
+    if (args[0] === '-c') return { status: 0, stdout: JSON.stringify({ path: cmd, version: [3, 13] }) };
+    return { status: 0 };
+  };
+  try {
+    assert.equal(setup(['--extra', 'h5py'], env, run), 0);
+    const install = calls.find(call => call.args[1] === 'pip');
+    assert.ok(install, 'pip must run in the managed interpreter');
+    assert.equal(install.cmd, managedPaths(env).python);
+    assert.ok(install.args.includes('h5py'));
+
+    let spawned = false;
+    assert.equal(setup(['--extra', '--index-url'], env, () => {
+      spawned = true;
+      return { status: 0 };
+    }), 2);
+    assert.equal(spawned, false, 'pip options must be rejected before spawning a process');
+  } finally { fs.rmSync(cache, { recursive: true, force: true }); }
+});
+
 test('skill install is atomic, complete, and refuses to overwrite', () => {
   const base = fs.mkdtempSync(path.join(os.tmpdir(), 'dm-skill-'));
   const target = path.join(base, 'custom skills', 'data-master');

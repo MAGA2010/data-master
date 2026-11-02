@@ -119,6 +119,7 @@ def gate_1_n_unit(ctx: Dict[str, Any]) -> Dict[str, Any]:
 
     missing_n = [t.get("outcome") for t in tests if not t.get("n_total")]
     unit_key = unit.get("unit_key")
+    question = inf.get("analysis_question") or {}
     rows_per_unit = unit.get("rows_per_unit")
     primary_level = inf.get("primary_level") or "row"
     clustered = rows_per_unit is not None and float(rows_per_unit) > 1.0
@@ -129,6 +130,16 @@ def gate_1_n_unit(ctx: Dict[str, Any]) -> Dict[str, Any]:
     if not unit_key:
         issues.append("independent unit not declared: %s"
                       % (unit.get("note") or "no --unit-key given"))
+    if not question.get("confirmatory_ready", False):
+        missing = question.get("missing_declarations") or [
+            "independent_unit", "group", "outcomes"]
+        issues.append("analysis question is exploratory; confirmatory declarations "
+                      "are missing: %s" % ", ".join(missing))
+        if not re.search(r"\*\*Analysis scope:\s*EXPLORATORY\s*[—-]\s*NOT CONFIRMATORY",
+                         ctx.get("report_text") or "", re.IGNORECASE):
+            issues.append("the report does not prominently label this comparison exploratory")
+    if question.get("provenance_mismatch"):
+        issues.append("selection provenance in inferential.json disagrees with state.json")
 
     if clustered and primary_level == "row":
         return gate(1, "n explicit and unit-defined", "FAIL",
@@ -144,16 +155,15 @@ def gate_1_n_unit(ctx: Dict[str, Any]) -> Dict[str, Any]:
 
     n_total = tests[0].get("n_total") if tests else None
     if issues:
-        status = "FAIL" if not unit_key else "WARN"
+        status = "FAIL" if (not unit_key or
+                             not question.get("confirmatory_ready", False)) else "WARN"
         return gate(1, "n explicit and unit-defined", status,
-                    "n is recorded per outcome (e.g. n=%s) and per group, but the "
-                    "independent unit is %s."
-                    % (n_total, "declared as `%s`" % unit_key if unit_key
-                       else "not declared in the input"),
+                    "n=%s is recorded per outcome and per group, but the independent "
+                    "unit or question specification is incomplete." % n_total,
                     issues,
-                    "pass --unit-key with what one row represents, or record it in "
-                    "the run manifest; the report already marks this "
-                    "AUTHOR_INPUT_NEEDED.")
+                    "re-run with --unit-key, --group, and --outcomes explicitly "
+                    "declared; the report already marks incomplete selections as "
+                    "exploratory.")
     evidence = ("unit `%s` declared; primary analysis at the %s level; n=%s "
                 "across %d outcome(s)."
                 % (unit_key, primary_level, n_total, len(tests)))
@@ -777,12 +787,47 @@ def main(argv: Optional[List[str]] = None) -> int:
         report_text = report_path.read_text(encoding="utf-8")
 
     build = load_json(outdir / "report_build.json") or {}
+    inferential = load_json(outdir / "analysis" / "inferential.json") or {}
+    state = load_json(outdir / "state.json") or {}
+    if isinstance(state.get("options"), dict):
+        # The run ledger records which selectors the user actually supplied.
+        # Derive the scope from it instead of trusting a mutable analysis field.
+        options = dict(state.get("options") or {})
+        options.update(state.get("options_from_answers") or {})
+        selection = {
+            "group": "user" if options.get("group") else "automatic",
+            "outcomes": "user" if options.get("outcomes") else "automatic",
+            "independent_unit": "user" if options.get("unit_key") else "missing",
+        }
+        missing = [name for name, source in selection.items() if source != "user"]
+        derived_question = {
+            "scope": "confirmatory" if not missing else "exploratory",
+            "confirmatory_ready": not missing,
+            "selection": selection,
+            "missing_declarations": missing,
+        }
+        recorded_question = inferential.get("analysis_question")
+        if recorded_question:
+            derived_question["provenance_mismatch"] = any(
+                recorded_question.get(k) != derived_question.get(k)
+                for k in ("scope", "confirmatory_ready", "selection",
+                          "missing_declarations"))
+        inferential["analysis_question"] = derived_question
+    elif not inferential.get("analysis_question"):
+        # No state ledger or selection metadata means explicit declarations
+        # cannot be proven; absent evidence stays exploratory.
+        inferential["analysis_question"] = {
+            "scope": "exploratory", "confirmatory_ready": False,
+            "selection": {"group": "automatic", "outcomes": "automatic",
+                          "independent_unit": "missing"},
+            "missing_declarations": ["group", "outcomes", "independent_unit"],
+        }
     ctx: Dict[str, Any] = {
         "title": build.get("title") or outdir.name,
         "report_text": report_text,
         "profile": load_json(outdir / "analysis" / "profile.json") or {},
         "descriptive": load_json(outdir / "analysis" / "descriptive.json") or {},
-        "inferential": load_json(outdir / "analysis" / "inferential.json") or {},
+        "inferential": inferential,
         "sensitivity": load_json(outdir / "analysis" / "sensitivity.json") or {},
         "decisions": load_json(outdir / "analysis" / "chart_decisions.json") or {},
         "cleaning_run": load_json(outdir / "cleaned" / "cleaning_run.json") or {},

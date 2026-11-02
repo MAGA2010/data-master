@@ -436,6 +436,16 @@ def main() -> int:
 
     doc = build_decisions(df, profile, desc, inf)
     doc["dtype_provenance"] = dtype_provenance
+    question = (inf or {}).get("analysis_question") or {}
+    doc["analysis_scope"] = question.get("scope", "exploratory")
+    if doc["analysis_scope"] == "exploratory":
+        for decision in doc["decisions"]:
+            if decision.get("chart_type") == "small_multiples_ci":
+                decision["title"] = "Exploratory screen: " + decision["title"]
+                decision["caption"] = (
+                    "Exploratory comparison; not confirmatory until the independent "
+                    "unit, grouping column, and outcomes are declared. "
+                    + decision.get("caption", ""))
     Path(a.out).parent.mkdir(parents=True, exist_ok=True)
     Path(a.out).write_text(json.dumps(doc, ensure_ascii=False, indent=1), encoding="utf-8")
 

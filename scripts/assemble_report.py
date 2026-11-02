@@ -12,8 +12,8 @@ report prose and the PDF must never disagree about a number.
   2. Produce the PDF, by cascade, because "no PDF backend" is a fact about the
      machine rather than about the data:
 
-        1. reportlab         pure Python, one pip install, no system dependency
-        2. fpdf2             pure Python, one pip install
+        1. reportlab         pure Python, no system dependency
+        2. fpdf2             pure Python, no system dependency
         3. headless browser  present on nearly every desktop, no install
         4. BLOCKED           report.md still written, with the install command
 
@@ -287,7 +287,8 @@ def render_pdf_cascade(md_path: Path, pdf_path: Path, prefer: str = "auto",
                     if exe is None:
                         raise RuntimeError(
                             "reportlab is not importable here or in any discovered "
-                            "interpreter; fix with: pip install reportlab")
+                            "interpreter; install it in the data-master managed "
+                            "environment with `data-master setup` after approval")
                     info = _run_renderer(exe, script, md_path, pdf_path)
                     entry["interpreter"] = exe
                     entry["in_process"] = False
@@ -306,7 +307,8 @@ def render_pdf_cascade(md_path: Path, pdf_path: Path, prefer: str = "auto",
                             break
                     if exe is None:
                         raise RuntimeError(
-                            "fpdf2 is not importable; fix with: pip install fpdf2")
+                            "fpdf2 is not importable; install it in the data-master "
+                            "managed environment with `data-master setup` after approval")
                     info = _run_renderer(exe, script, md_path, pdf_path)
                     entry["interpreter"] = exe
             else:
@@ -333,8 +335,7 @@ def render_pdf_cascade(md_path: Path, pdf_path: Path, prefer: str = "auto",
         "attempts": attempts,
         "blocked_reason": "no PDF backend available in this environment",
         "fix_commands": [
-            "pip install reportlab   # preferred: pure Python, no system dependencies",
-            "pip install fpdf2       # alternative pure-Python backend",
+            "data-master setup  # installs declared PDF backends in the managed environment",
             "install Chrome or Edge  # enables the headless-browser backend",
         ],
     }
@@ -439,6 +440,29 @@ def build_caveats(ctx: Dict[str, Any]) -> List[Dict[str, str]]:
             "limits": ("the causal reading of every group difference, and the width of every "
                        "interval"),
             "resolved_by": "AUTHOR_INPUT_NEEDED: what one row represents",
+        })
+
+    question = inf.get("analysis_question") or {}
+    if inf.get("tests") and not question.get("confirmatory_ready", False):
+        missing = question.get("missing_declarations") or []
+        selection = question.get("selection") or {}
+        automatic = [name for name, source in selection.items()
+                     if source == "automatic"]
+        details = []
+        if automatic:
+            details.append("automatic selection used for " + ", ".join(automatic))
+        if "independent_unit" in missing:
+            details.append("the independent unit was not declared")
+        out.append({
+            "id": "exploratory_question",
+            "caveat": ("This comparison is an exploratory screen, not a confirmatory "
+                       "analysis (%s). Its p values and intervals must not be presented "
+                       "as confirmatory evidence until the unit, grouping column, and "
+                       "outcome columns are declared."
+                       % ("; ".join(details) if details else
+                          "required declarations are incomplete")),
+            "limits": "the confirmatory interpretation of every comparison and correlation",
+            "resolved_by": "AUTHOR_INPUT_NEEDED: declare unit, group, and outcomes",
         })
 
     skewed = [(c, abs(s.get("skew") or 0.0)) for c, s in (desc.get("numeric") or {}).items()
@@ -629,6 +653,16 @@ class ReportBuilder:
         self.w()
         self.w("**Setup.** %s" % setup)
         self.w()
+        question = inf.get("analysis_question") or {}
+        if question.get("scope") == "exploratory":
+            missing = ", ".join(question.get("missing_declarations") or []) or \
+                "review the question definition"
+            self.w("**Analysis scope: EXPLORATORY — NOT CONFIRMATORY.** "
+                   "Some required declarations are missing (%s). The comparisons and "
+                   "their p values are screening results. Declare the independent unit, "
+                   "group, and outcomes in `answers.template.json` before using them as "
+                   "confirmatory evidence." % missing)
+            self.w()
         self.w("**The conflict.** %s" % conflict)
         self.w()
         self.w("**How it was resolved.** %s" % resolution)
@@ -668,6 +702,12 @@ class ReportBuilder:
         if hint:
             self.w("- **Row meaning**: the router suggests `%s`; that is a heuristic, and the "
                    "real answer is an open question below." % hint)
+        question = inf.get("analysis_question") or {}
+        if question.get("scope") == "exploratory":
+            missing = ", ".join(question.get("missing_declarations") or []) or \
+                "question definition"
+            self.w("- **Analysis scope**: EXPLORATORY, not confirmatory; the following "
+                   "declarations are incomplete: %s." % missing)
         self.w("- **Pre-registration**: AUTHOR_INPUT_NEEDED. Nothing in the input says "
                "whether these analyses were planned in advance, and the outcome columns were "
                "chosen after the data were seen.")
@@ -682,6 +722,18 @@ class ReportBuilder:
 
         self.w("## 2. Methods")
         self.w()
+
+        question = inf.get("analysis_question") or {}
+        if question:
+            self.w("**Question selection.** Scope: **%s**. Selection sources: %s."
+                   % (str(question.get("scope", "exploratory")).upper(),
+                      ", ".join("%s: %s" % (k, v)
+                                for k, v in (question.get("selection") or {}).items())))
+            if not question.get("confirmatory_ready"):
+                self.w("These results are exploratory screens. The independent unit, "
+                       "group, and outcomes must all be declared before the comparisons "
+                       "can be treated as confirmatory.")
+            self.w()
 
         self.w("### 2.1 Cleaning")
         self.w()
@@ -1538,6 +1590,20 @@ class ReportBuilder:
                 "runs, the effective n is smaller than the row count and every interval is "
                 "too narrow.",
                 "HIGH -- rescales every interval in the report"))
+        question = inf.get("analysis_question") or {}
+        selection = question.get("selection") or {}
+        if selection.get("group") != "user":
+            items.append((
+                "Which grouping column defines the question of interest?",
+                "An automatic candidate may be useful for exploration, but only the "
+                "study question can identify the comparison that should be primary.",
+                "HIGH -- determines which comparisons belong in the primary analysis"))
+        if selection.get("outcomes") != "user":
+            items.append((
+                "Which outcome column or columns were selected for this question?",
+                "The exploratory run selected outcome columns automatically. Name the "
+                "outcomes that define the intended comparison.",
+                "HIGH -- determines the outcome family and multiplicity correction"))
         if not any("pre-register" in (c.get("resolved_by") or "").lower()
                    for c in ctx["caveats"]):
             items.append((
@@ -1700,6 +1766,9 @@ def build_executive_summary(ctx: Dict[str, Any], builder: ReportBuilder) -> str:
     L.append("| Grouping variable | `%s`, %s |"
              % (inf.get("group") or "none established",
                 ", ".join(str(x) for x in (inf.get("group_levels") or [])) or "--"))
+    question = inf.get("analysis_question") or {}
+    L.append("| Analysis scope | %s |"
+             % str(question.get("scope", "exploratory")).upper())
     L.append("| Outcomes tested | %d of %d estimable |" % (n_est, len(tests)))
     fam = (inf.get("multiple_comparisons") or {}).get("primary_family") or {}
     L.append("| Multiplicity | %s, family of %s, %s surviving |"
@@ -1712,6 +1781,14 @@ def build_executive_summary(ctx: Dict[str, Any], builder: ReportBuilder) -> str:
     L.append("| Caveats raised | %d |" % len(ctx["caveats"]))
     L.append("| Open questions | see Appendix B |")
     L.append("")
+    if question.get("scope") == "exploratory":
+        missing = ", ".join(question.get("missing_declarations") or []) or \
+            "question definition"
+        L.append("**Exploratory only — not confirmatory.** Required declarations are "
+                 "missing: %s. These comparisons are screening results. Name the "
+                 "independent unit, group, and outcomes before using them as "
+                 "confirmatory evidence." % missing)
+        L.append("")
     L.append("## The three things a reader should take away")
     L.append("")
     L.append("1. **%s**" % (head if head else

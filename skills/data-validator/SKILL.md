@@ -46,6 +46,11 @@ Gates 1, 2, 7 and 8 are mandatory at every template. Gates 3-6 are mandatory for
 `nature` and relax only where the selected template says so -- and the relaxation is
 printed, never silent.
 
+Gate 1 also requires explicit question provenance for an estimable comparison:
+`--unit-key`, `--group`, and `--outcomes` must be user-declared. Automatic selections
+must be labelled exploratory in the report; a missing label or incomplete declaration
+fails the gate.
+
 ## Failure modes seen in real runs
 
 - **An audit that trusts the report.** Gate 3 must read `effect_sizes` from

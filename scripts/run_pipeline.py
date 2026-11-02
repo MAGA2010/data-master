@@ -196,7 +196,7 @@ def apply_answers_run_block(answers_path: Optional[str], options: Dict[str, Any]
     """Apply the answers file's run-level declarations to the run options.
 
     The answers file can now settle everything the audit will otherwise flag
-    as AUTHOR_INPUT_NEEDED -- unit key, grouping, design, journal -- in the
+    as AUTHOR_INPUT_NEEDED -- unit key, grouping, outcomes, design, journal -- in the
     same file as the cleaning decisions. Command-line and recorded-state
     values always win; the run block only fills blanks, and every value it
     fills is validated (columns against the profile, design against the
@@ -241,6 +241,11 @@ def apply_answers_run_block(answers_path: Optional[str], options: Dict[str, Any]
                        "journal", "covariates"):
             errors.append("run block: unknown key %r (accepted: unit_key, unit, "
                           "group, outcomes, design, journal, covariates)" % key)
+            continue
+        # Null entries in the generated template mean "not answered yet".
+        # They must leave the exploratory defaults intact rather than fail
+        # column validation or overwrite an existing option.
+        if value is None or value == "":
             continue
         if not _unset(key, "auto" if key in ("design", "journal") else None):
             continue  # an explicit CLI/state value wins; the run block stays quiet
@@ -298,12 +303,20 @@ def augment_answers_template(outdir: Path, options: Dict[str, Any],
             "why": "gate 1 fails without a declared independent unit; name the "
                    "column that identifies one unit",
             "required": True}
-    if not options.get("group") and group_used:
+    if not options.get("group"):
         run["group"] = {
             "value": None,
-            "why": "the grouping column was auto-selected as %r; name it "
-                   "explicitly to pin the research question" % group_used,
-            "required": False}
+            "why": (("the grouping column was auto-selected as %r; name it "
+                     "explicitly to define the research question" % group_used)
+                    if group_used else
+                    "name the grouping column that defines the research question"),
+            "required": True}
+    if not options.get("outcomes"):
+        run["outcomes"] = {
+            "value": None,
+            "why": "name one or more outcome columns before a comparison can be "
+                   "treated as confirmatory",
+            "required": True}
     if options.get("design") in (None, "auto"):
         run["design"] = {
             "value": None,
@@ -319,8 +332,9 @@ def augment_answers_template(outdir: Path, options: Dict[str, Any],
     if run:
         doc["run"] = run
         doc.setdefault("run_instructions",
-                       "fill 'value' for any entry you want to declare; "
-                       "unset entries keep their current behaviour")
+                       "Fill the required unit_key, group, and outcomes values to "
+                       "declare a confirmatory question. Leaving any blank keeps the "
+                       "analysis exploratory; optional entries may remain blank.")
         path.write_text(json.dumps(doc, indent=2, ensure_ascii=False) + "\n",
                         encoding="utf-8")
 
@@ -376,7 +390,7 @@ def export_lockfile(outdir: Path) -> Path:
     ]
     lines = [
         "# data-master lockfile -- exact versions that produced this run's artifacts.",
-        "# Install with:  python -m pip install -r lockfile.txt",
+        "# Install with the project's virtual-environment interpreter: python -m pip install -r lockfile.txt",
     ]
     prov = pipeline_provenance(ROOT)
     if prov.get("git_commit"):
@@ -403,11 +417,11 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--in", dest="inp", help="file, folder, or glob")
     ap.add_argument("--out", help="output directory (default: input parent/outputs)")
     ap.add_argument("--title", help="report title")
-    ap.add_argument("--group", help="grouping column; otherwise the profile's top candidate")
-    ap.add_argument("--outcomes", help="comma-separated outcome columns")
+    ap.add_argument("--group", help="grouping column; otherwise the profile's top candidate is used for exploratory screening")
+    ap.add_argument("--outcomes", help="comma-separated outcome columns; omission screens all numeric candidates and remains exploratory")
     ap.add_argument("--unit", default="row",
                     help="what one row represents (descriptive statistics)")
-    ap.add_argument("--unit-key", help="column identifying the independent unit")
+    ap.add_argument("--unit-key", help="column identifying the independent unit; required with --group and --outcomes for confirmatory analysis")
     ap.add_argument("--report", default="nature",
                     help="report template label recorded in the PDF")
     ap.add_argument("--journal", default="auto",
@@ -476,6 +490,14 @@ def write_skipped_inference(path: Path, clean_path: Path, profile: Dict[str, Any
             "n_rows": int((profile.get("shape") or {}).get("n_rows") or 0),
             "note": ("no --unit-key given; row is assumed to be the independent unit"
                      if not unit_key else "unit declared by the user"),
+        },
+        "analysis_question": {
+            "scope": "descriptive",
+            "confirmatory_ready": False,
+            "selection": {"group": "missing", "outcomes": "missing",
+                          "independent_unit": "user" if unit_key else "missing"},
+            "missing_declarations": ["group", "outcomes"] +
+                                    ([] if unit_key else ["independent_unit"]),
         },
         "tests": [],
         "multiple_comparisons": {
@@ -814,11 +836,15 @@ def run_full_tabular(pipe: Pipeline, input_path: Path, outdir: Path,
 
     group = options.get("group") or choose_group(profile)
     if group:
-        log("inferential: auto-selected group column %r" % group)
+        log("inferential: %s group column %r" %
+            ("using user-declared" if options.get("group") else "auto-selected",
+             group))
         infer_cmd = [
             sys.executable, str(HERE / "stats_inferential.py"),
             "--clean", str(clean_csv), "--out", str(inferential_path),
             "--group", str(group),
+            "--group-source", "user" if options.get("group") else "automatic",
+            "--outcomes-source", "user" if options.get("outcomes") else "automatic",
         ]
         if options.get("outcomes"):
             infer_cmd.extend(["--outcomes", str(options["outcomes"])])
@@ -861,6 +887,12 @@ def run_full_tabular(pipe: Pipeline, input_path: Path, outdir: Path,
     # the template should carry the run-level questions too, so one file
     # answers everything the audit would otherwise flag
     augment_answers_template(outdir, options, options.get("group") or group)
+    question = (read_json(inferential_path) or {}).get("analysis_question") or {}
+    if question.get("scope") == "exploratory":
+        missing = question.get("missing_declarations") or []
+        log("analysis scope: EXPLORATORY; confirmatory declarations still needed: %s. "
+            "See answers.template.json before interpreting comparisons."
+            % (", ".join(missing) if missing else "review the question definition"))
 
     code = pipe.run("chart_decisions", [
         sys.executable, str(HERE / "chart_decision.py"),

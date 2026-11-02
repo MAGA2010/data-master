@@ -77,7 +77,8 @@ def load_shapefile(path: Path) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
     try:
         import shapefile  # pyshp
     except Exception:
-        raise SystemExit("reading a shapefile needs pyshp: pip install pyshp")
+        raise SystemExit("reading a shapefile needs pyshp in the data-master managed "
+                         "environment; run data-master setup after approval")
     reader = shapefile.Reader(str(path))
     out = []
     for i, shape in enumerate(reader.shapes()):

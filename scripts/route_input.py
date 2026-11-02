@@ -53,6 +53,8 @@ GENERATED_DIRS = {
     "outputs", "audit", "state", "__pycache__", ".git", ".hg", ".svn",
     ".pytest_cache", ".ruff_cache", ".codex-preview", "branch_inputs",
 }
+UNSAFE_PICKLE_SUFFIXES = {".pkl", ".pickle", ".joblib", ".dill", ".pck", ".pckl",
+                          ".pt", ".pth"}
 
 
 def expand(pattern: str) -> List[Path]:
@@ -121,6 +123,17 @@ def classify(path: Path, deep: bool) -> Dict[str, Any]:
     rec: Dict[str, Any] = {"path": str(path), "name": path.name,
                            "suffix": suffix, "bytes": path.stat().st_size,
                            "alternatives_rejected": []}
+
+    # These suffixes are commonly used for Python object serialization. Keep
+    # them on the unknown route and make the reason explicit: a later research
+    # stage must not deserialize an untrusted file (pickle can execute code).
+    if suffix in UNSAFE_PICKLE_SUFFIXES:
+        rec.update({"modality": "unknown",
+                    "evidence": "Pickle-based object serialization is refused by default",
+                    "confidence": 1.0,
+                    "blocked_reason": "unsafe_deserialization",
+                    "rule_source": "route_input.py#unsafe-pickle"})
+        return rec
 
     # JSON is decided by content, not extension: a GeoJSON, a list of records and
     # a nested configuration document all end in .json and belong in three
